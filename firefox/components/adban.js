@@ -335,7 +335,7 @@ adban.prototype = {
       https: true,
       ftp: true,
   },
-  _SERVER_HOST: 'http://localhost:8080',
+  _SERVER_HOST: 'https://dev.latest.ad-ban.appspot.com',
   _ERROR_CODES: {
       NO_ERRORS: 0,
       REQUEST_PARSING_ERROR: 1,
