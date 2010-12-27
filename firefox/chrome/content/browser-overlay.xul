@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+
+<overlay id="adban-browser-overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <script type="application/x-javascript" src="browser-overlay.js"/>
+
+  <commandset>
+    <command id="cmd-adban-start" disabled="true"/>
+    <command id="cmd-adban-stop"/>
+    <command id="cmd-adban-complaint" observes="cmd-adban-stop"/>
+    <command id="cmd-adban-help"/>
+  </commandset>
+
+  <popupset>
+    <menupopup id="adban-menupopup" position="after_end">
+      <menuitem label="Stop" command="cmd-adban-stop"/>
+      <menuitem label="Start" command="cmd-adban-start"/>
+      <menuseparator/>
+      <menuitem label="Report ads or problems on the page" command="cmd-adban-complaint"/>
+      <menuseparator/>
+      <menuitem label="Help" command="cmd-adban-help"/>
+    </menupopup>
+  </popupset>
+
+  <toolbarpalette id="BrowserToolbarPalette">
+    <toolbarbutton id="adban-button" label="AdBan: on" type="menu" popup="adban-menupopup" insertbefore="urlbar-container"
+        class="toolbarbutton-1 chromeclass-toolbar-additional" tooltiptext="AdBan - block ads on the web"/>
+  </toolbarpalette>
+
+</overlay>
+

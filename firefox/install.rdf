@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+
+  <Description about="urn:mozilla:install-manifest">
+    <em:id>adban@ad-ban.appspot.com</em:id>
+    <em:name>AdBan</em:name>
+    <em:version>1.0.0</em:version>
+    <em:description>Blocks ads on the web.</em:description>
+    <em:creator>support@ad-ban.appspotmail.com</em:creator>
+    <em:homepageURL>https://ad-ban.appspot.com/</em:homepageURL>
+    <em:iconURL>https://ad-ban.appspot.com/img/1/ff_icon.png</em:iconURL>
+    <em:updateURL>https://ad-ban.appspot.com/update/firefox.rdf</em:updateURL>
+    <em:type>2</em:type>
+
+    <!-- Firefox -->
+    <em:targetApplication>
+      <Description>
+        <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+        <em:minVersion>3.0</em:minVersion>
+        <em:maxVersion>3.6.*</em:maxVersion>
+      </Description>
+    </em:targetApplication>
+
+  </Description>
+</RDF>

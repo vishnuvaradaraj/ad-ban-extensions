@@ -1,0 +1,18 @@
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+
+#adban-button .toolbarbutton-text {
+  display: block !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+#adban-button .toolbarbutton-icon {
+  display: none !important;
+}
+
+#adban-button {
+  list-style-image: none !important;
+  -moz-box-align: center !important;
+  -moz-box-orient: horizontal !important;
+}
+
