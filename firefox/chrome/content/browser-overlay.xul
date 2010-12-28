@@ -12,8 +12,8 @@
 
   <popupset>
     <menupopup id="adban-menupopup" position="after_end">
-      <menuitem label="Stop" command="cmd-adban-stop"/>
       <menuitem label="Start" command="cmd-adban-start"/>
+      <menuitem label="Stop" command="cmd-adban-stop"/>
       <menuseparator/>
       <menuitem label="Report ads or problems on the page" command="cmd-adban-complaint"/>
       <menuseparator/>
