@@ -1,6 +1,7 @@
 const Cu = Components.utils;
 const Ci = Components.interfaces;
 const Cc = Components.classes;
+const Cr = Components.results;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
@@ -426,6 +427,13 @@ adban.prototype = {
     if (!this._verifyLocation(new_channel.URI, request_origin)) {
       throw this._REJECT_EXCEPTION;
     }
+  },
+
+  // net-channel-event-sinks category event handler for Firefox 4+.
+  // See https://developer.mozilla.org/en/XPCOM_Interface_Reference/nsIChannelEventSink .
+  asyncOnChannelRedirect: function(old_channel, new_channel, flags, callback) {
+    this.onChannelRedirect(old_channel, new_channel, flags);
+    callback(Cr.NS_OK);
   },
 
   // content-policy category event handler
