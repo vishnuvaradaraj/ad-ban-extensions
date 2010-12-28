@@ -470,11 +470,14 @@ adban.prototype = {
     const vars = this._vars;
     if (topic == 'app-startup') {
       dump('app-startup\n');
-      // perform initialization at 'profile-do-change' step, since at this step
-      // profile information isn't yet available, so it is impossible to read
-      // data from local cache.
+      // perform initialization at 'profile-after-change' step,
+      // which is the only available in FF4.
+      // See https://developer.mozilla.org/en/XPCOM/XPCOM_changes_in_Gecko_2.0 .
+      observer_service.addObserver(this, 'profile-after-change', false);
+    }
+    else if (topic == 'profile-after-change') {
+      dump('profile-after-change\n');
       observer_service.addObserver(this, 'quit-application', false);
-      observer_service.addObserver(this, 'profile-do-change', false);
       observer_service.addObserver(this, 'private-browsing', false);
       try {
         const private_browsing_service = Cc['@mozilla.org/privatebrowsing;1'].getService(Ci.nsIPrivateBrowsingService);
@@ -485,9 +488,6 @@ adban.prototype = {
       catch (e) {
         dump('it seems the browser doesn\'t support private browsing\n');
       }
-    }
-    else if (topic == 'profile-do-change') {
-      dump('profile-do-change\n');
       this._converter.charset = 'UTF-8';
       this._loadCaches();
       this.start();
@@ -507,7 +507,7 @@ adban.prototype = {
       this.stop();
       this._flushCaches();
       observer_service.removeObserver(this, 'private-browsing');
-      observer_service.removeObserver(this, 'profile-do-change');
+      observer_service.removeObserver(this, 'profile-after-change');
       observer_service.removeObserver(this, 'quit-application');
     }
   },
