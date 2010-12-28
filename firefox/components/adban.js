@@ -1212,5 +1212,12 @@ adban.prototype = {
   },
 };
 
-const NSGetModule = XPCOMUtils.generateNSGetModule([adban]);
+// XPCOMUtils.generateNSGetFactory was introduced in Mozilla 2 (Firefox 4).
+// XPCOMUtils.generateNSGetModule is for Mozilla 1.9.2 (Firefox 3.6).
+if (XPCOMUtils.generateNSGetFactory) {
+  const NSGetFactory = XPCOMUtils.generateNSGetFactory([adban]);
+}
+else {
+  const NSGetModule = XPCOMUtils.generateNSGetModule([adban]);
+}
 
