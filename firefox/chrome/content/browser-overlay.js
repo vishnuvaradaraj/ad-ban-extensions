@@ -8,8 +8,16 @@ let $ = function(id) {
   return document.getElementById(id);
 };
 
-let appAlert = function(msg) {
-  prompts.alert(window, 'AdBan', msg);
+let alert_states = {};
+
+let conditionalAlert = function(alert_name, msg) {
+  let alert_state = alert_states[alert_name];
+  if (!alert_state) {
+    alert_state = alert_states[alert_name] = { value: false };
+  }
+  if (!alert_state.value) {
+    prompts.alertCheck(window, 'AdBan', msg, 'Don\'t show this message again', alert_state);
+  }
 };
 
 let openTab = function(url) {
@@ -55,7 +63,7 @@ let onStateChange = function(is_active) {
 
 let cmdStop = function() {
   adban.stop();
-  appAlert('The AdBan is stopped, so it won\'t cut ads until it will be started again');
+  conditionalAlert('adban-stopped', 'The AdBan is stopped, so it won\'t cut ads until it will be started again');
 };
 
 let cmdStart = function() {
@@ -65,7 +73,7 @@ let cmdStart = function() {
 let cmdComplaint = function() {
   const complaint_callback = function(site_url, comment) {
     const success_callback = function() {
-      appAlert('The report for the page ['+site_url+'] has been successfully sent');
+      conditionalAlert('complaint-sent', 'The report for the page ['+site_url+'] has been successfully sent');
     };
     adban.complaint_report(site_url, comment, success_callback);
   };
