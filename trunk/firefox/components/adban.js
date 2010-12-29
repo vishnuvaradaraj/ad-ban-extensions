@@ -333,7 +333,7 @@ adban.prototype = {
   // constants
   _ACCEPT: Ci.nsIContentPolicy.ACCEPT,
   _REJECT: Ci.nsIContentPolicy.REJECT_REQUEST,
-  _REJECT_EXCEPTION: Components.results.NS_BASE_STREAM_WOULD_BLOCK,
+  _REJECT_EXCEPTION: Cr.NS_BASE_STREAM_WOULD_BLOCK,
   _DATA_DIRECTORY_NAME: 'adban',
   _CACHE_FILENAME: 'cache.json',
   _FILTERED_SCHEMES: {
@@ -437,7 +437,7 @@ adban.prototype = {
   // See https://developer.mozilla.org/en/XPCOM_Interface_Reference/nsIChannelEventSink .
   asyncOnChannelRedirect: function(old_channel, new_channel, flags, callback) {
     this.onChannelRedirect(old_channel, new_channel, flags);
-    callback(Cr.NS_OK);
+    callback.onRedirectVerifyCallback(Cr.NS_OK);
   },
 
   // content-policy category event handler
