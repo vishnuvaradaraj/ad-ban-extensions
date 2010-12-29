@@ -29,7 +29,12 @@ let conditionalAlert = function(alert_name, msg) {
 };
 
 let openTab = function(url) {
-  gBrowser.selectedTab = gBrowser.addTab(url);
+  // use this hack, otherwise firefox 3.6 can skip the tab
+  // if another tab is immediately opened after this tab.
+  const open_tab_callback = function() {
+    gBrowser.selectedTab = gBrowser.addTab(url);
+  }
+  setTimeout(open_tab_callback, 10);
 };
 
 let firstRun = function() {
