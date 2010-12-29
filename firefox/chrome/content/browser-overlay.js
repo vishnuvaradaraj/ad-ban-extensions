@@ -40,29 +40,27 @@ let openTab = function(url) {
 };
 
 let firstRun = function() {
-  // add adban button to the main toolbar.
+  openTab(adban.FIRST_RUN_URL);
+
   const nav_bar = $('nav-bar');
-  const current_set = nav_bar.currentSet;
-  if (current_set.indexOf('adban-button') == -1) {
-    dump('adding adban-button to navigation bar\n');
-    // nav_bar.insertItem() doesn't work as expected.
-    // the following code snippet was borrowed from
-    // https://developer.mozilla.org/en/Code_snippets/Toolbar#Adding_button_by_default
-    current_set += ',adban-button';
-    nav_bar.setAttribute('currentset', current_set);
-    nav_bar.currentSet = current_set;
-    document.persist(nav_bar.id, 'currentset')
-    // it looks like the following call is required in FF4+, otherwise
-    // the button isn't visible on the navigation bar.
-    try {
-      BrowserToolboxCustomizeDone(true);
-    } catch (e) {
-      // nothing to do.
-    }
+  if (!nav_bar) {
+    dump('there is no navigation bar in the current window\n');
+    return;
+  }
+  if ($('adban-button')) {
+    dump('the adban-button is already installed (though it is unclear how it is possble)\n');
+    return;
   }
 
-  // open the help page for the extension.
-  openTab(adban.FIRST_RUN_URL);
+  dump('adding adban-button to navigation bar\n');
+  nav_bar.insertItem('adban-button', null, null, false);
+
+  // this 'magic' is necessary for stupid FF, which can't properly handle
+  // toolbar.insertItem().
+  // See http://forums.mozillazine.org/viewtopic.php?t=189667 .
+  nav_bar.setAttribute('currentset', nav_bar.currentSet);
+  window.document.persist('nav-bar', 'currentset');
+  }
 };
 
 let verifyFirstRun = function(verification_complete_callback) {
@@ -142,7 +140,12 @@ let init = function() {
     // is complete. Otherwise FF4+ won't find adban-button on first run.
     state_listener_id = adban.subscribeToStateChange(onStateChange);
   };
-  verifyFirstRun(first_run_verification_complete);
+  // defer first run verification due to stupid FF bug, which prevents from
+  // toolbar updating immediately in the window.onload event handler.
+  // Read more at http://blog.pearlcrescent.com/archives/24 .
+  window.setTimeout(function() {
+    verifyFirstRun(first_run_verification_complete);
+  }, 10);
 
   $('cmd-adban-stop').addEventListener('command', cmdStop, false);
   $('cmd-adban-start').addEventListener('command', cmdStart, false);
