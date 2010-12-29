@@ -60,7 +60,6 @@ let firstRun = function() {
   // See http://forums.mozillazine.org/viewtopic.php?t=189667 .
   nav_bar.setAttribute('currentset', nav_bar.currentSet);
   window.document.persist('nav-bar', 'currentset');
-  }
 };
 
 let verifyFirstRun = function(verification_complete_callback) {
