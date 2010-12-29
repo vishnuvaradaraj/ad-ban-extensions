@@ -3,6 +3,7 @@ const Ci = Components.interfaces;
 const Cc = Components.classes;
 const Cr = Components.results;
 
+Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
 const getCommonPrefixLength = function(s1, s2) {
@@ -357,7 +358,6 @@ adban.prototype = {
   _io_service: Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService),
   _observer_service: Cc['@mozilla.org/observer-service;1'].getService(Ci.nsIObserverService),
   _main_thread: Cc['@mozilla.org/thread-manager;1'].getService().mainThread,
-  _file_writer_thread: Cc['@mozilla.org/thread-manager;1'].getService().newThread(0),
   _verify_urls_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _file_writer_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _update_current_date_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
@@ -409,6 +409,7 @@ adban.prototype = {
     unverified_url_exceptions: {},
     opened_popups: {},
     is_url_verifier_active: false,
+    is_cache_saver_active: false,
     is_active: false,
     is_in_private_mode: false,
   },
@@ -711,6 +712,10 @@ adban.prototype = {
     const that = this;
     const observer = {
         onStreamComplete : function(loader, context, status, length, result) {
+          if (!Components.isSuccessCode(status)) {
+            dump('error when reading the file=['+file.path+'], status=['+status+']\n');
+            return;
+          }
           const data = that._converter.convertFromByteArray(result, length);
           read_complete_callback(data);
         }
@@ -721,29 +726,19 @@ adban.prototype = {
   },
 
   _writeToFile: function(file, data, write_complete_callback) {
-    const that = this;
-    const write_event = {
-        run: function() {
-          try {
-            const fstream = Cc['@mozilla.org/network/file-output-stream;1'].createInstance(Ci.nsIFileOutputStream);
-            const cstream = Cc['@mozilla.org/intl/converter-output-stream;1'].createInstance(Ci.nsIConverterOutputStream);
-            fstream.init(file, -1, -1, 0);
-            cstream.init(fstream, 'UTF-8', 0, 0);
-            cstream.writeString(data);
-            cstream.close();
-          }
-          finally {
-            const main_thread_callback = function() {
-              if (write_complete_callback) {
-                write_complete_callback();
-              }
-            };
-            that._runInMainThread(main_thread_callback);
-          }
-        }
+    const input_stream = this._converter.convertToInputStream(data);
+    const output_stream = Cc['@mozilla.org/network/file-output-stream;1'].createInstance(Ci.nsIFileOutputStream);
+    output_stream.init(file, -1, -1, 0);
+    const async_copy_callback = function(status) {
+      const is_success = Components.isSuccessCode(status);
+      if (!is_success) {
+        dump('error when writing to file=['+file.path+'], status=['+status+']\n');
+      }
+      if (write_complete_callback) {
+        write_complete_callback(is_success);
+      }
     };
-    const file_writer_thread = this._file_writer_thread;
-    file_writer_thread.dispatch(write_event, file_writer_thread.DISPATCH_NORMAL);
+    NetUtil.asyncCopy(input_stream, output_stream, async_copy_callback);
   },
 
   _flushCaches: function() {
@@ -788,6 +783,11 @@ adban.prototype = {
       dump('don\'t save caches in private mode\n');
       return;
     }
+    if (vars.is_cache_saver_active) {
+      dump('previos cache saving operation isn\'t complete yet\n');
+      return;
+    }
+    vars.is_cache_saver_active = true;
     const settings = this._settings;
     const current_date = vars.current_date;
     const url_cache = vars.url_cache;
@@ -800,7 +800,10 @@ adban.prototype = {
     ]
     const json_data = this._json_encoder.encode(data);
     const file = this._getFileForCaches();
-    this._writeToFile(file, json_data, null);
+    const write_complete_callback = function() {
+      vars.is_cache_saver_active = false;
+    };
+    this._writeToFile(file, json_data, write_complete_callback);
   },
 
   _injectCssToDocument: function(doc) {
