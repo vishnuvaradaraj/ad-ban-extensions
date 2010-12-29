@@ -39,7 +39,7 @@ let firstRun = function() {
   }
 
   // open the help page for the extension.
-  openTab(adban.getFirstRunUrl());
+  openTab(adban.FIRST_RUN_URL);
 };
 
 let stateToggle = function(from, to) {
@@ -85,7 +85,7 @@ let cmdComplaint = function() {
 };
 
 let cmdHelp = function() {
-  openTab(adban.getHelpUrl());
+  openTab(adban.HELP_URL);
 };
 
 let state_listener_id;
