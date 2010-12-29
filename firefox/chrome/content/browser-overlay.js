@@ -101,6 +101,7 @@ let state_listener_id;
 let init = function() {
   const extension = Application.extensions.get('adban@ad-ban.appspot.com');
   if (extension.firstRun) {
+    dump('the AdBan first run\n');
     firstRun();
   }
 
