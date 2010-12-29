@@ -363,7 +363,7 @@ adban.prototype = {
   _observer_service: Cc['@mozilla.org/observer-service;1'].getService(Ci.nsIObserverService),
   _main_thread: Cc['@mozilla.org/thread-manager;1'].getService().mainThread,
   _verify_urls_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
-  _file_writer_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
+  _save_caches_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _update_current_date_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _update_settings_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
 
@@ -585,6 +585,11 @@ adban.prototype = {
         const auth_token = cookie_pair[1];
         dump('auth_token obtained from cookie=['+auth_token+']\n');
         this._vars.auth_token = auth_token;
+        // immediately store the auth token to local storage,
+        // so it won't be lost if the browser is restarted before the timer
+        // for _saveCaches() will be fired.
+        // Note that the token won't be saved in private mode.
+        this._saveCaches();
         return;
       }
     }
@@ -606,7 +611,7 @@ adban.prototype = {
     // in this case the first callback will be automatically canceled.
     // See https://developer.mozilla.org/En/nsITimer .
     this._startRepeatingTimer(
-        this._file_writer_timer,
+        this._save_caches_timer,
         function() { that._saveCaches(); },
         settings.file_writer_interval);
 
@@ -628,7 +633,7 @@ adban.prototype = {
   _stopTimers: function() {
     // canceled timers can be re-used later.
     // See https://developer.mozilla.org/En/nsITimer#cancel() .
-    this._file_writer_timer.cancel();
+    this._save_caches_timer.cancel();
     this._update_current_date_timer.cancel();
     this._update_settings_timer.cancel();
   },
