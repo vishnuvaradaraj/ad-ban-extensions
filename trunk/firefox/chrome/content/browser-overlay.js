@@ -1,3 +1,5 @@
+let ADBAN_EXTENSION_ID = 'adban@ad-ban.appspot.com';
+
 let Cc = Components.classes;
 let Ci = Components.interfaces;
 
@@ -55,6 +57,24 @@ let firstRun = function() {
   openTab(adban.FIRST_RUN_URL);
 };
 
+let verifyFirstRun = function() {
+  const extensions_getter_callback = function(extensions) {
+    const extension = extensions.get(ADBAN_EXTENSION_ID);
+    if (extension.firstRun) {
+      dump('the AdBan first run\n');
+      firstRun();
+    }
+  };
+  if (Application.extensions) {
+    // Firefox 3.6
+    extensions_getter_callback(Application.extensions);
+  }
+  else {
+    // Firefox 4+
+    Application.getExtensions(extensions_getter_callback);
+  }
+};
+
 let stateToggle = function(from, to) {
   to.setAttribute('disabled', 'true');
   from.removeAttribute('disabled');
@@ -104,23 +124,7 @@ let cmdHelp = function() {
 let state_listener_id;
 
 let init = function() {
-  const EXTENSION_ID = 'adban@ad-ban.appspot.com';
-  let extension;
-  if (Application.extensions) {
-    // Firefox 3.6
-    extension = Application.extensions.get(EXTENSION_ID);
-  }
-  else {
-    // Firefox 4+
-    const extensions_getter = function(extensions) {
-      extension = extensions.get(EXTENSION_ID);
-    };
-    Application.getExtensions(extensions_getter);
-  }
-  if (extension.firstRun) {
-    dump('the AdBan first run\n');
-    firstRun();
-  }
+  verifyFirstRun();
 
   $('cmd-adban-stop').addEventListener('command', cmdStop, false);
   $('cmd-adban-start').addEventListener('command', cmdStart, false);
