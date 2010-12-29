@@ -104,7 +104,19 @@ let cmdHelp = function() {
 let state_listener_id;
 
 let init = function() {
-  const extension = Application.extensions.get('adban@ad-ban.appspot.com');
+  const EXTENSION_ID = 'adban@ad-ban.appspot.com';
+  let extension;
+  if (Application.extensions) {
+    // Firefox 3.6
+    extension = Application.extensions.get(EXTENSION_ID);
+  }
+  else {
+    // Firefox 4+
+    const extensions_getter = function(extensions) {
+      extension = extensions.get(EXTENSION_ID);
+    };
+    Application.getExtensions(extensions_getter);
+  }
   if (extension.firstRun) {
     dump('the AdBan first run\n');
     firstRun();
