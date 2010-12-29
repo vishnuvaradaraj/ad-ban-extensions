@@ -1,0 +1,7 @@
+<!ENTITY adban.menuitem.start "Start">
+<!ENTITY adban.menuitem.stop "Stop">
+<!ENTITY adban.menuitem.complaint "Report ads or problems on the current page">
+<!ENTITY adban.menuitem.help "Help">
+
+<!ENTITY adban.button.tooltiptext "AdBan - block ads on the web">
+

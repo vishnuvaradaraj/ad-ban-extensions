@@ -1,37 +1,28 @@
 <?xml version="1.0"?>
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<!DOCTYPE dialog SYSTEM "chrome://adban/locale/complaint-report.dtd">
 
 <dialog
     id="adban-complaint-dialog"
-    title="Report ads on the page"
+    title="&adban.complaint-dialog.title;"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
     buttons="accept,cancel"
-    buttonlabelcancel="Cancel"
-    buttonlabelaccept="Send the Report"
+    buttonlabelcancel="&adban.complaint-dialog.cancel-button.label;"
+    buttonlabelaccept="&adban.complaint-dialog.accept-button.label;"
     buttondisabledaccept="true">
   <script type="application/x-javascript" src="complaint-report.js"/>
 
   <groupbox>
-    <caption label="Report ads or bugs for the currently open page"/>
+    <caption label="&adban.complaint-dialog.title;"/>
 
-    <label control="adban-complaint-site-url">
-      The following page contains ads or looks ugly due to AdBan.
-      You can modify the page url if it is incorrect (though this is unlikely)
-    </label>
+    <label control="adban-complaint-site-url">&adban.complaint-dialog.site-url.label;</label>
     <textbox id="adban-complaint-site-url" tabindex="-1"/>
 
-    <label control="adban-complaint-comment">
-      Enter brief description of the problem you noticed on the given page.
-      This problem will be investigated and probably resolved in the near future
-    </label>
+    <label control="adban-complaint-comment">&adban.complaint-dialog.comment.label;</label>
     <textbox id="adban-complaint-comment" multiline="true" spellcheck="true" cols="80" rows="10" tabindex="1"/>
 
-    <label>
-      Note that AdBan can leave ads during the first page load on the given site.
-      If ads disappear after reloading the page, then there is no need in reporting
-      about this
-    </label>
-    <checkbox id="adban-complaint-checkbox" label="I reloaded the page, but the problem still exists" checked="false"/>
+    <label>&adban.complaint-dialog.reload-page-notification.label;</label>
+    <checkbox id="adban-complaint-checkbox" label="&adban.complaint-dialog.reload-page-checkbox.label;" checked="false"/>
   </groupbox>
 </dialog>
 

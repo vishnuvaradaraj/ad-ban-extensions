@@ -1,0 +1,18 @@
+<!ENTITY adban.complaint-dialog.title "Report ads or problems for the currently open page">
+<!ENTITY adban.complaint-dialog.cancel-button.label "Cancel">
+<!ENTITY adban.complaint-dialog.accept-button.label "Send the Report">
+<!ENTITY adban.complaint-dialog.site-url.label "
+  The following page contains ads or looks ugly due to AdBan.
+  You can modify the page url if it is incorrect (though this is unlikely)
+">
+<!ENTITY adban.complaint-dialog.comment.label "
+  Enter brief description of the problem you noticed on the given page.
+  This problem will be investigated and probably resolved in the near future
+">
+<!ENTITY adban.complaint-dialog.reload-page-notification.label "
+  Note that AdBan can leave ads during the first page load on the given site.
+  If ads disappear after reloading the page, then there is no need in reporting
+  about this
+">
+<!ENTITY adban.complaint-dialog.reload-page-checkbox.label "I reloaded the page, but the problem still exists">
+
