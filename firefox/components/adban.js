@@ -411,7 +411,6 @@ adban.prototype = {
     url_exception_cache: createEmptyUrlExceptionCache(0),
     unverified_urls: {},
     unverified_url_exceptions: {},
-    opened_popups: {},
     is_url_verifier_active: false,
     is_cache_saver_active: false,
     is_active: false,
@@ -907,36 +906,31 @@ adban.prototype = {
     }
   },
 
-  _openPopup: function(popup_name, url) {
-    const opened_popups = this._vars.opened_popups;
-    const popup_window = opened_popups[url];
-    if (popup_window && !popup_window.closed) {
-      dump('popup window for url=['+url+'] is already opened\n');
-      popup_window.focus();
-      return;
-    }
-
+  _openTab: function(tab_name, url) {
+    // this code has been stolen from https://developer.mozilla.org/en/Code_snippets/Tabbed_browser#Reusing_tabs .
     const browser_window = this._window_mediator.getMostRecentWindow('navigator:browser');
     if (!browser_window) {
-      dump('there are no browser windows');
+      dump('there are no open browser windows');
       return;
     }
-
-    // create fake popup window object in order to prevent race condition:
-    // the window.open() is called the second time before the main thread
-    // is dispatched to assign the first popup window to opened_popups[url].
-    opened_popups[url] = {
-        closed: false,
-        focus: function() {},
-    };
-
-    try {
-      // TODO: alwaysRaised attribute doesn't work on the popup. Investigate this.
-      opened_popups[url] = browser_window.open(url, popup_name, 'alwaysRaised');
+    const attribute_name = 'adban-tab-' + tab_name;
+    const tab_browser = browser_window.gBrowser;
+    const tabs = tab_browser.tabContainer.childNodes;
+    const tabs_count = tabs.length;
+    let tab;
+    for (let i = 0; i < tabs_count; i++) {
+      tab = tabs[i];
+      if (tab.hasAttribute(attribute_name)) {
+        dump('the tab ['+tab_name+'] is already opened');
+        tab_browser.selectedTab = tab;
+        return;
+      }
     }
-    catch (e) {
-      delete opened_popups[url];
-    }
+
+    dump('openining new tab ['+tab_name+']\n');
+    tab = tab_browser.addTab(url);
+    tab.setAttribute(attribute_name, 'true');
+    tab_browser.selectedTab = tab;
   },
 
   _showLoginPage: function() {
@@ -944,7 +938,7 @@ adban.prototype = {
     // if the user isn't authorized, then the login screen must redirect
     // to the landing page, where the reason for the authorization error
     // must be displayed.
-    this._openPopup('adban-login-popup', this.LOGIN_URL);
+    this._openTab('login', this.LOGIN_URL);
   },
 
   _processJsonResponse: function(request_text, response_text, response_callback) {
