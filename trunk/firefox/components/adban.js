@@ -306,6 +306,10 @@ const urlExceptionValueConstructor = function(d) {
 };
 
 const adban = function() {
+  this.LOGIN_URL = this._SERVER_HOST + '/ff/login';
+  this.HELP_URL = this._SERVER_HOST + '/ff/help';
+  this.FIRST_RUN_URL = this._SERVER_HOST + '/ff/first_run';
+
   // allow direct access to the XPCOM object from javascript.
   // see https://developer.mozilla.org/en/wrappedJSObject .
   this.wrappedJSObject = this;
@@ -456,7 +460,7 @@ adban.prototype = {
 
     if (e.type == 'DOMContentLoaded') {
       const doc = e.target;
-      if (doc.location.href == this._getLoginUrl()) {
+      if (doc.location.href == this.LOGIN_URL) {
         const cookie = doc.cookie;
         dump('login page captured. cookie=['+cookie+']\n');
         this._readAuthTokenFromCookie(cookie);
@@ -552,14 +556,6 @@ adban.prototype = {
     this._startJsonRequest(this._url_complaint_xhr, request_url, request_data, response_callback);
   },
 
-  getHelpUrl: function() {
-    return this._SERVER_HOST + '/ff/help';
-  },
-
-  getFirstRunUrl: function() {
-    return this._SERVER_HOST + '/ff/first_run';
-  },
-
   subscribeToStateChange: function(state_change_callback) {
     const listener_id = this._last_state_listener_id++;
     this._state_listeners[listener_id] = state_change_callback;
@@ -594,16 +590,6 @@ adban.prototype = {
       }
     }
     dump('cannot find auth token');
-  },
-
-  _getLoginUrl: function() {
-    // optimize the login url construction, since it is called in hot paths
-    // (see for example, handleEvent()).
-    let login_url = this._LOGIN_URL;
-    if (!login_url) {
-      login_url = this._LOGIN_URL = this._SERVER_HOST + '/ff/login';
-    }
-    return login_url;
   },
 
   _startRepeatingTimer: function(timer, callback, interval) {
@@ -977,7 +963,7 @@ adban.prototype = {
     // if the user isn't authorized, then the login screen must redirect
     // to the landing page, where the reason for the authorization error
     // must be displayed.
-    this._openPopup(this._getLoginUrl());
+    this._openPopup(this.LOGIN_URL);
   },
 
   _processJsonResponse: function(request_text, response_text, response_callback) {
