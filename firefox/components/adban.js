@@ -783,13 +783,17 @@ adban.prototype = {
     this._writeToFile(file, json_data, write_complete_callback);
   },
 
+  _shouldProcessUri: function(url) {
+    return (url.scheme in this._FILTERED_SCHEMES);
+  },
+
   _injectCssToDocument: function(doc) {
-    const site_url = this._createUri(doc.location.href);
-    if (!(site_url.scheme in this._FILTERED_SCHEMES)) {
+    const site_uri = this._createUri(doc.location.href);
+    if (!this._shouldProcessUri(site_uri)) {
       return;
     }
 
-    const canonical_site_url = this._getCanonicalUrl(site_url);
+    const canonical_site_url = this._getCanonicalUrl(site_uri);
     const url_exception_value = this._getUrlExceptionValue(canonical_site_url);
     const css_selectors = url_exception_value.css_selectors;
 
@@ -1150,7 +1154,7 @@ adban.prototype = {
   },
 
   _verifyLocation: function(content_location, request_origin) {
-    if (!(content_location.scheme in this._FILTERED_SCHEMES)) {
+    if (!this._shouldProcessUri(content_location)) {
       return true;
     }
     const content_location_url = this._getCanonicalUrl(content_location);
@@ -1158,7 +1162,7 @@ adban.prototype = {
     let is_whitelist = url_value.is_whitelist;
 
     let request_origin_url;
-    if (request_origin && (request_origin.scheme in this._FILTERED_SCHEMES)) {
+    if (request_origin && this._shouldProcessUri(request_origin)) {
       request_origin_url = this._getCanonicalUrl(request_origin);
 
       // override is_whitelist by per-site exception value if required.
