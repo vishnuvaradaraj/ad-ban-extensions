@@ -44,26 +44,35 @@ let firstRun = function() {
   const nav_bar = $('nav-bar');
   const current_set = nav_bar.currentSet;
   if (current_set.indexOf('adban-button') == -1) {
+    dump('adding adban-button to navigation bar\n');
     // nav_bar.insertItem() doesn't work as expected.
     // the following code snippet was borrowed from
     // https://developer.mozilla.org/en/Code_snippets/Toolbar#Adding_button_by_default
     current_set += ',adban-button';
-    nav_bar.currentSet = current_set;
     nav_bar.setAttribute('currentset', current_set);
-    document.persist(nav_bar.id, 'currentset');
+    nav_bar.currentSet = current_set;
+    document.persist(nav_bar.id, 'currentset')
+    // it looks like the following call is required in FF4+, otherwise
+    // the button isn't visible on the navigation bar.
+    try {
+      BrowserToolboxCustomizeDone(true);
+    } catch (e) {
+      // nothing to do.
+    }
   }
 
   // open the help page for the extension.
   openTab(adban.FIRST_RUN_URL);
 };
 
-let verifyFirstRun = function() {
+let verifyFirstRun = function(verification_complete_callback) {
   const extensions_getter_callback = function(extensions) {
     const extension = extensions.get(ADBAN_EXTENSION_ID);
     if (extension.firstRun) {
       dump('the AdBan first run\n');
       firstRun();
     }
+    verification_complete_callback();
   };
   if (Application.extensions) {
     // Firefox 3.6
@@ -124,7 +133,12 @@ let cmdHelp = function() {
 let state_listener_id;
 
 let init = function() {
-  verifyFirstRun();
+  const first_run_verification_complete = function() {
+    // Subscribe to adban state change only after firstRun verification
+    // is complete. Otherwise FF4+ won't find adban-button on first run.
+    state_listener_id = adban.subscribeToStateChange(onStateChange);
+  };
+  verifyFirstRun(first_run_verification_complete);
 
   $('cmd-adban-stop').addEventListener('command', cmdStop, false);
   $('cmd-adban-start').addEventListener('command', cmdStart, false);
@@ -135,7 +149,6 @@ let init = function() {
   // while DOMContentLoaded catches iframes and frames.
   // see https://developer.mozilla.org/en/Gecko-Specific_DOM_Events .
   gBrowser.addEventListener('DOMContentLoaded', adban, true);
-  state_listener_id = adban.subscribeToStateChange(onStateChange);
 
   window.addEventListener('unload', shutdown, false);
 };
