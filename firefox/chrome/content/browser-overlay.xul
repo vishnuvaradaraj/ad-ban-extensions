@@ -27,8 +27,14 @@
   </popupset>
 
   <toolbarpalette id="BrowserToolbarPalette">
-    <toolbarbutton id="adban-button" label="AdBan" type="menu" popup="adban-menupopup" insertbefore="urlbar-container"
-        class="toolbarbutton-1 chromeclass-toolbar-additional" tooltiptext="&adban.button.tooltiptext;"/>
+    <toolbarbutton
+      id="adban-button"
+      label="AdBan"
+      type="menu"
+      popup="adban-menupopup"
+      class="toolbarbutton-1"
+      tooltiptext="&adban.button.tooltiptext;"
+    />
   </toolbarpalette>
 
 </overlay>
