@@ -910,7 +910,7 @@ adban.prototype = {
     // this code has been stolen from https://developer.mozilla.org/en/Code_snippets/Tabbed_browser#Reusing_tabs .
     const browser_window = this._window_mediator.getMostRecentWindow('navigator:browser');
     if (!browser_window) {
-      dump('there are no open browser windows');
+      dump('there are no open browser windows\n');
       return;
     }
     const attribute_name = 'adban-tab-' + tab_name;
@@ -921,7 +921,7 @@ adban.prototype = {
     for (let i = 0; i < tabs_count; i++) {
       tab = tabs[i];
       if (tab.hasAttribute(attribute_name)) {
-        dump('the tab ['+tab_name+'] is already opened');
+        dump('the tab ['+tab_name+'] is already opened\n');
         tab_browser.selectedTab = tab;
         return;
       }
