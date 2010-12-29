@@ -75,7 +75,7 @@ let cmdComplaint = function() {
     const success_callback = function() {
       conditionalAlert('complaint-sent', 'The report for the page ['+site_url+'] has been successfully sent');
     };
-    adban.complaint_report(site_url, comment, success_callback);
+    adban.sendUrlComplaint(site_url, comment, success_callback);
   };
   const initial_site_url = gBrowser.currentURI.spec;
   // const initial_site_url = $('urlbar').value;

@@ -349,7 +349,7 @@ adban.prototype = {
   // helper XPCOM objects
   _verify_urls_xhr: Cc['@mozilla.org/xmlextras/xmlhttprequest;1'].createInstance(Ci.nsIXMLHttpRequest),
   _update_settings_xhr: Cc['@mozilla.org/xmlextras/xmlhttprequest;1'].createInstance(Ci.nsIXMLHttpRequest),
-  _complaint_report_xhr: Cc['@mozilla.org/xmlextras/xmlhttprequest;1'].createInstance(Ci.nsIXMLHttpRequest),
+  _url_complaint_xhr: Cc['@mozilla.org/xmlextras/xmlhttprequest;1'].createInstance(Ci.nsIXMLHttpRequest),
   _json_encoder: Cc['@mozilla.org/dom/json;1'].createInstance(Ci.nsIJSON),
   _converter: Cc['@mozilla.org/intl/scriptableunicodeconverter'].createInstance(Ci.nsIScriptableUnicodeConverter),
   _category_manager: Cc['@mozilla.org/categorymanager;1'].getService(Ci.nsICategoryManager),
@@ -542,14 +542,14 @@ adban.prototype = {
     dump('AdBan component has been stopped\n');
   },
 
-  complaint_report: function(site_url, comment, success_callback) {
+  sendUrlComplaint: function(site_url, comment, success_callback) {
     const request_data = [site_url, comment];
     const request_url = this._SERVER_HOST + '/c';
 
     const response_callback = function() {
       success_callback();
     };
-    this._startJsonRequest(this._complaint_report_xhr, request_url, request_data, response_callback);
+    this._startJsonRequest(this._url_complaint_xhr, request_url, request_data, response_callback);
   },
 
   getHelpUrl: function() {
