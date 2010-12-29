@@ -664,14 +664,6 @@ adban.prototype = {
     return request_origin;
   },
 
-  _runInMainThread: function(callback) {
-    const main_event = {
-        run: callback,
-    };
-    const main_thread = this._main_thread;
-    main_thread.dispatch(main_event, main_thread.DISPATCH_NORMAL);
-  },
-
   _getDataDirectory: function() {
     const data_dir = this._directory_service.get('ProfD', Ci.nsIFile);
     data_dir.append(this._DATA_DIRECTORY_NAME);
@@ -915,7 +907,7 @@ adban.prototype = {
     }
   },
 
-  _openPopupInternal: function(url) {
+  _openPopup: function(popup_name, url) {
     const opened_popups = this._vars.opened_popups;
     const popup_window = opened_popups[url];
     if (popup_window && !popup_window.closed) {
@@ -939,23 +931,12 @@ adban.prototype = {
     };
 
     try {
-      // TODO: modal and alwaysRaised attributes don't work on the popup. Investigate this.
-      opened_popups[url] = browser_window.open(url, 'adban-popup-' + url, 'alwaysRaised');
+      // TODO: alwaysRaised attribute doesn't work on the popup. Investigate this.
+      opened_popups[url] = browser_window.open(url, popup_name, 'alwaysRaised');
     }
     catch (e) {
       delete opened_popups[url];
     }
-  },
-
-  _openPopup: function(url) {
-    // defer execution of the openPopupInternal(), since it seems it can block
-    // or interact badly when called from certain contexts such as
-    // shouldLoad() or onChannelRedirect() event handlers.
-    const that = this;
-    const defer_callback = function() {
-      that._openPopupInternal(url);
-    };
-    this._runInMainThread(defer_callback);
   },
 
   _showLoginPage: function() {
@@ -963,7 +944,7 @@ adban.prototype = {
     // if the user isn't authorized, then the login screen must redirect
     // to the landing page, where the reason for the authorization error
     // must be displayed.
-    this._openPopup(this.LOGIN_URL);
+    this._openPopup('adban-login-popup', this.LOGIN_URL);
   },
 
   _processJsonResponse: function(request_text, response_text, response_callback) {
