@@ -6,6 +6,8 @@ overlay chrome://browser/content/browser.xul chrome://adban/content/browser-over
 style chrome://global/content/customizeToolbar.xul chrome://adban/skin/browser-overlay.css
 style chrome://adban/content/browser-overlay.xul chrome://adban/skin/browser-overlay.css
 
+locale adban en-US chrome/locale/en-US/
+
 component {02f31d71-1c0b-48f3-a3b5-100c18dc771e} components/adban.js
 contract @ad-ban.appspot.com/adban;1 {02f31d71-1c0b-48f3-a3b5-100c18dc771e}
 category profile-after-change @ad-ban.appspot.com/adban;1 @ad-ban.appspot.com/adban;1

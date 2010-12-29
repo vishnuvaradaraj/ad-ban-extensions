@@ -8,6 +8,14 @@ let $ = function(id) {
   return document.getElementById(id);
 };
 
+let _ = function(id, params) {
+  const adban_strings = $('adban-strings');
+  if (params) {
+    return adban_strings.getFormattedString(id, params);
+  }
+  return adban_strings.getString(id);
+};
+
 let alert_states = {};
 
 let conditionalAlert = function(alert_name, msg) {
@@ -16,7 +24,7 @@ let conditionalAlert = function(alert_name, msg) {
     alert_state = alert_states[alert_name] = { value: false };
   }
   if (!alert_state.value) {
-    prompts.alertCheck(window, 'AdBan', msg, 'Don\'t show this message again', alert_state);
+    prompts.alertCheck(window, 'AdBan', msg, _('dont-show-this-message-again'), alert_state);
   }
 };
 
@@ -53,17 +61,17 @@ let onStateChange = function(is_active) {
   const adban_button = $('adban-button');
   if (is_active) {
     stateToggle(cmd_adban_stop, cmd_adban_start);
-    adban_button.label = 'AdBan: on';
+    adban_button.label = 'AdBan: ' + _('on');
   }
   else {
     stateToggle(cmd_adban_start, cmd_adban_stop);
-    adban_button.label = 'AdBan: off';
+    adban_button.label = 'AdBan: ' + _('off');
   }
 };
 
 let cmdStop = function() {
   adban.stop();
-  conditionalAlert('adban-stopped', 'The AdBan is stopped, so it won\'t cut ads until it will be started again');
+  conditionalAlert('adban-stopped', _('adban-stopped'));
 };
 
 let cmdStart = function() {
@@ -73,7 +81,7 @@ let cmdStart = function() {
 let cmdComplaint = function() {
   const complaint_callback = function(site_url, comment) {
     const success_callback = function() {
-      conditionalAlert('complaint-sent', 'The report for the page ['+site_url+'] has been successfully sent');
+      conditionalAlert('complaint-sent', _('complaint-sent', [site_url]));
     };
     adban.sendUrlComplaint(site_url, comment, success_callback);
   };
