@@ -93,6 +93,10 @@ let onStateChange = function(is_active) {
   const cmd_adban_stop = $('cmd-adban-stop');
   const cmd_adban_start = $('cmd-adban-start');
   const adban_button = $('adban-button');
+  if (!adban_button) {
+    // it looks like the adban button has been removed from visible toolbars.
+    return;
+  }
   if (is_active) {
     stateToggle(cmd_adban_stop, cmd_adban_start);
     adban_button.label = 'AdBan: ' + _('on');
