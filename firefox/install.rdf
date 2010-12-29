@@ -7,10 +7,15 @@
     <em:id>adban@ad-ban.appspot.com</em:id>
     <em:name>AdBan</em:name>
     <em:version>1.0.0beta1</em:version>
-    <em:description>Blocks ads on the web.</em:description>
+    <em:description>Blocks ads on the web</em:description>
     <em:creator>support@ad-ban-dev.appspotmail.com</em:creator>
     <em:homepageURL>https://ad-ban-dev.appspot.com/</em:homepageURL>
     <em:type>2</em:type>
+
+    <em:localized>
+      <em:locale>en-US</em:locale>
+      <em:description>Blocks ads on the web</em:description>
+    </em:localized>
 
     <!-- Firefox -->
     <em:targetApplication>
