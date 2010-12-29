@@ -370,11 +370,11 @@ adban.prototype = {
   // component's settings. New values for these settings are periodically read
   // from the server.
   _settings: {
-    url_verifier_delay: 1000,
-    file_writer_interval: 1000 * 60 * 10,
+    url_verifier_delay: 1000 * 2,
+    file_writer_interval: 1000 * 60 * 30,
     stale_node_timeout: 1000 * 3600 * 24,
     node_delete_timeout: 1000 * 3600 * 24 * 30,
-    current_date_granularity: 1000 * 60 * 5,
+    current_date_granularity: 1000 * 60 * 10,
     update_settings_interval: 1000 * 10,
 
     import: function(data) {
