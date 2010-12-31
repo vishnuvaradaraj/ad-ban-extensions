@@ -3,7 +3,6 @@ const Ci = Components.interfaces;
 const Cc = Components.classes;
 const Cr = Components.results;
 
-Cu.import("resource://gre/modules/NetUtil.jsm");
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
 const getCommonPrefixLength = function(s1, s2) {
@@ -335,6 +334,7 @@ adban.prototype = {
   _REJECT: Ci.nsIContentPolicy.REJECT_REQUEST,
   _REJECT_EXCEPTION: Cr.NS_BASE_STREAM_WOULD_BLOCK,
   _DATA_DIRECTORY_NAME: 'adban',
+  _SETTINGS_FILENAME: 'settings.json',
   _CACHE_FILENAME: 'cache.json',
   _FILTERED_SCHEMES: {
       http: true,
@@ -363,7 +363,6 @@ adban.prototype = {
   _observer_service: Cc['@mozilla.org/observer-service;1'].getService(Ci.nsIObserverService),
   _main_thread: Cc['@mozilla.org/thread-manager;1'].getService().mainThread,
   _verify_urls_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
-  _save_caches_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _update_current_date_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _update_settings_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
 
@@ -371,25 +370,22 @@ adban.prototype = {
   // from the server.
   _settings: {
     url_verifier_delay: 1000 * 2,
-    file_writer_interval: 1000 * 60 * 30,
     stale_node_timeout: 1000 * 3600 * 24,
     node_delete_timeout: 1000 * 3600 * 24 * 30,
     current_date_granularity: 1000 * 60 * 10,
-    update_settings_interval: 1000 * 10,
+    update_settings_interval: 1000 * 3600 * 24,
 
     import: function(data) {
       this.url_verifier_delay = data[0];
-      this.file_writer_interval = data[1];
-      this.stale_node_timeout = data[2];
-      this.node_delete_timeout = data[3];
-      this.current_date_granularity = data[4];
-      this.update_settings_interval = data[5];
+      this.stale_node_timeout = data[1];
+      this.node_delete_timeout = data[2];
+      this.current_date_granularity = data[3];
+      this.update_settings_interval = data[4];
     },
 
     export: function() {
       return [
           this.url_verifier_delay,
-          this.file_writer_interval,
           this.stale_node_timeout,
           this.node_delete_timeout,
           this.current_date_granularity,
@@ -412,7 +408,6 @@ adban.prototype = {
     unverified_urls: {},
     unverified_url_exceptions: {},
     is_url_verifier_active: false,
-    is_cache_saver_active: false,
     is_active: false,
     is_in_private_mode: false,
   },
@@ -493,23 +488,46 @@ adban.prototype = {
         dump('it seems the browser doesn\'t support private browsing\n');
       }
       this._converter.charset = 'UTF-8';
-      this._loadCaches();
+      this._loadSettingsAsync();
+      this._loadCachesAsync();
       this.start();
     }
     else if (topic == 'private-browsing') {
       dump('private-browsing: ['+data+']\n');
       if (data == 'enter') {
+        // save current caches to local storage, so they can be loaded later
+        // after exiting the private mode. Caches created during private mode
+        // won't be saved to local storage.
+
+        // caches cannot be stored asynchronously here, since this can lead
+        // to the following race conditions:
+        // - saveCaches operation has been started, browser enters private
+        //   mode and adds new entries to caches, so they eventually are saved
+        //   to local storage after saveCaches is complete.
+        // - saveCaches operation has been started, browser exits private mode
+        //   and starts loading caches back from the local storage, which can
+        //   be in inconsistent state because of saveCaches operation isn't
+        //   complete yet.
+        this._saveCachesSync();
         vars.is_in_private_mode = true;
       }
       else if (data == 'exit') {
-        this._loadCaches();
+        // load caches from local storage, which were saved before entering
+        // the private mode. These caches will overwrite current caches, wich
+        // can contain private data.
+        this._loadCachesAsync();
         vars.is_in_private_mode = false;
       }
     }
     else if (topic == 'quit-application') {
       dump('quit-application\n');
       this.stop();
-      this._flushCaches();
+      if (!vars.is_in_private_mode) {
+        // caches cannot be stored asynchronously here, since the browser
+        // process can exit before the saveCaches operation is complete.
+        // This can leave locally stored caches in inconsistent state.
+        this._saveCachesSync();
+      }
       observer_service.removeObserver(this, 'private-browsing');
       observer_service.removeObserver(this, 'profile-after-change');
       observer_service.removeObserver(this, 'quit-application');
@@ -585,11 +603,9 @@ adban.prototype = {
         const auth_token = cookie_pair[1];
         dump('auth_token obtained from cookie=['+auth_token+']\n');
         this._vars.auth_token = auth_token;
-        // immediately store the auth token to local storage,
-        // so it won't be lost if the browser is restarted before the timer
-        // for _saveCaches() will be fired.
-        // Note that the token won't be saved in private mode.
-        this._saveCaches();
+        // Initiate reading settings from the server after new auth token
+        // has been obtained.
+        this._readSettingsFromServer();
         return;
       }
     }
@@ -610,11 +626,6 @@ adban.prototype = {
     // it is safe re-initializing timers in-place -
     // in this case the first callback will be automatically canceled.
     // See https://developer.mozilla.org/En/nsITimer .
-    this._startRepeatingTimer(
-        this._save_caches_timer,
-        function() { that._saveCaches(); },
-        settings.file_writer_interval);
-
     const update_current_date_callback = function() {
       that._vars.current_date = (new Date()).getTime();
     };
@@ -626,14 +637,13 @@ adban.prototype = {
 
     this._startRepeatingTimer(
         this._update_settings_timer,
-        function() { that._updateSettings(); },
+        function() { that._readSettingsFromServer(); },
         settings.update_settings_interval);
   },
 
   _stopTimers: function() {
     // canceled timers can be re-used later.
     // See https://developer.mozilla.org/En/nsITimer#cancel() .
-    this._save_caches_timer.cancel();
     this._update_current_date_timer.cancel();
     this._update_settings_timer.cancel();
   },
@@ -677,13 +687,20 @@ adban.prototype = {
     return data_dir;
   },
 
+  _getFileForSettings: function() {
+    const file = this._getDataDirectory().clone();
+    file.append(this._SETTINGS_FILENAME);
+    return file;
+  },
+
   _getFileForCaches: function() {
     const file = this._getDataDirectory().clone();
     file.append(this._CACHE_FILENAME);
     return file;
   },
 
-  _readFromFile: function(file, read_complete_callback) {
+  _readJsonFromFileAsync: function(file, read_complete_callback) {
+    dump('start reading from the file=['+file.path+']\n');
     if (!file.exists()) {
       dump('the file ['+file.path+'] doesn\'t exist, skipping loading from file\n');
       return;
@@ -698,7 +715,9 @@ adban.prototype = {
             dump('error when reading the file=['+file.path+'], status=['+status+']\n');
             return;
           }
-          const data = that._converter.convertFromByteArray(result, length);
+          const json_data = that._converter.convertFromByteArray(result, length);
+          const data = that._json_encoder.decode(json_data);
+          dump('stop reading from the file=['+file.path+']\n');
           read_complete_callback(data);
         }
     };
@@ -707,85 +726,73 @@ adban.prototype = {
     channel.asyncOpen(stream_loader, null);
   },
 
-  _writeToFile: function(file, data, write_complete_callback) {
-    const input_stream = this._converter.convertToInputStream(data);
+  _writeJsonToFileSync: function(file, data) {
+    dump('start writing to the file=['+file.path+']\n');
+    const json_data = this._json_encoder.encode(data);
+    const data_chunk = this._converter.ConvertFromUnicode(json_data);
     const output_stream = Cc['@mozilla.org/network/file-output-stream;1'].createInstance(Ci.nsIFileOutputStream);
     output_stream.init(file, -1, -1, 0);
-    const async_copy_callback = function(status) {
-      const is_success = Components.isSuccessCode(status);
-      if (!is_success) {
-        dump('error when writing to file=['+file.path+'], status=['+status+']\n');
-      }
-      if (write_complete_callback) {
-        write_complete_callback(is_success);
-      }
+    // Note: these blocking functions can lock UI for a short period of time,
+    // but this should be OK in most cases :). Non-blocking solutions are much
+    // more complex and suffer from race conditions.
+    output_stream.write(data_chunk, data_chunk.length);
+    output_stream.close();
+    dump('stop writing to the file=['+file.path+']\n');
+  },
+
+  _loadSettingsAsync: function() {
+    const file = this._getFileForSettings();
+    const that = this;
+    const read_complete_callback = function(data) {
+      that._vars.auth_token = data[0];
+      that._settings.import(data[1]);
+      that._readSettingsFromServer();
     };
-    NetUtil.asyncCopy(input_stream, output_stream, async_copy_callback);
+    this._readJsonFromFileAsync(file, read_complete_callback);
   },
 
-  _flushCaches: function() {
-    const vars = this._vars;
-    const node_delete_timeout = this._settings.node_delete_timeout;
-    vars.url_cache = createEmptyUrlCache(node_delete_timeout);
-    vars.url_exception_cache = createEmptyUrlExceptionCache(node_delete_timeout);
+  _saveSettingsSync: function() {
+    const data = [
+      this._vars.auth_token,
+      this._settings.export(),
+    ];
+    const file = this._getFileForSettings();
+    this._writeJsonToFileSync(file, data);
   },
 
-  _loadCaches: function() {
-    // create empty caches, so the component can work with them until the
-    // real data will be asynchronously loaded later.
-    this._flushCaches();
-
+  _loadCachesAsync: function() {
     const that = this;
     const vars = this._vars;
     const node_delete_timeout = this._settings.node_delete_timeout;
     const file = this._getFileForCaches();
-    const read_complete_callback = function(json_data) {
-      const data = that._json_encoder.decode(json_data);
-      vars.auth_token = data[0];
-      that._settings.import(data[1]);
+    const read_complete_callback = function(data) {
       const url_cache = Trie.importFromNodes(
           createUrlCacheDefaultValue(),
           node_delete_timeout,
-          data[2],
+          data[0],
           urlValueConstructor);
       const url_exception_cache = Trie.importFromNodes(
           createUrlExceptionCacheDefaultValue(),
           node_delete_timeout,
-          data[3],
+          data[1],
           urlExceptionValueConstructor);
       vars.url_cache = url_cache;
       vars.url_exception_cache = url_exception_cache;
     };
-    this._readFromFile(file, read_complete_callback);
+    this._readJsonFromFileAsync(file, read_complete_callback);
   },
 
-  _saveCaches: function() {
+  _saveCachesSync: function() {
     const vars = this._vars;
-    if (vars.is_in_private_mode) {
-      dump('don\'t save caches in private mode\n');
-      return;
-    }
-    if (vars.is_cache_saver_active) {
-      dump('previos cache saving operation isn\'t complete yet\n');
-      return;
-    }
-    vars.is_cache_saver_active = true;
-    const settings = this._settings;
     const current_date = vars.current_date;
     const url_cache = vars.url_cache;
     const url_exception_cache = vars.url_exception_cache;
     const data = [
-        vars.auth_token,
-        settings.export(),
         url_cache.exportToNodes(urlNodeConstructor, current_date),
         url_exception_cache.exportToNodes(urlExceptionNodeConstructor, current_date),
     ]
-    const json_data = this._json_encoder.encode(data);
     const file = this._getFileForCaches();
-    const write_complete_callback = function() {
-      vars.is_cache_saver_active = false;
-    };
-    this._writeToFile(file, json_data, write_complete_callback);
+    this._writeJsonToFileSync(file, data);
   },
 
   _shouldProcessUri: function(url) {
@@ -1010,13 +1017,16 @@ adban.prototype = {
     xhr.send(encoded_request);
   },
 
-  _updateSettings: function() {
+  _readSettingsFromServer: function() {
     const request_data = [];
     const settings = this._settings;
     const vars = this._vars;
     const that = this;
     const response_callback = function(response) {
       settings.import(response);
+      // save settings on the local storage syncrhonously to be sure they
+      // are stored in a consistent state.
+      that._saveSettingsSync();
       that._startTimers();
       vars.url_cache.setNodeDeleteTimeout(settings.node_delete_timeout);
       vars.url_exception_cache.setNodeDeleteTimeout(settings.node_delete_timeout);
