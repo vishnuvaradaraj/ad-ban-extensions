@@ -9,18 +9,18 @@
   </stringbundleset>
 
   <commandset>
+    <command id="cmd-adban-complaint" observes="cmd-adban-stop"/>
     <command id="cmd-adban-start" disabled="true"/>
     <command id="cmd-adban-stop"/>
-    <command id="cmd-adban-complaint" observes="cmd-adban-stop"/>
     <command id="cmd-adban-help"/>
   </commandset>
 
   <popupset>
     <menupopup id="adban-menupopup" position="after_end">
+      <menuitem label="&adban.menuitem.complaint;" command="cmd-adban-complaint"/>
+      <menuseparator/>
       <menuitem label="&adban.menuitem.start;" command="cmd-adban-start"/>
       <menuitem label="&adban.menuitem.stop;" command="cmd-adban-stop"/>
-      <menuseparator/>
-      <menuitem label="&adban.menuitem.complaint;" command="cmd-adban-complaint"/>
       <menuseparator/>
       <menuitem label="&adban.menuitem.help;" command="cmd-adban-help"/>
     </menupopup>
