@@ -18,11 +18,12 @@
     <label control="adban-complaint-site-url">&adban.complaint-dialog.site-url.label;</label>
     <textbox id="adban-complaint-site-url" tabindex="-1"/>
 
-    <label control="adban-complaint-comment">&adban.complaint-dialog.comment.label;</label>
-    <textbox id="adban-complaint-comment" multiline="true" spellcheck="true" cols="80" rows="10" tabindex="1"/>
-
     <label>&adban.complaint-dialog.reload-page-notification.label;</label>
-    <checkbox id="adban-complaint-checkbox" label="&adban.complaint-dialog.reload-page-checkbox.label;" checked="false"/>
+    <checkbox id="adban-complaint-checkbox" label="&adban.complaint-dialog.reload-page-checkbox.label;" checked="false" tabindex="1"/>
+
+    <label control="adban-complaint-comment">&adban.complaint-dialog.comment.label;</label>
+    <textbox id="adban-complaint-comment" multiline="true" spellcheck="true" cols="80" rows="10" tabindex="2"/>
+
   </groupbox>
 </dialog>
 
