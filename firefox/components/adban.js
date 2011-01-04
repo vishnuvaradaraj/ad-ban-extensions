@@ -371,7 +371,7 @@ const urlExceptionValueConstructor = function(d) {
   };
 };
 
-const adban = function() {
+const AdBan = function() {
   // TODO: update this to WARNING in prod.
   logging.setLogLevel(logging.levels.INFO);
 
@@ -384,7 +384,7 @@ const adban = function() {
   this.wrappedJSObject = this;
 };
 
-adban.prototype = {
+AdBan.prototype = {
   // this shit is for XPCOM
   classDescription: 'AdBan XPCOM component',
   classID:          Components.ID('{02f31d71-1c0b-48f3-a3b5-100c18dc771e}'),
@@ -1318,9 +1318,9 @@ adban.prototype = {
 // XPCOMUtils.generateNSGetFactory was introduced in Mozilla 2 (Firefox 4).
 // XPCOMUtils.generateNSGetModule is for Mozilla 1.9.2 (Firefox 3.6).
 if (XPCOMUtils.generateNSGetFactory) {
-  const NSGetFactory = XPCOMUtils.generateNSGetFactory([adban]);
+  const NSGetFactory = XPCOMUtils.generateNSGetFactory([AdBan]);
 }
 else {
-  const NSGetModule = XPCOMUtils.generateNSGetModule([adban]);
+  const NSGetModule = XPCOMUtils.generateNSGetModule([AdBan]);
 }
 
