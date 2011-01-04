@@ -1039,32 +1039,16 @@ AdBan.prototype = {
     return keys;
   },
 
-  _cleanupUnverifiedUrls: function() {
-    const vars = this._vars;
-    const unverified_urls = vars.unverified_urls;
+  _cleanupUnverifiedUrls: function(unverified_urls, cache) {
+    const current_date = this._vars.current_date;
     const urls = this._getDictionaryKeys(unverified_urls);
-    const url_cache = vars.url_cache;
-    for (let i = 0; i < urls.length; i++) {
-      const url = urls[i];
-      const cache_node = url_cache.get(url, vars.current_date);
+    const urls_length = urls.length;
+    for (let i = 0; i < urls_length; i++) {
+      let url = urls[i];
+      let cache_node = cache.get(url, current_date);
       if (!this._isStaleCacheNode(cache_node)) {
-        logging.info('the url [' + url + '] is already verified');
+        logging.info('the url ['+url+'] is already verified');
         delete unverified_urls[url];
-      }
-    }
-  },
-
-  _cleanupUnverifiedUrlExceptions: function() {
-    const vars = this._vars;
-    const unverified_url_exceptions = vars.unverified_url_exceptions;
-    const urls = this._getDictionaryKeys(unverified_url_exceptions);
-    const url_exception_cache = vars.url_exception_cache;
-    for (let i = 0; i < urls.length; i++) {
-      const url = urls[i];
-      const cache_node = url_exception_cache.get(url, vars.current_date);
-      if (!this._isStaleCacheNode(cache_node)) {
-        logging.info('the exception url [' + url + '] is already verified');
-        delete unverified_url_exceptions[url];
       }
     }
   },
@@ -1204,8 +1188,8 @@ AdBan.prototype = {
     const response_callback = function(response) {
       that._updateUrlCache(response[0], urls);
       that._updateUrlExceptionCache(response[1], url_exceptions);
-      that._cleanupUnverifiedUrls();
-      that._cleanupUnverifiedUrlExceptions();
+      that._cleanupUnverifiedUrls(vars.unverified_urls, vars.url_cache);
+      that._cleanupUnverifiedUrls(vars.unverified_url_exceptions, vars.url_exception_cache);
     };
     const request_url = this._SERVER_HOST + '/g';
     this._startJsonRequest(this._verify_urls_xhr, request_url, request_data, response_callback, verification_complete_callback);
