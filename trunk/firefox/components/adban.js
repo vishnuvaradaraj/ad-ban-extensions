@@ -396,7 +396,7 @@ AdBan.prototype = {
       https: true,
       ftp: true,
   },
-  _SERVER_HOST: 'https://ad-ban-dev.appspot.com',
+  _SERVER_HOST: 'http://localhost:8080',
   _ERROR_CODES: {
       NO_ERRORS: 0,
       REQUEST_PARSING_ERROR: 1,
@@ -419,6 +419,7 @@ AdBan.prototype = {
   _pref_service: Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefService),
   _main_thread: Cc['@mozilla.org/thread-manager;1'].getService().mainThread,
   _verify_urls_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
+  _read_settings_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _update_current_date_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _update_settings_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
 
@@ -436,6 +437,7 @@ AdBan.prototype = {
     node_delete_timeout: 1000 * 3600 * 24 * 30,
     current_date_granularity: 1000 * 60 * 10,
     update_settings_interval: 1000 * 3600 * 24,
+    read_settings_delay: 1000 * 5,  // this value isn't changed.
 
     import: function(data) {
       this.url_verifier_delay = data[0];
@@ -714,6 +716,13 @@ AdBan.prototype = {
     timer.initWithCallback(timer_callback, interval, timer.TYPE_REPEATING_SLACK);
   },
 
+  _executeDelayed: function(timer, callback, delay) {
+    const timer_callback = {
+        notify: callback,
+    };
+    timer.initWithCallback(timer_callback, delay, timer.TYPE_ONE_SHOT);
+  },
+
   _startTimers: function() {
     logging.info('starting AdBan component timers');
     const that = this;
@@ -731,9 +740,12 @@ AdBan.prototype = {
         update_current_date_callback,
         settings.current_date_granularity);
 
+    const read_settings_callback = function() {
+      that._readSettingsFromServer();
+    };
     this._startRepeatingTimer(
         this._update_settings_timer,
-        function() { that._readSettingsFromServer(); },
+        read_settings_callback,
         settings.update_settings_interval);
     logging.info('AdBan component timers have been started');
   },
@@ -785,7 +797,6 @@ AdBan.prototype = {
       logging.info('creating data directory for AdBan plugin: ['+data_dir.path+']');
       data_dir.create(data_dir.DIRECTORY_TYPE, 0774);
     }
-    logging.info('data directory for AdBan plugin is ['+data_dir.path+']');
     return data_dir.clone();
   },
 
@@ -863,10 +874,16 @@ AdBan.prototype = {
     const read_complete_callback = function(data) {
       that._vars.auth_token = data[0];
       that._settings.import(data[1]);
-      that._readSettingsFromServer();
       logging.info('AdBan settings have been loaded from file');
     };
     this._readJsonFromFileAsync(file, read_complete_callback);
+
+    // read settings from the server with little delay, so the browser will
+    // be ready to send XHR requests.
+    const read_settings_callback = function() {
+      that._readSettingsFromServer();
+    };
+    that._executeDelayed(this._read_settings_timer, read_settings_callback, this._settings.read_settings_delay);
   },
 
   _saveSettingsSync: function() {
@@ -1174,16 +1191,10 @@ AdBan.prototype = {
       vars.is_url_verifier_active = false;
       that._launchUrlVerifier();
     };
-    const verify_urls_timer_callback = {
-        notify: function() {
-          that._verifyUrls(verification_complete_callback);
-        },
+    const verify_urls_callback = function() {
+      that._verifyUrls(verification_complete_callback);
     };
-    const verify_urls_timer = this._verify_urls_timer;
-    verify_urls_timer.initWithCallback(
-        verify_urls_timer_callback,
-        this._settings.url_verifier_delay,
-        verify_urls_timer.TYPE_ONE_SHOT);
+    this._executeDelayed(this._verify_urls_timer, verify_urls_callback, this._settings.url_verifier_delay);
   },
 
   _isStaleCacheNode: function(cache_node) {
