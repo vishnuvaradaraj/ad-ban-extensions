@@ -16,7 +16,7 @@ const logging = {
   _app_info: Cc['@mozilla.org/xre/app-info;1'].getService(Ci.nsIXULAppInfo),
 
   _log_stream: null,
-  _level_id: 0,
+  _level_id: 0,  // TODO: set it to 20 (WARNING) in prod.
   _previous_level_id: 0,
   _pending_messages: [],
 
