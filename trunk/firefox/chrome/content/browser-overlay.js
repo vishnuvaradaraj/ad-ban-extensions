@@ -6,6 +6,7 @@ let Ci = Components.interfaces;
 let prompts = Cc['@mozilla.org/embedcomp/prompt-service;1'].getService(Ci.nsIPromptService);
 let pref_service = Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefService);
 let adban = Cc['@ad-ban.appspot.com/adban;1'].getService().wrappedJSObject;
+let logging = adban.logging;
 
 let $ = function(id) {
   return document.getElementById(id);
@@ -24,6 +25,7 @@ let alert_states_pref_branch = pref_service.getBranch('extensions.' + ADBAN_EXTE
 let conditionalAlert = function(alert_name, msg) {
   if (alert_states_pref_branch.prefHasUserValue(alert_name) &&
       alert_states_pref_branch.getBoolPref(alert_name)) {
+    logging.info('the alert ['+alert_name+'] is disabled in preferences');
     return;
   }
   const state_obj = {
@@ -31,11 +33,13 @@ let conditionalAlert = function(alert_name, msg) {
   };
   prompts.alertCheck(window, 'AdBan', msg, _('dont-show-this-message-again'), state_obj);
   if (state_obj.value) {
+    logging.info('disabling the alert ['+alert_name+'] in preferences');
     alert_states_pref_branch.setBoolPref(alert_name, true);
   }
 };
 
 let openTab = function(url) {
+  logging.info('opening the tab with url=['+url+']');
   // use this hack, otherwise firefox 3.6 can skip the tab
   // if another tab is immediately opened after this tab.
   const open_tab_callback = function() {
@@ -49,15 +53,15 @@ let firstRun = function() {
 
   const nav_bar = $('nav-bar');
   if (!nav_bar) {
-    dump('there is no navigation bar in the current window\n');
+    logging.warning('there is no navigation bar in the current window');
     return;
   }
   if ($('adban-button')) {
-    dump('the adban-button is already installed (though it is unclear how it is possble)\n');
+    logging.warning('the adban-button is already installed (though it is unclear how it is possble)');
     return;
   }
 
-  dump('adding adban-button to navigation bar\n');
+  logging.info('adding adban-button to navigation bar\n');
   nav_bar.insertItem('adban-button', null, null, false);
 
   // this 'magic' is necessary for stupid FF, which can't properly handle
@@ -65,13 +69,14 @@ let firstRun = function() {
   // See http://forums.mozillazine.org/viewtopic.php?t=189667 .
   nav_bar.setAttribute('currentset', nav_bar.currentSet);
   document.persist('nav-bar', 'currentset');
+  logging.info('adban-button must be added to navigation bar');
 };
 
 let verifyFirstRun = function(verification_complete_callback) {
   const extensions_getter_callback = function(extensions) {
     const extension = extensions.get(ADBAN_EXTENSION_ID);
     if (extension.firstRun) {
-      dump('the AdBan first run\n');
+      logging.info('the AdBan first run');
       firstRun();
     }
     verification_complete_callback();
@@ -96,7 +101,7 @@ let onStateChange = function(is_active) {
   const cmd_adban_start = $('cmd-adban-start');
   const adban_button = $('adban-button');
   if (!adban_button) {
-    // it looks like the adban button has been removed from visible toolbars.
+    logging.warning('it looks like the adban button has been removed from visible toolbars');
     return;
   }
   if (is_active) {
@@ -139,6 +144,7 @@ let cmdHelp = function() {
 let state_listener_id;
 
 let init = function() {
+  logging.info('initializing browser-overlay');
   const first_run_verification_complete = function() {
     // Subscribe to adban state change only after firstRun verification
     // is complete. Otherwise FF4+ won't find adban-button on first run.
@@ -163,9 +169,11 @@ let init = function() {
   gBrowser.addEventListener('DOMContentLoaded', adban, true);
 
   window.addEventListener('unload', shutdown, false);
+  logging.info('browser-overlay has been initialized');
 };
 
 let shutdown = function() {
+  logging.info('shutting down browser-overlay');
   adban.unsubscribeFromStateChange(state_listener_id);
   gBrowser.removeEventListener('DOMContentLoaded', adban, true);
 
@@ -176,6 +184,7 @@ let shutdown = function() {
 
   window.removeEventListener('load', init, false);
   window.removeEventListener('unload', shutdown, false);
+  logging.info('browser-overlay has been shut down');
 };
 
 window.addEventListener('load', init, false);
