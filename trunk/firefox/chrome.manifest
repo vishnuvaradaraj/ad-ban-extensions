@@ -4,7 +4,7 @@ skin adban classic/1.0 chrome/skin/
 overlay chrome://browser/content/browser.xul chrome://adban/content/browser-overlay.xul
 
 style chrome://global/content/customizeToolbar.xul chrome://adban/skin/browser-overlay.css
-style chrome://adban/content/browser-overlay.xul chrome://adban/skin/browser-overlay.css
+style chrome://browser/content/browser.xul chrome://adban/skin/browser-overlay.css
 
 locale adban en-US chrome/locale/en-US/
 
