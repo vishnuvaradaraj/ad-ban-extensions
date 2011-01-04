@@ -1,5 +1,3 @@
-let ADBAN_EXTENSION_ID = 'adban@ad-ban.appspot.com';
-
 let Cc = Components.classes;
 let Ci = Components.interfaces;
 
@@ -20,7 +18,7 @@ let _ = function(id, params) {
   return adban_strings.getString(id);
 };
 
-let alert_states_pref_branch = pref_service.getBranch('extensions.' + ADBAN_EXTENSION_ID + '.alert-states.');
+let alert_states_pref_branch = pref_service.getBranch('extensions.' + adban.EXTENSION_ID + '.alert-states.');
 
 let conditionalAlert = function(alert_name, msg) {
   if (alert_states_pref_branch.prefHasUserValue(alert_name) &&
@@ -74,7 +72,7 @@ let firstRun = function() {
 
 let verifyFirstRun = function(verification_complete_callback) {
   const extensions_getter_callback = function(extensions) {
-    const extension = extensions.get(ADBAN_EXTENSION_ID);
+    const extension = extensions.get(adban.EXTENSION_ID);
     if (extension.firstRun) {
       logging.info('the AdBan first run');
       firstRun();
