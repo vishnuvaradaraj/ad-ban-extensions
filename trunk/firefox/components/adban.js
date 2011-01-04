@@ -16,8 +16,8 @@ const logging = {
   _app_info: Cc['@mozilla.org/xre/app-info;1'].getService(Ci.nsIXULAppInfo),
 
   _log_stream: null,
-  _level_id: 0,  // TODO: set it to 20 (WARNING) in prod.
-  _previous_level_id: 0,
+  _level_id: 0,
+  _previous_level_id: 20,  // TODO: set it to 20 (WARNING) in prod.
   _pending_messages: [],
 
   start: function() {
@@ -405,7 +405,7 @@ AdBan.prototype = {
       https: true,
       ftp: true,
   },
-  _SERVER_HOST: 'http://localhost:8080',
+  _SERVER_HOST: 'https://ad-ban-dev.appspot.com',
   _ERROR_CODES: {
       NO_ERRORS: 0,
       REQUEST_PARSING_ERROR: 1,
