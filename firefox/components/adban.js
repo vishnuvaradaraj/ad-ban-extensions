@@ -288,9 +288,6 @@ const createUrlCacheDefaultValue = function() {
 
 const createUrlExceptionCacheDefaultValue = function() {
   return {
-      blacklisted_canonical_urls: [],
-      whitelisted_canonical_urls: [],
-      css_selectors: [],
   };
 };
 
@@ -302,24 +299,6 @@ const createEmptyUrlExceptionCache = function(node_delete_timeout) {
   return new Trie(createUrlExceptionCacheDefaultValue(), node_delete_timeout);
 };
 
-const stringsToRegExps = function(s_list) {
-  const regexp_list = [];
-  const s_list_length = s_list.length;
-  for (let i = 0; i < s_list_length; i++) {
-    regexp_list[i] = new RegExp(s_list[i]);
-  }
-  return regexp_list;
-};
-
-const regExpsToStrings = function(regexp_list) {
-  const s_list = [];
-  const regexp_list_length = regexp_list.length;
-  for (let i = 0; i < regexp_list_length; i++) {
-    s_list[i] = regexp_list[i].source;
-  }
-  return s_list;
-};
-
 const BLACKLISTED_CANONICAL_URLS_BIT_MASK = (1 << 0);
 const WHITELISTED_CANONICAL_URLS_BIT_MASK = (1 << 1);
 const CSS_SELECTORS_BIT_MASK = (1 << 2);
@@ -329,21 +308,21 @@ const urlNodeConstructor = function(v) {
 };
 
 const urlExceptionNodeConstructor = function(v) {
-  const blacklisted_canonical_urls = regExpsToStrings(v.blacklisted_canonical_urls);
-  const whitelisted_canonical_urls = regExpsToStrings(v.whitelisted_canonical_urls);
+  const blacklisted_canonical_urls = v.blacklisted_canonical_urls;
+  const whitelisted_canonical_urls = v.whitelisted_canonical_urls;
   const css_selectors = v.css_selectors;
 
   let d_bitmap = 0;
   const d = [];
-  if (blacklisted_canonical_urls.length > 0) {
+  if (blacklisted_canonical_urls) {
     d_bitmap |= BLACKLISTED_CANONICAL_URLS_BIT_MASK;
-    d.push(blacklisted_canonical_urls);
+    d.push(blacklisted_canonical_urls.source);
   }
-  if (whitelisted_canonical_urls.length > 0) {
+  if (whitelisted_canonical_urls) {
     d_bitmap |= WHITELISTED_CANONICAL_URLS_BIT_MASK;
-    d.push(whitelisted_canonical_urls);
+    d.push(whitelisted_canonical_urls.source);
   }
-  if (css_selectors.length > 0) {
+  if (css_selectors) {
     d_bitmap |= CSS_SELECTORS_BIT_MASK;
     d.push(css_selectors);
   }
@@ -358,29 +337,22 @@ const urlValueConstructor = function(d) {
 };
 
 const urlExceptionValueConstructor = function(d) {
-  let blacklisted_canonical_urls = [];
-  let whitelisted_canonical_urls = [];
-  let css_selectors = [];
-
+  const v = {};
   const d_bitmap = d.pop();
   let i = 0;
   if (d_bitmap & BLACKLISTED_CANONICAL_URLS_BIT_MASK) {
-    blacklisted_canonical_urls = stringsToRegExps(d[i]);
+    v.blacklisted_canonical_urls = new RegExp(d[i]);
     i++;
   }
   if (d_bitmap & WHITELISTED_CANONICAL_URLS_BIT_MASK) {
-    whitelisted_canonical_urls = stringsToRegExps(d[i]);
+    v.whitelisted_canonical_urls = new RegExp(d[i]);
     i++;
   }
   if (d_bitmap & CSS_SELECTORS_BIT_MASK) {
-    css_selectors = d[i];
+    v.css_selectors = d[i];
     i++;
   }
-  return {
-      blacklisted_canonical_urls: blacklisted_canonical_urls,
-      whitelisted_canonical_urls: whitelisted_canonical_urls,
-      css_selectors: css_selectors,
-  };
+  return v;
 };
 
 const AdBan = function() {
@@ -961,10 +933,10 @@ AdBan.prototype = {
     const url_exception_value = this._getUrlExceptionValue(canonical_site_url);
     const css_selectors = url_exception_value.css_selectors;
 
-    if (css_selectors.length > 0) {
+    if (css_selectors) {
       const s = doc.createElement('style');
       s.type = 'text/css';
-      s.innerHTML = css_selectors.join(',') + '{display: none !important;}';
+      s.innerHTML = css_selectors + '{display: none !important;}';
       logging.info('adding css selector=['+s.innerHTML+']');
       doc.getElementsByTagName('head')[0].appendChild(s);
     }
@@ -1274,14 +1246,8 @@ AdBan.prototype = {
     return content_location.spec.substring(7).toLowerCase();
   },
 
-  _matchesRegexp: function(regexp_list, s) {
-    const regexp_list_length = regexp_list.length;
-    for (let i = 0; i < regexp_list_length; i++) {
-      if (s.search(regexp_list[i]) != -1) {
-        return true;
-      }
-    }
-    return false;
+  _matchesRegexp: function(regexp, s) {
+    return (s.search(regexp) != -1);
   },
 
   _verifyLocation: function(content_location, request_origin) {
@@ -1299,9 +1265,11 @@ AdBan.prototype = {
       // override is_whitelist by per-site exception value if required.
       const url_exception_value = this._getUrlExceptionValue(request_origin_url);
       if (this._matchesRegexp(url_exception_value.whitelisted_canonical_urls, content_location_url)) {
+        logging.info('the content_location_url=['+content_location_url+'] is whitelisted via url exceptions for request_origin_url=['+request_origin_url+']');
         is_whitelist = true;
       }
       else if (this._matchesRegexp(url_exception_value.blacklisted_canonical_urls, content_location_url)) {
+        logging.info('the content_location_url=['+content_location_url+'] is blacklisted via url exception for request_origin_url=['+request_origin_url+']');
         is_whitelist = false;
       }
     }
