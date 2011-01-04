@@ -2,9 +2,9 @@ let Cc = Components.classes;
 let Ci = Components.interfaces;
 
 let prompts = Cc['@mozilla.org/embedcomp/prompt-service;1'].getService(Ci.nsIPromptService);
-let pref_service = Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefService);
 let adban = Cc['@ad-ban.appspot.com/adban;1'].getService().wrappedJSObject;
 let logging = adban.logging;
+let pref_branch = adban.pref_branch;
 
 let $ = function(id) {
   return document.getElementById(id);
@@ -18,11 +18,10 @@ let _ = function(id, params) {
   return adban_strings.getString(id);
 };
 
-let alert_states_pref_branch = pref_service.getBranch('extensions.' + adban.EXTENSION_ID + '.alert-states.');
-
 let conditionalAlert = function(alert_name, msg) {
-  if (alert_states_pref_branch.prefHasUserValue(alert_name) &&
-      alert_states_pref_branch.getBoolPref(alert_name)) {
+  alert_name = 'alert-states.' + alert_name;
+  if (pref_branch.prefHasUserValue(alert_name) &&
+      pref_branch.getBoolPref(alert_name)) {
     logging.info('the alert ['+alert_name+'] is disabled in preferences');
     return;
   }
@@ -32,7 +31,7 @@ let conditionalAlert = function(alert_name, msg) {
   prompts.alertCheck(window, 'AdBan', msg, _('dont-show-this-message-again'), state_obj);
   if (state_obj.value) {
     logging.info('disabling the alert ['+alert_name+'] in preferences');
-    alert_states_pref_branch.setBoolPref(alert_name, true);
+    pref_branch.setBoolPref(alert_name, true);
   }
 };
 
