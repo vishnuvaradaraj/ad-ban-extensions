@@ -10,15 +10,25 @@ const logging = {
       INFO: ['INFO', 10],
       WARNING: ['WARNING', 20],
       ERROR: ['ERROR', 30],
+      NONE: ['NONE', 40],
   },
+
+  _app_info: Cc['@mozilla.org/xre/app-info;1'].getService(Ci.nsIXULAppInfo),
 
   _log_stream: null,
   _level_id: 0,
+  _previous_level_id: 0,
   _pending_messages: [],
 
-  init: function() {
-    const app_info = Cc['@mozilla.org/xre/app-info;1'].getService(Ci.nsIXULAppInfo);
+  start: function() {
+    this._level_id = this._previous_level_id;
+    const app_info = this._app_info;
     this._log(app_info.name+' '+app_info.version+', appBuildId=['+app_info.appBuildID+'], ID=['+app_info.ID+'], vendor=['+app_info.vendor+'], platformBuildID=['+app_info.platformBuildID+'], platformVersion=['+app_info.platformVersion+']\n');
+  },
+
+  stop: function() {
+    this._previous_level_id = this._level_id;
+    this.setLogLevel(this.levels.NONE);
   },
 
   setLogLevel: function(level) {
@@ -71,6 +81,8 @@ const logging = {
     this.log(this.levels.ERROR, msg);
   },
 };
+
+logging.start();
 
 const getCommonPrefixLength = function(s1, s2) {
   const s1_length = s1.length;
@@ -372,9 +384,8 @@ const urlExceptionValueConstructor = function(d) {
 };
 
 const AdBan = function() {
-  // TODO: update this to WARNING in prod.
-  logging.setLogLevel(logging.levels.INFO);
-
+  logging.info('entering AdBan constructor');
+  this.pref_branch = this._pref_service.getBranch('extensions.' + this.EXTENSION_ID + '.');
   this.LOGIN_URL = this._SERVER_HOST + '/ff/login';
   this.HELP_URL = this._SERVER_HOST + '/ff/help';
   this.FIRST_RUN_URL = this._SERVER_HOST + '/ff/first_run';
@@ -382,6 +393,7 @@ const AdBan = function() {
   // allow direct access to the XPCOM object from javascript.
   // see https://developer.mozilla.org/en/wrappedJSObject .
   this.wrappedJSObject = this;
+  logging.info('exiting AdBan constructor');
 };
 
 AdBan.prototype = {
@@ -432,6 +444,7 @@ AdBan.prototype = {
   _directory_service: Cc['@mozilla.org/file/directory_service;1'].getService(Ci.nsIProperties),
   _io_service: Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService),
   _observer_service: Cc['@mozilla.org/observer-service;1'].getService(Ci.nsIObserverService),
+  _pref_service: Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefService),
   _main_thread: Cc['@mozilla.org/thread-manager;1'].getService().mainThread,
   _verify_urls_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _update_current_date_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
@@ -545,7 +558,6 @@ AdBan.prototype = {
     const observer_service = this._observer_service;
     const vars = this._vars;
     if (topic == 'app-startup') {
-      logging.init();
       logging.info('app-startup');
       // perform initialization at 'profile-after-change' step,
       // which is the only available in FF4.
@@ -554,13 +566,14 @@ AdBan.prototype = {
     }
     else if (topic == 'profile-after-change') {
       logging.info('profile-after-change');
-      this._initGlobalLogStream();
+      this._setupLogging();
       observer_service.addObserver(this, 'quit-application', false);
       observer_service.addObserver(this, 'private-browsing', false);
       try {
         const private_browsing_service = Cc['@mozilla.org/privatebrowsing;1'].getService(Ci.nsIPrivateBrowsingService);
         if (private_browsing_service.privateBrowsingEnabled) {
           logging.info('private mode is on at browser start');
+          logging.stop();
           vars.is_in_private_mode = true;
         }
       }
@@ -573,7 +586,6 @@ AdBan.prototype = {
       this.start();
     }
     else if (topic == 'private-browsing') {
-      logging.info('private-browsing: ['+data+']');
       if (data == 'enter') {
         // save current caches to local storage, so they can be loaded later
         // after exiting the private mode. Caches created during private mode
@@ -589,9 +601,13 @@ AdBan.prototype = {
         //   be in inconsistent state because of saveCaches operation isn't
         //   complete yet.
         this._saveCachesSync();
+        logging.info('entering private browsing mode');
+        logging.stop();
         vars.is_in_private_mode = true;
       }
       else if (data == 'exit') {
+        logging.start();
+        logging.info('exiting private browsing mode');
         // load caches from local storage, which were saved before entering
         // the private mode. These caches will overwrite current caches, wich
         // can contain private data.
@@ -678,7 +694,7 @@ AdBan.prototype = {
     }
   },
 
-  _initGlobalLogStream: function() {
+  _setupLogging: function() {
     logging.info('initializing global log stream');
     const log_file = this._getFileForLogs();
     const log_file_stream = Cc["@mozilla.org/network/file-output-stream;1"].createInstance(Ci.nsIFileOutputStream);
@@ -688,6 +704,16 @@ AdBan.prototype = {
     log_stream.init(log_file_stream, 'UTF-8', 0, 0);
     logging.setLogStream(log_stream);
     logging.info('global log stream has been initialized');
+
+    const pref_branch = this.pref_branch;
+    if (pref_branch.prefHasUserValue('log-level')) {
+      const log_level_name = pref_branch.getCharPref('log-level');
+      const log_level = logging.levels[log_level_name];
+      if (log_level) {
+        logging.info('setting log_level to ['+log_level_name+']');
+        logging.setLogLevel(log_level);
+      }
+    }
   },
 
   _readAuthTokenFromCookie: function(cookie) {
