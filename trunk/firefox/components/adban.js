@@ -965,9 +965,7 @@ AdBan.prototype = {
     }
   },
 
-  _updateUrlCache: function(response_data, urls) {
-    const vars = this._vars;
-    const url_cache = vars.url_cache;
+  _updateCache: function(response_data, urls, cache, value_constructor, default_value_constructor) {
     const response_data_length = response_data.length;
 
     for (let i = 0; i < response_data_length; i++) {
@@ -983,50 +981,17 @@ AdBan.prototype = {
         end_urls[j] = urls[url_idx[j]];
       }
       const url = urls[url_idx[0]].substring(0, url_length);
-      let value = urlValueConstructor(properties);
-      url_cache.update(url, end_urls, value, vars.current_date);
+      let value = value_constructor(properties);
+      cache.update(url, end_urls, value, this._vars.current_date);
 
       const todo_chars = todo.split('');
       const todo_length = todo_chars.length;
       for (let j = 0; j < todo_length; j++) {
-        // value must be created each time it is added into url_cache,
+        // value must be created each time it is added into cache,
         // otherwise a single modification of the value will modify other
         // values.
-        value = createUrlCacheDefaultValue();
-        url_cache.add(url + todo_chars[j], value, 0);
-      }
-    }
-  },
-
-  _updateUrlExceptionCache: function(response_data, url_exceptions) {
-    const vars = this._vars;
-    const url_exception_cache = vars.url_exception_cache;
-    const response_data_length = response_data.length;
-
-    for (let i = 0; i < response_data_length; i++) {
-      const data = response_data[i];
-      const url_length = data[0];
-      const todo = data[1];
-      const url_idx = data[2];
-      const properties = data[3];
-
-      const end_urls = [];
-      const url_idx_length = url_idx.length;
-      for (let j = 0; j < url_idx_length; j++) {
-        end_urls[j] = url_exceptions[url_idx[j]];
-      }
-      const url = url_exceptions[url_idx[0]].substring(0, url_length);
-      let value = urlExceptionValueConstructor(properties);
-      url_exception_cache.update(url, end_urls, value, vars.current_date);
-
-      const todo_chars = todo.split('');
-      const todo_length = todo_chars.length;
-      for (let j = 0; j < todo_length; j++) {
-        // value must be created each time it is added into url_exception_cache,
-        // otherwise a single modification of the value will modify other
-        // values.
-        value = createUrlExceptionCacheDefaultValue();
-        url_exception_cache.add(url + todo_chars[j], value, 0);
+        value = default_value_constructor();
+        cache.add(url + todo_chars[j], value, 0);
       }
     }
   },
@@ -1186,8 +1151,18 @@ AdBan.prototype = {
 
     const that = this;
     const response_callback = function(response) {
-      that._updateUrlCache(response[0], urls);
-      that._updateUrlExceptionCache(response[1], url_exceptions);
+      that._updateCache(
+          response[0],
+          urls,
+          vars.url_cache,
+          urlValueConstructor,
+          createUrlCacheDefaultValue);
+      that._updateCache(
+          response[1],
+          url_exceptions,
+          vars.url_exception_cache,
+          urlExceptionValueConstructor,
+          createUrlExceptionCacheDefaultValue);
       that._cleanupUnverifiedUrls(vars.unverified_urls, vars.url_cache);
       that._cleanupUnverifiedUrls(vars.unverified_url_exceptions, vars.url_exception_cache);
     };
