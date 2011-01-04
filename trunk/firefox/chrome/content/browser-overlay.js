@@ -22,7 +22,7 @@ let conditionalAlert = function(alert_name, msg) {
   alert_name = 'alert-states.' + alert_name;
   if (pref_branch.prefHasUserValue(alert_name) &&
       pref_branch.getBoolPref(alert_name)) {
-    logging.info('the alert ['+alert_name+'] is disabled in preferences');
+    logging.info('the alert [%s] is disabled in preferences', alert_name);
     return;
   }
   const state_obj = {
@@ -30,13 +30,13 @@ let conditionalAlert = function(alert_name, msg) {
   };
   prompts.alertCheck(window, 'AdBan', msg, _('dont-show-this-message-again'), state_obj);
   if (state_obj.value) {
-    logging.info('disabling the alert ['+alert_name+'] in preferences');
+    logging.info('disabling the alert [%s] in preferences', alert_name);
     pref_branch.setBoolPref(alert_name, true);
   }
 };
 
 let openTab = function(url) {
-  logging.info('opening the tab with url=['+url+']');
+  logging.info('opening the tab with url=[%s]', url);
   // use this hack, otherwise firefox 3.6 can skip the tab
   // if another tab is immediately opened after this tab.
   const open_tab_callback = function() {
@@ -58,7 +58,7 @@ let firstRun = function() {
     return;
   }
 
-  logging.info('adding adban-button to navigation bar\n');
+  logging.info('adding adban-button to navigation bar');
   nav_bar.insertItem('adban-button', null, null, false);
 
   // this 'magic' is necessary for stupid FF, which can't properly handle
