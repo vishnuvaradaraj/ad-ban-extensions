@@ -4,6 +4,7 @@ let Cc = Components.classes;
 let Ci = Components.interfaces;
 
 let prompts = Cc['@mozilla.org/embedcomp/prompt-service;1'].getService(Ci.nsIPromptService);
+let pref_service = Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefService);
 let adban = Cc['@ad-ban.appspot.com/adban;1'].getService().wrappedJSObject;
 
 let $ = function(id) {
@@ -18,15 +19,19 @@ let _ = function(id, params) {
   return adban_strings.getString(id);
 };
 
-let alert_states = {};
+let alert_states_pref_branch = pref_service.getBranch('extensions.' + ADBAN_EXTENSION_ID + '.alert-states.');
 
 let conditionalAlert = function(alert_name, msg) {
-  let alert_state = alert_states[alert_name];
-  if (!alert_state) {
-    alert_state = alert_states[alert_name] = { value: false };
+  if (alert_states_pref_branch.prefHasUserValue(alert_name) &&
+      alert_states_pref_branch.getBoolPref(alert_name)) {
+    return;
   }
-  if (!alert_state.value) {
-    prompts.alertCheck(window, 'AdBan', msg, _('dont-show-this-message-again'), alert_state);
+  const state_obj = {
+      value: false,
+  };
+  prompts.alertCheck(window, 'AdBan', msg, _('dont-show-this-message-again'), state_obj);
+  if (state_obj.value) {
+    alert_states_pref_branch.setBoolPref(alert_name, true);
   }
 };
 
@@ -59,7 +64,7 @@ let firstRun = function() {
   // toolbar.insertItem().
   // See http://forums.mozillazine.org/viewtopic.php?t=189667 .
   nav_bar.setAttribute('currentset', nav_bar.currentSet);
-  window.document.persist('nav-bar', 'currentset');
+  document.persist('nav-bar', 'currentset');
 };
 
 let verifyFirstRun = function(verification_complete_callback) {
@@ -142,9 +147,10 @@ let init = function() {
   // defer first run verification due to stupid FF bug, which prevents from
   // toolbar updating immediately in the window.onload event handler.
   // Read more at http://blog.pearlcrescent.com/archives/24 .
-  window.setTimeout(function() {
+  const first_run_callback = function() {
     verifyFirstRun(first_run_verification_complete);
-  }, 10);
+  };
+  window.setTimeout(first_run_callback, 10);
 
   $('cmd-adban-stop').addEventListener('command', cmdStop, false);
   $('cmd-adban-start').addEventListener('command', cmdStart, false);
