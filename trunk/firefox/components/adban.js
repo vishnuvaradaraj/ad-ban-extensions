@@ -1266,8 +1266,11 @@ AdBan.prototype = {
     return content_location.spec.substring(7).toLowerCase();
   },
 
-  _matchesRegexp: function(regexp, s) {
-    return (s.search(regexp) != -1);
+  _matchesRegexp: function(reg_exp, s) {
+    if (!reg_exp) {
+      return false;
+    }
+    return (s.search(reg_exp) != -1);
   },
 
   _verifyLocation: function(content_location, request_origin) {
