@@ -118,6 +118,7 @@ let cmdStop = function() {
 
 let cmdStart = function() {
   adban.start();
+  conditionalAlert('adban-started', _('adban-started'));
 };
 
 let cmdComplaint = function() {
