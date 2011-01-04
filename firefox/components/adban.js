@@ -440,6 +440,9 @@ AdBan.prototype = {
   // this logging must be accessible outside the AdBan component.
   logging: logging,
 
+  // id of the AdBan extension (see install.rdf)
+  EXTENSION_ID: 'adban@ad-ban.appspot.com',
+
   // component's settings. New values for these settings are periodically read
   // from the server.
   _settings: {
