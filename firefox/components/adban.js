@@ -60,25 +60,34 @@ const logging = {
     }
   },
 
-  log: function(level, msg) {
+  log: function(level, msg, args) {
     if (level[1] < this._level_id) {
       return;
     }
+    const msg_parts = msg.split('%s');
+    const msg_parts_length = msg_parts.length;
+    const formatted_msg_parts = [
+      msg_parts[0],
+    ];
+    for (let i = 1; i < msg_parts_length; i++) {
+      formatted_msg_parts.push(args[i], msg_parts[i]);
+    };
+    const formatted_msg = formatted_msg_parts.join('');
     const date_string = (new Date()).toString();
-    const log_string = '['+date_string+'] ['+level[0]+']: '+msg+'\n';
+    const log_string = '['+date_string+'] ['+level[0]+']: '+formatted_msg+'\n';
     this._log(log_string);
   },
 
   info: function(msg) {
-    this.log(this.levels.INFO, msg);
+    this.log(this.levels.INFO, msg, arguments);
   },
 
   warning: function(msg) {
-    this.log(this.levels.WARNING, msg);
+    this.log(this.levels.WARNING, msg, arguments);
   },
 
   error: function(msg) {
-    this.log(this.levels.ERROR, msg);
+    this.log(this.levels.ERROR, msg, arguments);
   },
 };
 
@@ -481,7 +490,7 @@ AdBan.prototype = {
 
   // net-channel-event-sinks category event handler
   onChannelRedirect: function(old_channel, new_channel, flags) {
-    logging.info('redirect from [' + old_channel.URI.spec + '] to  [' + new_channel.URI.spec + ']');
+    logging.info('redirect from [%s] to [%s]', old_channel.URI.spec, new_channel.URI.spec);
 
     // there is no need in verifying the old_channel, because it must be
     // already verified by shouldLoad() content-policy handler.
@@ -520,7 +529,7 @@ AdBan.prototype = {
       const doc = e.target;
       if (doc.location.href == this.LOGIN_URL) {
         const cookie = doc.cookie;
-        logging.info('login page captured. cookie=['+cookie+']');
+        logging.info('login page captured. cookie=[%s]', cookie);
         this._readAuthTokenFromCookie(cookie);
       }
       this._injectCssToDocument(e.target);
@@ -636,7 +645,7 @@ AdBan.prototype = {
   },
 
   sendUrlComplaint: function(site_url, comment, success_callback) {
-    logging.info('sending url complaint for site_url=['+site_url+'], comment=['+comment+']');
+    logging.info('sending url complaint for site_url=[%s], comment=[%s]', site_url, comment);
     const request_data = [site_url, comment];
     const request_url = this._SERVER_HOST + '/c';
 
@@ -655,7 +664,7 @@ AdBan.prototype = {
   },
 
   unsubscribeFromStateChange: function(listener_id) {
-    logging.info('unsubscribing from AdBan component state change. listener_id=['+listener_id+']');
+    logging.info('unsubscribing from AdBan component state change. listener_id=[%s]', listener_id);
     delete this._state_listeners[listener_id];
   },
 
@@ -663,7 +672,7 @@ AdBan.prototype = {
   _notifyStateListeners: function(is_active) {
     const state_listeners = this._state_listeners;
     for (let listener_id in state_listeners) {
-      logging.info('notifying AdBan component state listener ['+listener_id+']');
+      logging.info('notifying AdBan component state listener [%s]', listener_id);
       state_listeners[listener_id](is_active);
     }
   },
@@ -684,7 +693,7 @@ AdBan.prototype = {
       const log_level_name = pref_branch.getCharPref('log-level');
       const log_level = logging.levels[log_level_name];
       if (log_level) {
-        logging.info('setting log_level to ['+log_level_name+']');
+        logging.info('setting log_level to [%s]', log_level_name);
         logging.setLogLevel(log_level);
       }
     }
@@ -698,7 +707,7 @@ AdBan.prototype = {
       cookie_pair = cookies[i].split('=');
       if (cookie_pair[0] == 'a') {
         const auth_token = cookie_pair[1];
-        logging.info('auth_token obtained from cookie=['+auth_token+']');
+        logging.info('auth_token=[%s] obtained from cookie', auth_token);
         this._vars.auth_token = auth_token;
         // Initiate reading settings from the server after new auth token
         // has been obtained.
@@ -706,7 +715,7 @@ AdBan.prototype = {
         return;
       }
     }
-    logging.warning('cannot find auth token in cookie=['+cookie+']');
+    logging.warning('cannot find auth token in cookie=[%s]', cookie);
   },
 
   _startRepeatingTimer: function(timer, callback, interval) {
@@ -784,7 +793,7 @@ AdBan.prototype = {
         // It looks like css channels don't provide nsIDOMWindow
         // during redirects. Just silently skip this, because it is unclear
         // how to determine the request_origin in this case.
-        logging.warning('error when obtaining request origin from channel: ['+e+']');
+        logging.warning('error when obtaining request origin from channel: [%s]', e);
       }
     }
     return request_origin;
@@ -794,7 +803,7 @@ AdBan.prototype = {
     const data_dir = this._directory_service.get('ProfD', Ci.nsIFile);
     data_dir.append(this._DATA_DIRECTORY_NAME);
     if (!data_dir.exists() || !data_dir.isDirectory()) {
-      logging.info('creating data directory for AdBan plugin: ['+data_dir.path+']');
+      logging.info('creating data directory for AdBan plugin: [%s]', data_dir.path);
       data_dir.create(data_dir.DIRECTORY_TYPE, 0774);
     }
     return data_dir.clone();
@@ -803,28 +812,28 @@ AdBan.prototype = {
   _getFileForSettings: function() {
     const file = this._getDataDirectory();
     file.append(this._SETTINGS_FILENAME);
-    logging.info('file for settings is ['+file.path+']');
+    logging.info('file for settings is [%s]', file.path);
     return file;
   },
 
   _getFileForCaches: function() {
     const file = this._getDataDirectory();
     file.append(this._CACHE_FILENAME);
-    logging.info('file for caches is ['+file.path+']');
+    logging.info('file for caches is [%s]', file.path);
     return file;
   },
 
   _getFileForLogs: function() {
     const file = this._getDataDirectory();
     file.append(this._LOGS_FILENAME);
-    logging.info('file for logs is ['+file.path+']');
+    logging.info('file for logs is [%s]', file.path);
     return file;
   },
 
   _readJsonFromFileAsync: function(file, read_complete_callback) {
-    logging.info('start reading from the file=['+file.path+']');
+    logging.info('start reading from the file=[%s]', file.path);
     if (!file.exists()) {
-      logging.warning('the file ['+file.path+'] doesn\'t exist, skipping loading from file');
+      logging.warning('the file [%s] doesn\'t exist, skipping loading from file', file.path);
       return;
     }
     const ios = this._io_service;
@@ -834,17 +843,17 @@ AdBan.prototype = {
     const observer = {
         onStreamComplete : function(loader, context, status, length, result) {
           if (!Components.isSuccessCode(status)) {
-            logging.error('error when reading the file=['+file.path+'], status=['+status+']');
+            logging.error('error when reading the file=[%s], status=[%s]', file.path, status);
             return;
           }
           try {
             const json_data = that._converter.convertFromByteArray(result, length);
             const data = that._json_encoder.decode(json_data);
-            logging.info('stop reading from the file=['+file.path+']');
+            logging.info('stop reading from the file=[%s]', file.path);
             read_complete_callback(data);
           }
           catch(e) {
-            logging.error('error when reading and parsing json from the file=['+file.path+']: ['+e+']');
+            logging.error('error when reading and parsing json from the file=[%s]: [%s]', file.path, e);
           }
         },
     };
@@ -854,7 +863,7 @@ AdBan.prototype = {
   },
 
   _writeJsonToFileSync: function(file, data) {
-    logging.info('start writing to the file=['+file.path+']');
+    logging.info('start writing to the file=[%s]', file.path);
     const json_data = this._json_encoder.encode(data);
     const data_chunk = this._converter.ConvertFromUnicode(json_data);
     const output_stream = Cc['@mozilla.org/network/file-output-stream;1'].createInstance(Ci.nsIFileOutputStream);
@@ -864,7 +873,7 @@ AdBan.prototype = {
     // more complex and suffer from race conditions.
     output_stream.write(data_chunk, data_chunk.length);
     output_stream.close();
-    logging.info('stop writing to the file=['+file.path+']');
+    logging.info('stop writing to the file=[%s]', file.path);
   },
 
   _loadSettingsAsync: function() {
@@ -954,7 +963,7 @@ AdBan.prototype = {
       const s = doc.createElement('style');
       s.type = 'text/css';
       s.innerHTML = css_selectors + '{display: none !important;}';
-      logging.info('adding css selector=['+s.innerHTML+']');
+      logging.info('adding css selector=[%s]', s.innerHTML);
       doc.getElementsByTagName('head')[0].appendChild(s);
     }
   },
@@ -1006,14 +1015,14 @@ AdBan.prototype = {
       let url = urls[i];
       let cache_node = cache.get(url, current_date);
       if (!this._isStaleCacheNode(cache_node)) {
-        logging.info('the url ['+url+'] is already verified');
+        logging.info('the url [%s] is already verified', url);
         delete unverified_urls[url];
       }
     }
   },
 
   _openTab: function(tab_name, url) {
-    logging.info('opening a tab ['+tab_name+'], url=['+url+']');
+    logging.info('opening a tab [%s], url=[%s]', tab_name, url);
     // this code has been stolen from https://developer.mozilla.org/en/Code_snippets/Tabbed_browser#Reusing_tabs .
     const browser_window = this._window_mediator.getMostRecentWindow('navigator:browser');
     if (!browser_window) {
@@ -1028,17 +1037,17 @@ AdBan.prototype = {
     for (let i = 0; i < tabs_count; i++) {
       tab = tabs[i];
       if (tab.hasAttribute(attribute_name)) {
-        logging.info('the tab ['+tab_name+'] is already opened');
+        logging.info('the tab [%s] is already opened', tab_name);
         tab_browser.selectedTab = tab;
         return;
       }
     }
 
-    logging.info('openining new tab ['+tab_name+']');
+    logging.info('openining new tab [%s]', tab_name);
     tab = tab_browser.addTab(url);
     tab.setAttribute(attribute_name, 'true');
     tab_browser.selectedTab = tab;
-    logging.info('the tab ['+tab_name+'], url=['+url+'] has been opened');
+    logging.info('the tab [%s], url=[%s] has been opened', tab_name, url);
   },
 
   _showLoginPage: function() {
@@ -1053,7 +1062,7 @@ AdBan.prototype = {
     const error_codes = this._ERROR_CODES;
     const vars = this._vars;
 
-    logging.info('response_text=['+response_text+']');
+    logging.info('response_text=[%s]', response_text);
     const response_data = this._json_encoder.decode(response_text);
     const error_code = response_data[0];
     if (error_code == error_codes.NO_ERRORS) {
@@ -1063,11 +1072,11 @@ AdBan.prototype = {
     }
     else if (error_code == error_codes.AUTHENTICATION_ERROR ||
              error_code == error_codes.AUTHORIZATION_ERROR) {
-      logging.warning('authentication or authorization failed for auth_token=['+vars.auth_token+']. error_code='+error_code);
+      logging.warning('authentication or authorization failed for auth_token=[%s]. error_code=[%s]', vars.auth_token, error_code);
       vars.auth_token = '';
     }
     else {
-      logging.error('server responded with the error_code='+error_code+' for the request_text=['+request_text+']. response_text=['+response_text+']');
+      logging.error('server responded with the error_code=[%s] for the request_text=[%s]. response_text=[%s]', error_code, request_text, response_text);
     }
   },
 
@@ -1083,7 +1092,7 @@ AdBan.prototype = {
     };
 
     const request_text = this._json_encoder.encode([auth_token, request_data]);
-    logging.info('request_url=['+request_url+'], request_text=[' + request_text + ']');
+    logging.info('request_url=[%s], request_text=[%s]', request_url, request_text);
 
     const that = this;
     xhr.open('POST', request_url);
@@ -1095,11 +1104,11 @@ AdBan.prototype = {
             that._processJsonResponse(request_text, xhr.responseText, response_callback);
           }
           else {
-            logging.error('unexpected HTTP status code for the request_url=['+request_url+'], request_text=['+request_text+'], http_status=['+http_status+']');
+            logging.error('unexpected HTTP status code for the request_url=[%s], request_text=[%s], http_status=[%s]', request_url, request_text, http_status);
           }
         }
         catch(e) {
-          logging.error('error when processing json response=['+xhr.responseText+'] for the request_url=['+request_url+'], request_text=['+request_text+']: ['+e+']');
+          logging.error('error when processing json response=[%s] for the request_url=[%s], request_text=[%s]: [%s]', xhr.responseText, request_url, request_text, e);
         }
         finally {
           if (finish_callback) {
@@ -1276,16 +1285,16 @@ AdBan.prototype = {
       // override is_whitelist by per-site exception value if required.
       const url_exception_value = this._getUrlExceptionValue(request_origin_url);
       if (this._matchesRegexp(url_exception_value.whitelisted_canonical_urls, content_location_url)) {
-        logging.info('the content_location_url=['+content_location_url+'] is whitelisted via url exceptions for request_origin_url=['+request_origin_url+']');
+        logging.info('the content_location_url=[%s] is whitelisted via url exceptions for request_origin_url=[%s]', content_location_url, request_origin_url);
         is_whitelist = true;
       }
       else if (this._matchesRegexp(url_exception_value.blacklisted_canonical_urls, content_location_url)) {
-        logging.info('the content_location_url=['+content_location_url+'] is blacklisted via url exception for request_origin_url=['+request_origin_url+']');
+        logging.info('the content_location_url=[%s] is blacklisted via url exceptions for request_origin_url=[%s]', content_location_url, request_origin_url);
         is_whitelist = false;
       }
     }
 
-    logging.info('is_whitelist='+is_whitelist+', original=['+content_location.spec+'], content_location_url=['+content_location_url+'], request_origin_url=['+request_origin_url+']');
+    logging.info('is_whitelist=[%s], original=[%s], conten_location_url=[%s], request_origin_url=[%s]', is_whitelist, content_location.spec, content_location_url, request_origin_url);
     return is_whitelist;
   },
 };
