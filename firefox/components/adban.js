@@ -577,7 +577,7 @@ AdBan.prototype = {
           vars.is_in_private_mode = true;
         }
       }
-      catch (e) {
+      catch(e) {
         logging.warning('it seems the browser doesn\'t support private browsing');
       }
       this._converter.charset = 'UTF-8';
@@ -796,7 +796,7 @@ AdBan.prototype = {
         }
         request_origin = this._createUri(origin_url);
       }
-      catch (e) {
+      catch(e) {
         // It looks like css channels don't provide nsIDOMWindow
         // during redirects. Just silently skip this, because it is unclear
         // how to determine the request_origin in this case.
@@ -854,11 +854,16 @@ AdBan.prototype = {
             logging.error('error when reading the file=['+file.path+'], status=['+status+']');
             return;
           }
-          const json_data = that._converter.convertFromByteArray(result, length);
-          const data = that._json_encoder.decode(json_data);
-          logging.info('stop reading from the file=['+file.path+']');
-          read_complete_callback(data);
-        }
+          try {
+            const json_data = that._converter.convertFromByteArray(result, length);
+            const data = that._json_encoder.decode(json_data);
+            logging.info('stop reading from the file=['+file.path+']');
+            read_complete_callback(data);
+          }
+          catch(e) {
+            logging.error('error when reading and parsing json from the file=['+file.path+']: ['+e+']');
+          }
+        },
     };
     const stream_loader = Cc['@mozilla.org/network/stream-loader;1'].createInstance(Ci.nsIStreamLoader);
     stream_loader.init(observer);
@@ -1103,6 +1108,9 @@ AdBan.prototype = {
           else {
             logging.error('unexpected HTTP status code for the request_url=['+request_url+'], request_text=['+request_text+'], http_status=['+http_status+']');
           }
+        }
+        catch(e) {
+          logging.error('error when processing json response=['+xhr.responseText+'] for the request_url=['+request_url+'], request_text=['+request_text+']: ['+e+']');
         }
         finally {
           if (finish_callback) {
