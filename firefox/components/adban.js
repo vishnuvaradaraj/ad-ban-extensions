@@ -55,9 +55,9 @@ const logging = {
       log_stream.flush();
     }
     else {
+      dump(log_string);
       this._pending_messages.push(log_string);
     }
-    dump(log_string);
   },
 
   log: function(level, msg) {
