@@ -2,6 +2,7 @@
 
 #adban-button {
   -moz-box-orient: horizontal;
+  list-style-image: none;
 }
 
 #adban-button .toolbarbutton-text {
