@@ -5,6 +5,73 @@ const Cr = Components.results;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
+const logging = {
+  levels: {
+      INFO: ['INFO', 10],
+      WARNING: ['WARNING', 20],
+      ERROR: ['ERROR', 30],
+  },
+
+  _log_stream: null,
+  _level_id: 0,
+  _pending_messages: [],
+
+  init: function() {
+    const app_info = Cc['@mozilla.org/xre/app-info;1'].getService(Ci.nsIXULAppInfo);
+    this._log(app_info.name+' '+app_info.version+', appBuildId=['+app_info.appBuildID+'], ID=['+app_info.ID+'], vendor=['+app_info.vendor+'], platformBuildID=['+app_info.platformBuildID+'], platformVersion=['+app_info.platformVersion+']\n');
+  },
+
+  setLogLevel: function(level) {
+    this._level_id = level[1];
+  },
+
+  setLogStream: function(log_stream) {
+    this._log_stream = log_stream;
+    if (log_stream) {
+      const pending_messages = this._pending_messages;
+      const pending_messages_length = pending_messages.length;
+      for (let i = 0; i < pending_messages_length; i++) {
+        log_stream.writeString(pending_messages[i]);
+      }
+      log_stream.flush();
+      this._pending_messages = [];
+    }
+  },
+
+  _log: function(log_string) {
+    const log_stream = this._log_stream;
+    if (log_stream) {
+      log_stream.writeString(log_string);
+      log_stream.flush();
+    }
+    else {
+      this._pending_messages.push(log_string);
+    }
+    dump(log_string);
+  },
+
+  log: function(level, msg) {
+    if (level[1] < this._level_id) {
+      return;
+    }
+    const date_string = (new Date()).toString();
+    const log_string = '['+date_string+'] ['+level[0]+']: '+msg+'\n';
+    this._log(log_string);
+  },
+
+  info: function(msg) {
+    this.log(this.levels.INFO, msg);
+  },
+
+  warning: function(msg) {
+    this.log(this.levels.WARNING, msg);
+  },
+
+  error: function(msg) {
+    this.log(this.levels.ERROR, msg);
+  },
+};
+
 const getCommonPrefixLength = function(s1, s2) {
   const s1_length = s1.length;
   for (let i = 0; i < s1_length; i++) {
@@ -305,6 +372,9 @@ const urlExceptionValueConstructor = function(d) {
 };
 
 const adban = function() {
+  // TODO: update this to WARNING in prod.
+  logging.setLogLevel(logging.levels.INFO);
+
   this.LOGIN_URL = this._SERVER_HOST + '/ff/login';
   this.HELP_URL = this._SERVER_HOST + '/ff/help';
   this.FIRST_RUN_URL = this._SERVER_HOST + '/ff/first_run';
@@ -336,6 +406,7 @@ adban.prototype = {
   _DATA_DIRECTORY_NAME: 'adban',
   _SETTINGS_FILENAME: 'settings.json',
   _CACHE_FILENAME: 'cache.json',
+  _LOGS_FILENAME: 'log.txt',
   _FILTERED_SCHEMES: {
       http: true,
       https: true,
@@ -365,6 +436,9 @@ adban.prototype = {
   _verify_urls_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _update_current_date_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _update_settings_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
+
+  // this logging must be accessible outside the AdBan component.
+  logging: logging,
 
   // component's settings. New values for these settings are periodically read
   // from the server.
@@ -417,7 +491,7 @@ adban.prototype = {
 
   // net-channel-event-sinks category event handler
   onChannelRedirect: function(old_channel, new_channel, flags) {
-    dump('redirect from [' + old_channel.URI.spec + '] to  [' + new_channel.URI.spec + ']\n');
+    logging.info('redirect from [' + old_channel.URI.spec + '] to  [' + new_channel.URI.spec + ']');
 
     // there is no need in verifying the old_channel, because it must be
     // already verified by shouldLoad() content-policy handler.
@@ -456,7 +530,7 @@ adban.prototype = {
       const doc = e.target;
       if (doc.location.href == this.LOGIN_URL) {
         const cookie = doc.cookie;
-        dump('login page captured. cookie=['+cookie+']\n');
+        logging.info('login page captured. cookie=['+cookie+']');
         this._readAuthTokenFromCookie(cookie);
       }
       this._injectCssToDocument(e.target);
@@ -468,24 +542,27 @@ adban.prototype = {
     const observer_service = this._observer_service;
     const vars = this._vars;
     if (topic == 'app-startup') {
-      dump('app-startup\n');
+      logging.init();
+      logging.info('app-startup');
       // perform initialization at 'profile-after-change' step,
       // which is the only available in FF4.
       // See https://developer.mozilla.org/en/XPCOM/XPCOM_changes_in_Gecko_2.0 .
       observer_service.addObserver(this, 'profile-after-change', false);
     }
     else if (topic == 'profile-after-change') {
-      dump('profile-after-change\n');
+      logging.info('profile-after-change');
+      this._initGlobalLogStream();
       observer_service.addObserver(this, 'quit-application', false);
       observer_service.addObserver(this, 'private-browsing', false);
       try {
         const private_browsing_service = Cc['@mozilla.org/privatebrowsing;1'].getService(Ci.nsIPrivateBrowsingService);
         if (private_browsing_service.privateBrowsingEnabled) {
+          logging.info('private mode is on at browser start');
           vars.is_in_private_mode = true;
         }
       }
       catch (e) {
-        dump('it seems the browser doesn\'t support private browsing\n');
+        logging.warning('it seems the browser doesn\'t support private browsing');
       }
       this._converter.charset = 'UTF-8';
       this._loadSettingsAsync();
@@ -493,7 +570,7 @@ adban.prototype = {
       this.start();
     }
     else if (topic == 'private-browsing') {
-      dump('private-browsing: ['+data+']\n');
+      logging.info('private-browsing: ['+data+']');
       if (data == 'enter') {
         // save current caches to local storage, so they can be loaded later
         // after exiting the private mode. Caches created during private mode
@@ -520,7 +597,7 @@ adban.prototype = {
       }
     }
     else if (topic == 'quit-application') {
-      dump('quit-application\n');
+      logging.info('quit-application');
       this.stop();
       if (!vars.is_in_private_mode) {
         // caches cannot be stored asynchronously here, since the browser
@@ -538,6 +615,7 @@ adban.prototype = {
   start: function() {
     const vars = this._vars;
     if (vars.is_active) {
+      logging.warning('AdBan component already started');
       return;
     }
     const category_manager = this._category_manager;
@@ -546,12 +624,13 @@ adban.prototype = {
     this._startTimers();
     vars.is_active = true;
     this._notifyStateListeners(true);
-    dump('AdBan component has been started\n');
+    logging.info('AdBan component has been started');
   },
 
   stop: function() {
     const vars = this._vars;
     if (!vars.is_active) {
+      logging.warning('AdBan component already stopped');
       return;
     }
     this._stopTimers();
@@ -560,10 +639,11 @@ adban.prototype = {
     category_manager.deleteCategoryEntry('content-policy', this.classDescription, false);
     vars.is_active = false;
     this._notifyStateListeners(false);
-    dump('AdBan component has been stopped\n');
+    logging.info('AdBan component has been stopped');
   },
 
   sendUrlComplaint: function(site_url, comment, success_callback) {
+    logging.info('sending url complaint for site_url=['+site_url+'], comment=['+comment+']');
     const request_data = [site_url, comment];
     const request_url = this._SERVER_HOST + '/c';
 
@@ -574,6 +654,7 @@ adban.prototype = {
   },
 
   subscribeToStateChange: function(state_change_callback) {
+    logging.info('subscribing to AdBan component state change');
     const listener_id = this._last_state_listener_id++;
     this._state_listeners[listener_id] = state_change_callback;
     state_change_callback(this._vars.is_active);
@@ -581,18 +662,31 @@ adban.prototype = {
   },
 
   unsubscribeFromStateChange: function(listener_id) {
+    logging.info('unsubscribing from AdBan component state change. listener_id=['+listener_id+']');
     delete this._state_listeners[listener_id];
   },
 
+  // private methods.
   _notifyStateListeners: function(is_active) {
     const state_listeners = this._state_listeners;
     for (let listener_id in state_listeners) {
-      dump('notifying listener ['+listener_id+']\n');
+      logging.info('notifying AdBan component state listener ['+listener_id+']');
       state_listeners[listener_id](is_active);
     }
   },
 
-  // private methods.
+  _initGlobalLogStream: function() {
+    logging.info('initializing global log stream');
+    const log_file = this._getFileForLogs();
+    const log_file_stream = Cc["@mozilla.org/network/file-output-stream;1"].createInstance(Ci.nsIFileOutputStream);
+    const io_flags = 0x02 | 0x08 | 0x10;  // open for writing (0x02), create if doesn't exist (0x08) and appending (0x10).
+    log_file_stream.init(log_file, io_flags, -1, 0);
+    const log_stream = Cc["@mozilla.org/intl/converter-output-stream;1"].createInstance(Ci.nsIConverterOutputStream);
+    log_stream.init(log_file_stream, 'UTF-8', 0, 0);
+    logging.setLogStream(log_stream);
+    logging.info('global log stream has been initialized');
+  },
+
   _readAuthTokenFromCookie: function(cookie) {
     const cookies = cookie.split(/;\s*/);
     const cookies_length = cookies.length;
@@ -601,7 +695,7 @@ adban.prototype = {
       cookie_pair = cookies[i].split('=');
       if (cookie_pair[0] == 'a') {
         const auth_token = cookie_pair[1];
-        dump('auth_token obtained from cookie=['+auth_token+']\n');
+        logging.info('auth_token obtained from cookie=['+auth_token+']');
         this._vars.auth_token = auth_token;
         // Initiate reading settings from the server after new auth token
         // has been obtained.
@@ -609,7 +703,7 @@ adban.prototype = {
         return;
       }
     }
-    dump('cannot find auth token');
+    logging.warning('cannot find auth token in cookie=['+cookie+']');
   },
 
   _startRepeatingTimer: function(timer, callback, interval) {
@@ -620,6 +714,7 @@ adban.prototype = {
   },
 
   _startTimers: function() {
+    logging.info('starting AdBan component timers');
     const that = this;
     const settings = this._settings;
 
@@ -639,13 +734,16 @@ adban.prototype = {
         this._update_settings_timer,
         function() { that._readSettingsFromServer(); },
         settings.update_settings_interval);
+    logging.info('AdBan component timers have been started');
   },
 
   _stopTimers: function() {
+    logging.info('stopping AdBan component timers');
     // canceled timers can be re-used later.
     // See https://developer.mozilla.org/En/nsITimer#cancel() .
     this._update_current_date_timer.cancel();
     this._update_settings_timer.cancel();
+    logging.info('AdBan component timers have been stopped');
   },
 
   _createUri: function(url) {
@@ -673,6 +771,7 @@ adban.prototype = {
         // It looks like css channels don't provide nsIDOMWindow
         // during redirects. Just silently skip this, because it is unclear
         // how to determine the request_origin in this case.
+        logging.warning('error when obtaining request origin from channel: ['+e+']');
       }
     }
     return request_origin;
@@ -682,27 +781,38 @@ adban.prototype = {
     const data_dir = this._directory_service.get('ProfD', Ci.nsIFile);
     data_dir.append(this._DATA_DIRECTORY_NAME);
     if (!data_dir.exists() || !data_dir.isDirectory()) {
+      logging.info('creating data directory for AdBan plugin: ['+data_dir.path+']');
       data_dir.create(data_dir.DIRECTORY_TYPE, 0774);
     }
-    return data_dir;
+    logging.info('data directory for AdBan plugin is ['+data_dir.path+']');
+    return data_dir.clone();
   },
 
   _getFileForSettings: function() {
-    const file = this._getDataDirectory().clone();
+    const file = this._getDataDirectory();
     file.append(this._SETTINGS_FILENAME);
+    logging.info('file for settings is ['+file.path+']');
     return file;
   },
 
   _getFileForCaches: function() {
-    const file = this._getDataDirectory().clone();
+    const file = this._getDataDirectory();
     file.append(this._CACHE_FILENAME);
+    logging.info('file for caches is ['+file.path+']');
+    return file;
+  },
+
+  _getFileForLogs: function() {
+    const file = this._getDataDirectory();
+    file.append(this._LOGS_FILENAME);
+    logging.info('file for logs is ['+file.path+']');
     return file;
   },
 
   _readJsonFromFileAsync: function(file, read_complete_callback) {
-    dump('start reading from the file=['+file.path+']\n');
+    logging.info('start reading from the file=['+file.path+']');
     if (!file.exists()) {
-      dump('the file ['+file.path+'] doesn\'t exist, skipping loading from file\n');
+      logging.warning('the file ['+file.path+'] doesn\'t exist, skipping loading from file');
       return;
     }
     const ios = this._io_service;
@@ -712,12 +822,12 @@ adban.prototype = {
     const observer = {
         onStreamComplete : function(loader, context, status, length, result) {
           if (!Components.isSuccessCode(status)) {
-            dump('error when reading the file=['+file.path+'], status=['+status+']\n');
+            logging.error('error when reading the file=['+file.path+'], status=['+status+']');
             return;
           }
           const json_data = that._converter.convertFromByteArray(result, length);
           const data = that._json_encoder.decode(json_data);
-          dump('stop reading from the file=['+file.path+']\n');
+          logging.info('stop reading from the file=['+file.path+']');
           read_complete_callback(data);
         }
     };
@@ -727,7 +837,7 @@ adban.prototype = {
   },
 
   _writeJsonToFileSync: function(file, data) {
-    dump('start writing to the file=['+file.path+']\n');
+    logging.info('start writing to the file=['+file.path+']');
     const json_data = this._json_encoder.encode(data);
     const data_chunk = this._converter.ConvertFromUnicode(json_data);
     const output_stream = Cc['@mozilla.org/network/file-output-stream;1'].createInstance(Ci.nsIFileOutputStream);
@@ -737,30 +847,35 @@ adban.prototype = {
     // more complex and suffer from race conditions.
     output_stream.write(data_chunk, data_chunk.length);
     output_stream.close();
-    dump('stop writing to the file=['+file.path+']\n');
+    logging.info('stop writing to the file=['+file.path+']');
   },
 
   _loadSettingsAsync: function() {
+    logging.info('loading AdBan settings from file');
     const file = this._getFileForSettings();
     const that = this;
     const read_complete_callback = function(data) {
       that._vars.auth_token = data[0];
       that._settings.import(data[1]);
       that._readSettingsFromServer();
+      logging.info('AdBan settings have been loaded from file');
     };
     this._readJsonFromFileAsync(file, read_complete_callback);
   },
 
   _saveSettingsSync: function() {
+    logging.info('saving AdBan settings to file');
     const data = [
       this._vars.auth_token,
       this._settings.export(),
     ];
     const file = this._getFileForSettings();
     this._writeJsonToFileSync(file, data);
+    logging.info('AdBan settings have been saved to file');
   },
 
   _loadCachesAsync: function() {
+    logging.info('loading AdBan caches from file');
     const that = this;
     const vars = this._vars;
     const node_delete_timeout = this._settings.node_delete_timeout;
@@ -778,11 +893,13 @@ adban.prototype = {
           urlExceptionValueConstructor);
       vars.url_cache = url_cache;
       vars.url_exception_cache = url_exception_cache;
+      logging.info('AdBan caches have been loaded from file');
     };
     this._readJsonFromFileAsync(file, read_complete_callback);
   },
 
   _saveCachesSync: function() {
+    logging.info('saving AdBan caches to file');
     const vars = this._vars;
     const current_date = vars.current_date;
     const url_cache = vars.url_cache;
@@ -793,6 +910,7 @@ adban.prototype = {
     ]
     const file = this._getFileForCaches();
     this._writeJsonToFileSync(file, data);
+    logging.info('AdBan caches have been saved to file');
   },
 
   _shouldProcessUri: function(url) {
@@ -800,11 +918,11 @@ adban.prototype = {
   },
 
   _injectCssToDocument: function(doc) {
-    const site_uri = this._createUri(doc.location.href);
+    const site_url = doc.location.href;
+    const site_uri = this._createUri(site_url);
     if (!this._shouldProcessUri(site_uri)) {
       return;
     }
-
     const canonical_site_url = this._getCanonicalUrl(site_uri);
     const url_exception_value = this._getUrlExceptionValue(canonical_site_url);
     const css_selectors = url_exception_value.css_selectors;
@@ -813,7 +931,7 @@ adban.prototype = {
       const s = doc.createElement('style');
       s.type = 'text/css';
       s.innerHTML = css_selectors.join(',') + '{display: none !important;}';
-      dump('adding css selector=['+s.innerHTML+']\n');
+      logging.info('adding css selector=['+s.innerHTML+']');
       doc.getElementsByTagName('head')[0].appendChild(s);
     }
   },
@@ -901,7 +1019,7 @@ adban.prototype = {
       const url = urls[i];
       const cache_node = url_cache.get(url, vars.current_date);
       if (!this._isStaleCacheNode(cache_node)) {
-        dump('the url [' + url + '] is already verified\n');
+        logging.info('the url [' + url + '] is already verified');
         delete unverified_urls[url];
       }
     }
@@ -916,17 +1034,18 @@ adban.prototype = {
       const url = urls[i];
       const cache_node = url_exception_cache.get(url, vars.current_date);
       if (!this._isStaleCacheNode(cache_node)) {
-        dump('the url [' + url + '] is already verified\n');
+        logging.info('the exception url [' + url + '] is already verified');
         delete unverified_url_exceptions[url];
       }
     }
   },
 
   _openTab: function(tab_name, url) {
+    logging.info('opening a tab ['+tab_name+'], url=['+url+']');
     // this code has been stolen from https://developer.mozilla.org/en/Code_snippets/Tabbed_browser#Reusing_tabs .
     const browser_window = this._window_mediator.getMostRecentWindow('navigator:browser');
     if (!browser_window) {
-      dump('there are no open browser windows\n');
+      logging.error('there are no open browser windows');
       return;
     }
     const attribute_name = 'adban-tab-' + tab_name;
@@ -937,16 +1056,17 @@ adban.prototype = {
     for (let i = 0; i < tabs_count; i++) {
       tab = tabs[i];
       if (tab.hasAttribute(attribute_name)) {
-        dump('the tab ['+tab_name+'] is already opened\n');
+        logging.info('the tab ['+tab_name+'] is already opened');
         tab_browser.selectedTab = tab;
         return;
       }
     }
 
-    dump('openining new tab ['+tab_name+']\n');
+    logging.info('openining new tab ['+tab_name+']');
     tab = tab_browser.addTab(url);
     tab.setAttribute(attribute_name, 'true');
     tab_browser.selectedTab = tab;
+    logging.info('the tab ['+tab_name+'], url=['+url+'] has been opened');
   },
 
   _showLoginPage: function() {
@@ -961,7 +1081,7 @@ adban.prototype = {
     const error_codes = this._ERROR_CODES;
     const vars = this._vars;
 
-    dump('response_text=['+response_text+']\n');
+    logging.info('response_text=['+response_text+']');
     const response_data = this._json_encoder.decode(response_text);
     const error_code = response_data[0];
     if (error_code == error_codes.NO_ERRORS) {
@@ -971,18 +1091,18 @@ adban.prototype = {
     }
     else if (error_code == error_codes.AUTHENTICATION_ERROR ||
              error_code == error_codes.AUTHORIZATION_ERROR) {
-      dump('authentication or authorization failed for auth_token=['+vars.auth_token+']. error_code='+error_code+'\n');
+      logging.warning('authentication or authorization failed for auth_token=['+vars.auth_token+']. error_code='+error_code);
       vars.auth_token = '';
     }
     else {
-      dump('server responded with the error_code='+error_code+' for the request_text=['+request_text+']. response_text=['+response_text+']\n');
+      logging.error('server responded with the error_code='+error_code+' for the request_text=['+request_text+']. response_text=['+response_text+']');
     }
   },
 
   _startJsonRequest: function(xhr, request_url, request_data, response_callback, finish_callback) {
     const auth_token = this._vars.auth_token;
     if (auth_token == '') {
-      dump('the user must be authenticated\n');
+      logging.info('the user must be authenticated');
       this._showLoginPage();
       if (finish_callback) {
         finish_callback();
@@ -991,7 +1111,7 @@ adban.prototype = {
     };
 
     const request_text = this._json_encoder.encode([auth_token, request_data]);
-    dump('request_url=['+request_url+'], request_text=[' + request_text + ']\n');
+    logging.info('request_url=['+request_url+'], request_text=[' + request_text + ']');
 
     const that = this;
     xhr.open('POST', request_url);
@@ -1003,7 +1123,7 @@ adban.prototype = {
             that._processJsonResponse(request_text, xhr.responseText, response_callback);
           }
           else {
-            dump('unexpected HTTP status code for the request_url=['+request_url+'], request_text=['+request_text+'], http_status=['+http_status+']\n');
+            logging.error('unexpected HTTP status code for the request_url=['+request_url+'], request_text=['+request_text+'], http_status=['+http_status+']');
           }
         }
         finally {
@@ -1078,11 +1198,11 @@ adban.prototype = {
     if (vars.is_url_verifier_active || this._isUnverifiedUrlsEmpty()) {
       return;
     }
-    dump('!!!!url verifier started\n');
+    logging.info('url verifier started');
     vars.is_url_verifier_active = true;
     const that = this;
     const verification_complete_callback = function() {
-      dump('!!!!url verifier stopped\n');
+      logging.info('url verifier stopped');
       vars.is_url_verifier_active = false;
       that._launchUrlVerifier();
     };
@@ -1190,7 +1310,7 @@ adban.prototype = {
       }
     }
 
-    dump('is_whitelist='+is_whitelist+', original=['+content_location.spec+'], content_location_url=['+content_location_url+'], request_origin_url=['+request_origin_url+']\n');
+    logging.info('is_whitelist='+is_whitelist+', original=['+content_location.spec+'], content_location_url=['+content_location_url+'], request_origin_url=['+request_origin_url+']');
     return is_whitelist;
   },
 };
