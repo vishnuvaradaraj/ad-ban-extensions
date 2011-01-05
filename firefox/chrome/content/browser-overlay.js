@@ -53,12 +53,17 @@ let firstRun = function() {
     logging.warning('there is no navigation bar in the current window');
     return;
   }
+  if ($('adban-complaint-button')) {
+    logging.warning('the adban-complaint-button is already installed (though it is unclear how it is possible)');
+    return;
+  }
   if ($('adban-button')) {
     logging.warning('the adban-button is already installed (though it is unclear how it is possble)');
     return;
   }
 
-  logging.info('adding adban-button to navigation bar');
+  logging.info('adding adban buttons to navigation bar');
+  nav_bar.insertItem('adban-complaint-button', null, null, false);
   nav_bar.insertItem('adban-button', null, null, false);
 
   // this 'magic' is necessary for stupid FF, which can't properly handle
@@ -66,7 +71,7 @@ let firstRun = function() {
   // See http://forums.mozillazine.org/viewtopic.php?t=189667 .
   nav_bar.setAttribute('currentset', nav_bar.currentSet);
   document.persist('nav-bar', 'currentset');
-  logging.info('adban-button must be added to navigation bar');
+  logging.info('adban buttons must be added to navigation bar');
 };
 
 let verifyFirstRun = function(verification_complete_callback) {
