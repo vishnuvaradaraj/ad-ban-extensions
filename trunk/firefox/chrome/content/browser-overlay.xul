@@ -17,16 +17,23 @@
 
   <popupset>
     <menupopup id="adban-menupopup" position="after_end">
-      <menuitem label="&adban.menuitem.complaint;" command="cmd-adban-complaint"/>
+      <menuitem label="&adban.menuitem.complaint;" command="cmd-adban-complaint" tooltiptext="&adban.menuitem.complaint.tooltiptext;"/>
       <menuseparator/>
-      <menuitem label="&adban.menuitem.start;" command="cmd-adban-start"/>
-      <menuitem label="&adban.menuitem.stop;" command="cmd-adban-stop"/>
+      <menuitem label="&adban.menuitem.start;" command="cmd-adban-start" tooltiptext="&adban.menuitem.start.tooltiptext;"/>
+      <menuitem label="&adban.menuitem.stop;" command="cmd-adban-stop" tooltiptext="&adban.menuitem.stop.tooltiptext;"/>
       <menuseparator/>
       <menuitem label="&adban.menuitem.help;" command="cmd-adban-help"/>
     </menupopup>
   </popupset>
 
   <toolbarpalette id="BrowserToolbarPalette">
+    <toolbarbutton
+      id="adban-complaint-button"
+      label="&adban.complaint-button.label;"
+      class="toolbarbutton-1"
+      tooltiptext="&adban.complaint-button.tooltiptext;"
+      command="cmd-adban-complaint"
+    />
     <toolbarbutton
       id="adban-button"
       label="AdBan"
