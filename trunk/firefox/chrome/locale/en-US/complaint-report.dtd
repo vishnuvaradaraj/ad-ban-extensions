@@ -9,10 +9,4 @@
   Enter brief description of the problem you noticed on the given page.
   This problem will be investigated and probably resolved in the near future
 ">
-<!ENTITY adban.complaint-dialog.reload-page-notification.label "
-  Note that AdBan can leave ads during the first page load on the given site.
-  If ads disappear after reloading the page, then there is no need in reporting
-  about this
-">
-<!ENTITY adban.complaint-dialog.reload-page-checkbox.label "I reloaded the page, but the problem still exists">
 
