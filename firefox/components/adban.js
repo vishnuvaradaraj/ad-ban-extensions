@@ -799,21 +799,18 @@ AdBan.prototype = {
   _getFileForSettings: function() {
     const file = this._getDataDirectory();
     file.append(this._SETTINGS_FILENAME);
-    logging.info('file for settings is [%s]', file.path);
     return file;
   },
 
   _getFileForCaches: function() {
     const file = this._getDataDirectory();
     file.append(this._CACHE_FILENAME);
-    logging.info('file for caches is [%s]', file.path);
     return file;
   },
 
   _getFileForLogs: function() {
     const file = this._getDataDirectory();
     file.append(this._LOGS_FILENAME);
-    logging.info('file for logs is [%s]', file.path);
     return file;
   },
 
