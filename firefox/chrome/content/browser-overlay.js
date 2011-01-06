@@ -166,11 +166,6 @@ let init = function() {
   $('cmd-adban-complaint').addEventListener('command', cmdComplaint, false);
   $('cmd-adban-help').addEventListener('command', cmdHelp, false);
 
-  // DOMFrameContentLoaded doesn't work as expected,
-  // while DOMContentLoaded catches iframes and frames.
-  // see https://developer.mozilla.org/en/Gecko-Specific_DOM_Events .
-  gBrowser.addEventListener('DOMContentLoaded', adban, true);
-
   window.addEventListener('unload', shutdown, false);
   logging.info('browser-overlay has been initialized');
 };
@@ -178,7 +173,6 @@ let init = function() {
 let shutdown = function() {
   logging.info('shutting down browser-overlay');
   adban.unsubscribeFromStateChange(state_listener_id);
-  gBrowser.removeEventListener('DOMContentLoaded', adban, true);
 
   $('cmd-adban-stop').removeEventListener('command', cmdStop, false);
   $('cmd-adban-start').removeEventListener('command', cmdStart, false);
