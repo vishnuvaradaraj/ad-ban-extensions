@@ -388,7 +388,6 @@ AdBan.prototype = {
   QueryInterface: XPCOMUtils.generateQI([
       Ci.nsIChannelEventSink,
       Ci.nsIContentPolicy,
-      Ci.nsIDOMEventListener,
       Ci.nsIObserver,
   ]),
 
@@ -519,28 +518,14 @@ AdBan.prototype = {
     return this._ACCEPT;
   },
 
-  // nsIDOMEventListener implementation
-  handleEvent: function(e) {
-    if (!this._vars.is_active) {
-      return;
-    }
-
-    if (e.type == 'DOMContentLoaded') {
-      const doc = e.target;
-      if (doc.location.href == this.LOGIN_URL) {
-        const cookie = doc.cookie;
-        logging.info('login page captured. cookie=[%s]', cookie);
-        this._readAuthTokenFromCookie(cookie);
-      }
-      this._injectCssToDocument(e.target);
-    }
-  },
-
   // nsIObserver implementation
   observe: function(subject, topic, data) {
     const observer_service = this._observer_service;
     const vars = this._vars;
-    if (topic == 'app-startup') {
+    if (topic == 'content-document-global-created') {
+      this._handleNewDocument(subject.document);
+    }
+    else if (topic == 'app-startup') {
       logging.info('app-startup');
       // perform initialization at 'profile-after-change' step,
       // which is the only available in FF4.
@@ -552,6 +537,7 @@ AdBan.prototype = {
       this._setupLogging();
       observer_service.addObserver(this, 'quit-application', false);
       observer_service.addObserver(this, 'private-browsing', false);
+      observer_service.addObserver(this, 'content-document-global-created', false);
       try {
         const private_browsing_service = Cc['@mozilla.org/privatebrowsing;1'].getService(Ci.nsIPrivateBrowsingService);
         if (private_browsing_service.privateBrowsingEnabled) {
@@ -607,6 +593,7 @@ AdBan.prototype = {
         // This can leave locally stored caches in inconsistent state.
         this._saveCachesSync();
       }
+      observer_service.removeObserver(this, 'content-document-global-created');
       observer_service.removeObserver(this, 'private-browsing');
       observer_service.removeObserver(this, 'profile-after-change');
       observer_service.removeObserver(this, 'quit-application');
@@ -949,10 +936,11 @@ AdBan.prototype = {
     return (url.scheme in this._FILTERED_SCHEMES);
   },
 
-  _injectCssToDocument: function(doc) {
-    const site_url = doc.location.href;
+  _injectCssToDocument: function(doc, site_url) {
+    logging.info('trying to inject css to the document=[%s]', site_url);
     const site_uri = this._createUri(site_url);
     if (!this._shouldProcessUri(site_uri)) {
+      logging.info('don\'t inject css to the document=[%s]', site_url);
       return;
     }
     const canonical_site_url = this._getCanonicalUrl(site_uri);
@@ -962,9 +950,25 @@ AdBan.prototype = {
     if (css_selectors) {
       const s = doc.createElement('style');
       s.type = 'text/css';
-      s.innerHTML = css_selectors + '{display: none !important;}';
-      logging.info('adding css selector=[%s]', s.innerHTML);
+      const html = css_selectors + '{display: none !important;}';
+      logging.info('adding css selector=[%s] to the document=[%s]', html, site_url);
+      s.innerHTML = html;
       doc.getElementsByTagName('head')[0].appendChild(s);
+    }
+  },
+
+  _handleNewDocument: function(doc) {
+    const site_url = doc.location.href;
+    if (!site_url) {
+      return;
+    }
+    if (site_url == this.LOGIN_URL) {
+      const cookie = doc.cookie;
+      logging.info('login page=[%s] captured. cookie=[%s]', site_url, cookie);
+      this._readAuthTokenFromCookie(cookie);
+    }
+    if (this._vars.is_active) {
+      this._injectCssToDocument(doc, site_url);
     }
   },
 
