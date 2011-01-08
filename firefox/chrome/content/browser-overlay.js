@@ -108,11 +108,11 @@ let onStateChange = function(is_active) {
   }
   if (is_active) {
     stateToggle(cmd_adban_stop, cmd_adban_start);
-    adban_button.label = 'AdBan: ' + _('on');
+    adban_button.label = 'AdBan ' + _('on');
   }
   else {
     stateToggle(cmd_adban_start, cmd_adban_stop);
-    adban_button.label = 'AdBan: ' + _('off');
+    adban_button.label = 'AdBan ' + _('off');
   }
 };
 
