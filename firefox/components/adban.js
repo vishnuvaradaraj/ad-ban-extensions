@@ -960,7 +960,7 @@ AdBan.prototype = {
       const s = doc.createElement('style');
       s.type = 'text/css';
       s.innerHTML = css_selectors + '{display: none !important;}';
-      logging.info('adding css selector=[%s]', s.innerHTML);
+      logging.info('adding css selector=[%s] to the site_url=[%s]', s.innerHTML, site_url);
       doc.getElementsByTagName('head')[0].appendChild(s);
     }
   },
