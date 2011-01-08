@@ -45,7 +45,7 @@ let openTab = function(url) {
   setTimeout(open_tab_callback, 10);
 };
 
-let firstRun = function() {
+let firstRunSetup = function() {
   openTab(adban.FIRST_RUN_URL);
 
   const nav_bar = $('nav-bar');
@@ -72,25 +72,6 @@ let firstRun = function() {
   nav_bar.setAttribute('currentset', nav_bar.currentSet);
   document.persist('nav-bar', 'currentset');
   logging.info('adban buttons must be added to navigation bar');
-};
-
-let verifyFirstRun = function(verification_complete_callback) {
-  const extensions_getter_callback = function(extensions) {
-    const extension = extensions.get(adban.EXTENSION_ID);
-    if (extension.firstRun) {
-      logging.info('the AdBan first run');
-      firstRun();
-    }
-    verification_complete_callback();
-  };
-  if (Application.extensions) {
-    // Firefox 3.6
-    extensions_getter_callback(Application.extensions);
-  }
-  else {
-    // Firefox 4+
-    Application.getExtensions(extensions_getter_callback);
-  }
 };
 
 let stateToggle = function(from, to) {
@@ -148,16 +129,18 @@ let state_listener_id;
 
 let init = function() {
   logging.info('initializing browser-overlay');
-  const first_run_verification_complete = function() {
-    // Subscribe to adban state change only after firstRun verification
-    // is complete. Otherwise FF4+ won't find adban-button on first run.
-    state_listener_id = adban.subscribeToStateChange(onStateChange);
-  };
   // defer first run verification due to stupid FF bug, which prevents from
   // toolbar updating immediately in the window.onload event handler.
   // Read more at http://blog.pearlcrescent.com/archives/24 .
+  // Also adban-button isn't accessible via $('adban-button') during
+  // the first run.
   const first_run_callback = function() {
-    verifyFirstRun(first_run_verification_complete);
+    if (!pref_branch.prefHasUserValue('first-run')) {
+      logging.info('first run of AdBan');
+      firstRunSetup();
+      pref_branch.setBoolPref('first-run', true);
+    }
+    state_listener_id = adban.subscribeToStateChange(onStateChange);
   };
   window.setTimeout(first_run_callback, 10);
 
