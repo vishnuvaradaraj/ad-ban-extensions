@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
-<!DOCTYPE dialog SYSTEM "chrome://adban/locale/complaint-report.dtd">
+<!DOCTYPE dialog SYSTEM "chrome://adban/locale/report-ads-dialog.dtd">
 
 <dialog
     id="adban-complaint-dialog"
@@ -10,7 +10,7 @@
     buttons="accept,cancel"
     buttonlabelcancel="&adban.complaint-dialog.cancel-button.label;"
     buttonlabelaccept="&adban.complaint-dialog.accept-button.label;">
-  <script type="application/x-javascript" src="complaint-report.js"/>
+  <script type="application/x-javascript" src="report-ads-dialog.js"/>
 
   <groupbox>
     <caption label="&adban.complaint-dialog.title;"/>
