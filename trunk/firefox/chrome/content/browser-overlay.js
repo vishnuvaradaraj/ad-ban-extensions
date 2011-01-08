@@ -135,7 +135,7 @@ let cmdComplaint = function() {
   };
   const initial_site_url = gBrowser.currentURI.spec;
   // const initial_site_url = $('urlbar').value;
-  const complaint_window = window.openDialog('chrome://adban/content/complaint-report.xul',
+  const complaint_window = window.openDialog('chrome://adban/content/report-ads-dialog.xul',
       'adban-complaint-window', '', complaint_callback, initial_site_url);
   complaint_window.focus();
 };
