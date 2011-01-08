@@ -6,6 +6,7 @@
     id="adban-complaint-dialog"
     title="&adban.complaint-dialog.title;"
     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+    maxwidth="500"
     buttons="accept,cancel"
     buttonlabelcancel="&adban.complaint-dialog.cancel-button.label;"
     buttonlabelaccept="&adban.complaint-dialog.accept-button.label;">
