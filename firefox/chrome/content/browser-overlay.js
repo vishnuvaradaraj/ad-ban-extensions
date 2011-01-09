@@ -67,10 +67,6 @@ let setupToolbarButtons = function() {
   logging.info('adban buttons must be added to navigation bar');
 };
 
-let firstRunSetup = function() {
-  setupToolbarButtons();
-};
-
 let stateToggle = function(from, to) {
   to.setAttribute('disabled', 'true');
   from.removeAttribute('disabled');
@@ -131,7 +127,7 @@ let init = function() {
   const first_run_callback = function() {
     if (!pref_branch.prefHasUserValue('first-run')) {
       logging.info('first run of AdBan');
-      firstRunSetup();
+      setupToolbarButtons();
       pref_branch.setBoolPref('first-run', true);
     }
     state_listener_id = adban.subscribeToStateChange(onStateChange);
