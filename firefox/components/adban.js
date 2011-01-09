@@ -711,23 +711,30 @@ AdBan.prototype = {
       return;
     }
 
-    let tab_browser, tabs;
-    if (this.is_fennec) {
+    const is_fennec = this.is_fennec;
+    let tab_browser, tabs, has_attrubute;
+    if (is_fennec) {
       // see http://hg.mozilla.org/mobile-browser/file/f8add7971e4b/chrome/content/browser.js .
       tab_browser = browser_window.Browser;
       tabs = tab_browser.tabs;
+      has_attribute = function(tab, attribute_name) {
+        return tab.chromeTab.hasAttribute(attribute_name);
+      };
     }
     else {
       // see http://mxr.mozilla.org/mozilla-central/source/browser/base/content/browser.js
       tab_browser = browser_window.gBrowser;
       tabs = tab_browser.tabContainer.childNodes;
+      has_attribute = function(tab, attribute_name) {
+        return tab.hasAttribute(attribute_name);
+      };
     }
     const tabs_count = tabs.length;
     const attribute_name = 'adban-tab-' + tab_name;
     let tab;
     for (let i = 0; i < tabs_count; i++) {
       tab = tabs[i];
-      if (tab.hasAttribute(attribute_name)) {
+      if (has_attribute(tab, attribute_name)) {
         logging.info('the tab [%s] is already opened', tab_name);
         tab_browser.selectedTab = tab;
         return;
@@ -736,7 +743,12 @@ AdBan.prototype = {
 
     logging.info('openining new tab [%s]', tab_name);
     tab = tab_browser.addTab(url);
-    tab.setAttribute(attribute_name, 'true');
+    if (is_fennec) {
+      tab.chromeTab.setAttribute(attribute_name, 'true');
+    }
+    else {
+      tab.setAttribute(attribute_name, 'true');
+    }
     tab_browser.selectedTab = tab;
     logging.info('the tab [%s], url=[%s] has been opened', tab_name, url);
   },
@@ -849,6 +861,7 @@ AdBan.prototype = {
     // I don't know how this code works. It has been copy-pasted from
     // https://developer.mozilla.org/en/Code_snippets/Tabbed_browser#Getting_the_browser_that_fires_the_http-on-modify-request_notification .
     let request_origin = null;
+    return null;
     const cb = channel.notificationCallbacks ? channel.notificationCallbacks : channel.loadGroup.notificationCallbacks;
     if (cb) {
       try {
