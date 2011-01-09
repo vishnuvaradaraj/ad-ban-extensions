@@ -9,7 +9,10 @@
   </stringbundleset>
 
   <commandset>
-    <command id="cmd-adban-complaint"/>
+    <command id="cmd-adban-complaint" observes="cmd-adban-stop"/>
+    <command id="cmd-adban-start" disabled="true"/>
+    <command id="cmd-adban-stop"/>
+    <command id="cmd-adban-help"/>
   </commandset>
 
   <vbox id="browser-controls">

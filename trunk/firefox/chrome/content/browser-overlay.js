@@ -38,6 +38,9 @@ let conditionalAlert = function(alert_name, msg) {
 
 let firstRunSetup = function() {
   adban.openTab('first-run', adban.FIRST_RUN_URL);
+  if (adban.is_fennec) {
+    return;
+  }
 
   const nav_bar = $('nav-bar');
   if (!nav_bar) {
@@ -71,6 +74,9 @@ let stateToggle = function(from, to) {
 };
 
 let onStateChange = function(is_active) {
+  if (adban.is_fennec) {
+    return;
+  }
   const cmd_adban_stop = $('cmd-adban-stop');
   const cmd_adban_start = $('cmd-adban-start');
   const adban_button = $('adban-button');
@@ -105,11 +111,17 @@ let cmdComplaint = function() {
     };
     adban.sendUrlComplaint(site_url, comment, success_callback);
   };
+
   const initial_site_url = tab_browser.currentURI.spec;
   // const initial_site_url = $('urlbar').value;
-  const complaint_window = window.openDialog('chrome://adban/content/report-ads-dialog.xul',
-      'adban-complaint-window', '', complaint_callback, initial_site_url);
-  complaint_window.focus();
+  if (adban.is_fennec) {
+    complaint_callback(initial_site_url, 'Ad report from Fennec');
+  }
+  else {
+    const complaint_window = window.openDialog('chrome://adban/content/report-ads-dialog.xul',
+        'adban-complaint-window', '', complaint_callback, initial_site_url);
+    complaint_window.focus();
+  }
 };
 
 let cmdHelp = function() {
