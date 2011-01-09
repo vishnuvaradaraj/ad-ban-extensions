@@ -377,7 +377,6 @@ const AdBan = function() {
   this.is_fennec = (app_info.ID == '{a23983c0-fd0e-11dc-95ff-0800200c9a66}');
   this.LOGIN_URL = this._SERVER_HOST + '/ff/login';
   this.HELP_URL = this._SERVER_HOST + '/ff/help';
-  this.FIRST_RUN_URL = this._SERVER_HOST + '/ff/first_run';
 
   // allow direct access to the XPCOM object from javascript.
   // see https://developer.mozilla.org/en/wrappedJSObject .
@@ -683,7 +682,26 @@ AdBan.prototype = {
     delete this._state_listeners[listener_id];
   },
 
+  executeDeferred: function(callback) {
+    const main_thread = this._main_thread;
+    const thread_event = {
+        run: callback,
+    };
+    main_thread.dispatch(thread_event, main_thread.DISPATCH_NORMAL);
+  },
+
   openTab: function(tab_name, url) {
+    // open a tab asynchronously, since this operation can block in contexts,
+    // where blocking is prohibited.
+    const that = this;
+    const open_tab_callback = function() {
+      that._openTabInternal(tab_name, url);
+    };
+    this.executeDeferred(open_tab_callback);
+  },
+
+  // private methods
+  _openTabInternal: function(tab_name, url) {
     logging.info('opening a tab [%s], url=[%s]', tab_name, url);
 
     // this code has been stolen from https://developer.mozilla.org/en/Code_snippets/Tabbed_browser#Reusing_tabs .
@@ -723,7 +741,6 @@ AdBan.prototype = {
     logging.info('the tab [%s], url=[%s] has been opened', tab_name, url);
   },
 
-  // private methods.
   _notifyStateListeners: function(is_active) {
     const state_listeners = this._state_listeners;
     for (let listener_id in state_listeners) {
