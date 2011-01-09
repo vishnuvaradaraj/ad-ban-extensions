@@ -453,8 +453,8 @@ AdBan.prototype = {
     node_delete_timeout: 1000 * 3600 * 24 * 30,
     current_date_granularity: 1000 * 60 * 10,
     update_settings_interval: 1000 * 3600 * 24,
-    max_url_length: 0,
-    max_url_exception_length: 0,
+    max_url_length: 100,
+    max_url_exception_length: 100,
 
     read_settings_delay: 1000 * 5,  // this value isn't changed.
 
