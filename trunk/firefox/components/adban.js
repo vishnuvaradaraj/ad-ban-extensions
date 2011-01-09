@@ -103,7 +103,7 @@ const getCommonPrefixLength = function(s1, s2) {
   return s1_length;
 };
 
-const compressStrings = function(s_list) {
+const compressStrings = function(s_list, max_s_length) {
   // s_list must be sorted in order to achieve better differential compression.
   const result = [];
   let prev_s = '';
@@ -112,9 +112,12 @@ const compressStrings = function(s_list) {
   for (let i = 0; i < s_list_length; i++) {
     s = s_list[i];
     common_prefix_length = getCommonPrefixLength(prev_s, s);
+    if (common_prefix_length > max_s_length) {
+      common_prefix_length = max_s_length;
+    }
     result.push(
         common_prefix_length,
-        s.substring(common_prefix_length));
+        s.substring(common_prefix_length, max_s_length));
     prev_s = s;
   }
   return result;
@@ -446,6 +449,9 @@ AdBan.prototype = {
     node_delete_timeout: 1000 * 3600 * 24 * 30,
     current_date_granularity: 1000 * 60 * 10,
     update_settings_interval: 1000 * 3600 * 24,
+    max_url_length: 0,
+    max_url_exception_length: 0,
+
     read_settings_delay: 1000 * 5,  // this value isn't changed.
 
     import: function(data) {
@@ -454,6 +460,8 @@ AdBan.prototype = {
       this.node_delete_timeout = data[2];
       this.current_date_granularity = data[3];
       this.update_settings_interval = data[4];
+      this.max_url_length = data[5];
+      this.max_url_exception_length = data[6];
     },
 
     export: function() {
@@ -463,6 +471,8 @@ AdBan.prototype = {
           this.node_delete_timeout,
           this.current_date_granularity,
           this.update_settings_interval,
+          this.max_url_length,
+          this.max_url_exception_length,
       ];
     },
   },
@@ -1138,6 +1148,7 @@ AdBan.prototype = {
 
   _verifyUrls: function(verification_complete_callback) {
     const vars = this._vars;
+    const settings = this._settings;
     const urls = this._getDictionaryKeys(vars.unverified_urls);
     const url_exceptions = this._getDictionaryKeys(vars.unverified_url_exceptions);
 
@@ -1146,8 +1157,8 @@ AdBan.prototype = {
     url_exceptions.sort();
 
     const request_data = [
-        compressStrings(urls),
-        compressStrings(url_exceptions),
+        compressStrings(urls, settings.max_url_length),
+        compressStrings(url_exceptions, settings.max_url_exception_length),
     ];
     vars.unverified_urls = {};
     vars.unverified_url_exceptions = {};
