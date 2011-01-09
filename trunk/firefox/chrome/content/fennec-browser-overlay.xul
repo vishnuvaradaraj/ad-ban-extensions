@@ -18,7 +18,7 @@
   <vbox id="browser-controls">
     <toolbarbutton
       id="adban-complaint-button"
-      label="&adban.complaint-button.label;"
+      label="&adban.fennec-complaint-button.label;"
       class="toolbarbutton-1"
       tooltiptext="&adban.complaint-button.tooltiptext;"
       command="cmd-adban-complaint"
