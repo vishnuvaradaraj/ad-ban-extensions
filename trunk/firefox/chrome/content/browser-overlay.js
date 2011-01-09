@@ -5,7 +5,12 @@ let prompts = Cc['@mozilla.org/embedcomp/prompt-service;1'].getService(Ci.nsIPro
 let adban = Cc['@ad-ban.appspot.com/adban;1'].getService().wrappedJSObject;
 let logging = adban.logging;
 let pref_branch = adban.pref_branch;
-let tab_browser = adban.is_fennec ? Browser : gBrowser;
+
+let getBrowser = function() {
+  // in FF4 gBrowser isn't defined yet when the script is loaded,
+  // so the getBrowser() must be called only after onload event.
+  return adban.is_fennec ? Browser : gBrowser;
+};
 
 let $ = function(id) {
   return document.getElementById(id);
@@ -36,8 +41,7 @@ let conditionalAlert = function(alert_name, msg) {
   }
 };
 
-let firstRunSetup = function() {
-  adban.openTab('first-run', adban.FIRST_RUN_URL);
+let setupToolbarButtons = function() {
   if (adban.is_fennec) {
     return;
   }
@@ -66,6 +70,10 @@ let firstRunSetup = function() {
   nav_bar.setAttribute('currentset', nav_bar.currentSet);
   document.persist('nav-bar', 'currentset');
   logging.info('adban buttons must be added to navigation bar');
+};
+
+let firstRunSetup = function() {
+  setupToolbarButtons();
 };
 
 let stateToggle = function(from, to) {
@@ -112,13 +120,13 @@ let cmdComplaint = function() {
     adban.sendUrlComplaint(site_url, comment, success_callback);
   };
 
-  const initial_site_url = tab_browser.currentURI.spec;
+  const initial_site_url = getBrowser().currentURI.spec;
   // const initial_site_url = $('urlbar').value;
   if (adban.is_fennec) {
     complaint_callback(initial_site_url, 'Ad report from Fennec');
   }
   else {
-    const complaint_window = window.openDialog('chrome://adban/content/report-ads-dialog.xul',
+    const complaint_window = openDialog('chrome://adban/content/report-ads-dialog.xul',
         'adban-complaint-window', '', complaint_callback, initial_site_url);
     complaint_window.focus();
   }
@@ -145,7 +153,7 @@ let init = function() {
     }
     state_listener_id = adban.subscribeToStateChange(onStateChange);
   };
-  window.setTimeout(first_run_callback, 10);
+  adban.executeDeferred(first_run_callback);
 
   $('cmd-adban-stop').addEventListener('command', cmdStop, false);
   $('cmd-adban-start').addEventListener('command', cmdStart, false);
@@ -155,7 +163,7 @@ let init = function() {
   // DOMFrameContentLoaded doesn't work as expected,
   // while DOMContentLoaded catches iframes and frames.
   // see https://developer.mozilla.org/en/Gecko-Specific_DOM_Events .
-  tab_browser.addEventListener('DOMContentLoaded', adban, true);
+  getBrowser().addEventListener('DOMContentLoaded', adban, true);
 
   window.addEventListener('unload', shutdown, false);
   logging.info('browser-overlay has been initialized');
@@ -164,7 +172,7 @@ let init = function() {
 let shutdown = function() {
   logging.info('shutting down browser-overlay');
   adban.unsubscribeFromStateChange(state_listener_id);
-  tab_browser.removeEventListener('DOMContentLoaded', adban, true);
+  getBrowser().removeEventListener('DOMContentLoaded', adban, true);
 
   $('cmd-adban-stop').removeEventListener('command', cmdStop, false);
   $('cmd-adban-start').removeEventListener('command', cmdStart, false);
