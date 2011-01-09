@@ -5,6 +5,8 @@ const Cr = Components.results;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
+const app_info = Cc['@mozilla.org/xre/app-info;1'].getService(Ci.nsIXULAppInfo);
+
 const logging = {
   levels: {
       INFO: ['INFO', 10],
@@ -13,22 +15,24 @@ const logging = {
       NONE: ['NONE', 40],
   },
 
-  _app_info: Cc['@mozilla.org/xre/app-info;1'].getService(Ci.nsIXULAppInfo),
-
   _log_stream: null,
-  _level_id: 0,
-  _previous_level_id: 20,  // TODO: set it to 20 (WARNING) in prod.
+  _level_id: 20,
+  _is_active: true,
   _pending_messages: [],
 
+  init: function() {
+    this.log(this.levels.NONE, 'name=[%s], version=[%s], appBuildId=[%s], ID=[%s], vendor=[%s], platformBuildID=[%s], platformVersion=[%s]',
+        [null, app_info.name, app_info.version, app_info.appBuildID, app_info.ID, app_info.vendor, app_info.platformBuildID, app_info.platformVersion]);
+  },
+
   start: function() {
-    this._level_id = this._previous_level_id;
-    const app_info = this._app_info;
-    this._log(app_info.name+' '+app_info.version+', appBuildId=['+app_info.appBuildID+'], ID=['+app_info.ID+'], vendor=['+app_info.vendor+'], platformBuildID=['+app_info.platformBuildID+'], platformVersion=['+app_info.platformVersion+']\n');
+    this._is_active = true;
+    logging.info('logger has been started');
   },
 
   stop: function() {
-    this._previous_level_id = this._level_id;
-    this.setLogLevel(this.levels.NONE);
+    logging.info('logger has been stopped');
+    this._is_active = false;
   },
 
   setLogLevel: function(level) {
@@ -61,7 +65,7 @@ const logging = {
   },
 
   log: function(level, msg, args) {
-    if (level[1] < this._level_id) {
+    if (!this._is_active || level[1] < this._level_id) {
       return;
     }
     const msg_parts = msg.split('%s');
@@ -91,7 +95,7 @@ const logging = {
   },
 };
 
-logging.start();
+logging.init();
 
 const getCommonPrefixLength = function(s1, s2) {
   const s1_length = s1.length;
@@ -370,6 +374,7 @@ const urlExceptionValueConstructor = function(d) {
 const AdBan = function() {
   logging.info('entering AdBan constructor');
   this.pref_branch = this._pref_service.getBranch('extensions.' + this.EXTENSION_ID + '.');
+  this.is_fennec = (app_info.ID == '{a23983c0-fd0e-11dc-95ff-0800200c9a66}');
   this.LOGIN_URL = this._SERVER_HOST + '/ff/login';
   this.HELP_URL = this._SERVER_HOST + '/ff/help';
   this.FIRST_RUN_URL = this._SERVER_HOST + '/ff/first_run';
@@ -676,6 +681,46 @@ AdBan.prototype = {
   unsubscribeFromStateChange: function(listener_id) {
     logging.info('unsubscribing from AdBan component state change. listener_id=[%s]', listener_id);
     delete this._state_listeners[listener_id];
+  },
+
+  openTab: function(tab_name, url) {
+    logging.info('opening a tab [%s], url=[%s]', tab_name, url);
+
+    // this code has been stolen from https://developer.mozilla.org/en/Code_snippets/Tabbed_browser#Reusing_tabs .
+    const browser_window = this._window_mediator.getMostRecentWindow('navigator:browser');
+    if (!browser_window) {
+      logging.error('there are no open browser windows');
+      return;
+    }
+
+    let tab_browser, tabs;
+    if (this.is_fennec) {
+      // see http://hg.mozilla.org/mobile-browser/file/f8add7971e4b/chrome/content/browser.js .
+      tab_browser = browser_window.Browser;
+      tabs = tab_browser.tabs;
+    }
+    else {
+      // see http://mxr.mozilla.org/mozilla-central/source/browser/base/content/browser.js
+      tab_browser = browser_window.gBrowser;
+      tabs = tab_browser.tabContainer.childNodes;
+    }
+    const tabs_count = tabs.length;
+    const attribute_name = 'adban-tab-' + tab_name;
+    let tab;
+    for (let i = 0; i < tabs_count; i++) {
+      tab = tabs[i];
+      if (tab.hasAttribute(attribute_name)) {
+        logging.info('the tab [%s] is already opened', tab_name);
+        tab_browser.selectedTab = tab;
+        return;
+      }
+    }
+
+    logging.info('openining new tab [%s]', tab_name);
+    tab = tab_browser.addTab(url);
+    tab.setAttribute(attribute_name, 'true');
+    tab_browser.selectedTab = tab;
+    logging.info('the tab [%s], url=[%s] has been opened', tab_name, url);
   },
 
   // private methods.
@@ -1028,41 +1073,12 @@ AdBan.prototype = {
     }
   },
 
-  _openTab: function(tab_name, url) {
-    logging.info('opening a tab [%s], url=[%s]', tab_name, url);
-    // this code has been stolen from https://developer.mozilla.org/en/Code_snippets/Tabbed_browser#Reusing_tabs .
-    const browser_window = this._window_mediator.getMostRecentWindow('navigator:browser');
-    if (!browser_window) {
-      logging.error('there are no open browser windows');
-      return;
-    }
-    const attribute_name = 'adban-tab-' + tab_name;
-    const tab_browser = browser_window.gBrowser;
-    const tabs = tab_browser.tabContainer.childNodes;
-    const tabs_count = tabs.length;
-    let tab;
-    for (let i = 0; i < tabs_count; i++) {
-      tab = tabs[i];
-      if (tab.hasAttribute(attribute_name)) {
-        logging.info('the tab [%s] is already opened', tab_name);
-        tab_browser.selectedTab = tab;
-        return;
-      }
-    }
-
-    logging.info('openining new tab [%s]', tab_name);
-    tab = tab_browser.addTab(url);
-    tab.setAttribute(attribute_name, 'true');
-    tab_browser.selectedTab = tab;
-    logging.info('the tab [%s], url=[%s] has been opened', tab_name, url);
-  },
-
   _showLoginPage: function() {
     // login screen must be displayed for this user.
     // if the user isn't authorized, then the login screen must redirect
     // to the landing page, where the reason for the authorization error
     // must be displayed.
-    this._openTab('login', this.LOGIN_URL);
+    this.openTab('login', this.LOGIN_URL);
   },
 
   _processJsonResponse: function(request_text, response_text, response_callback) {

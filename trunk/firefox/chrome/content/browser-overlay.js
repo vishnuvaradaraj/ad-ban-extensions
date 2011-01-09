@@ -5,6 +5,7 @@ let prompts = Cc['@mozilla.org/embedcomp/prompt-service;1'].getService(Ci.nsIPro
 let adban = Cc['@ad-ban.appspot.com/adban;1'].getService().wrappedJSObject;
 let logging = adban.logging;
 let pref_branch = adban.pref_branch;
+let tab_browser = adban.is_fennec ? Browser : gBrowser;
 
 let $ = function(id) {
   return document.getElementById(id);
@@ -35,18 +36,8 @@ let conditionalAlert = function(alert_name, msg) {
   }
 };
 
-let openTab = function(url) {
-  logging.info('opening the tab with url=[%s]', url);
-  // use this hack, otherwise firefox 3.6 can skip the tab
-  // if another tab is immediately opened after this tab.
-  const open_tab_callback = function() {
-    gBrowser.selectedTab = gBrowser.addTab(url);
-  }
-  setTimeout(open_tab_callback, 10);
-};
-
 let firstRunSetup = function() {
-  openTab(adban.FIRST_RUN_URL);
+  adban.openTab('first-run', adban.FIRST_RUN_URL);
 
   const nav_bar = $('nav-bar');
   if (!nav_bar) {
@@ -114,7 +105,7 @@ let cmdComplaint = function() {
     };
     adban.sendUrlComplaint(site_url, comment, success_callback);
   };
-  const initial_site_url = gBrowser.currentURI.spec;
+  const initial_site_url = tab_browser.currentURI.spec;
   // const initial_site_url = $('urlbar').value;
   const complaint_window = window.openDialog('chrome://adban/content/report-ads-dialog.xul',
       'adban-complaint-window', '', complaint_callback, initial_site_url);
@@ -122,7 +113,7 @@ let cmdComplaint = function() {
 };
 
 let cmdHelp = function() {
-  openTab(adban.HELP_URL);
+  adban.openTab('help', adban.HELP_URL);
 };
 
 let state_listener_id;
@@ -152,7 +143,7 @@ let init = function() {
   // DOMFrameContentLoaded doesn't work as expected,
   // while DOMContentLoaded catches iframes and frames.
   // see https://developer.mozilla.org/en/Gecko-Specific_DOM_Events .
-  gBrowser.addEventListener('DOMContentLoaded', adban, true);
+  tab_browser.addEventListener('DOMContentLoaded', adban, true);
 
   window.addEventListener('unload', shutdown, false);
   logging.info('browser-overlay has been initialized');
@@ -161,7 +152,7 @@ let init = function() {
 let shutdown = function() {
   logging.info('shutting down browser-overlay');
   adban.unsubscribeFromStateChange(state_listener_id);
-  gBrowser.removeEventListener('DOMContentLoaded', adban, true);
+  tab_browser.removeEventListener('DOMContentLoaded', adban, true);
 
   $('cmd-adban-stop').removeEventListener('command', cmdStop, false);
   $('cmd-adban-start').removeEventListener('command', cmdStart, false);
