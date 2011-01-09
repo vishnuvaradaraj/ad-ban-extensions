@@ -55,14 +55,9 @@ let setupToolbarButtons = function() {
     logging.warning('the adban-complaint-button is already installed (though it is unclear how it is possible)');
     return;
   }
-  if ($('adban-button')) {
-    logging.warning('the adban-button is already installed (though it is unclear how it is possble)');
-    return;
-  }
 
   logging.info('adding adban buttons to navigation bar');
   nav_bar.insertItem('adban-complaint-button', null, null, false);
-  nav_bar.insertItem('adban-button', null, null, false);
 
   // this 'magic' is necessary for stupid FF, which can't properly handle
   // toolbar.insertItem().
@@ -82,23 +77,13 @@ let stateToggle = function(from, to) {
 };
 
 let onStateChange = function(is_active) {
-  if (adban.is_fennec) {
-    return;
-  }
   const cmd_adban_stop = $('cmd-adban-stop');
   const cmd_adban_start = $('cmd-adban-start');
-  const adban_button = $('adban-button');
-  if (!adban_button) {
-    logging.warning('it looks like the adban button has been removed from visible toolbars');
-    return;
-  }
   if (is_active) {
     stateToggle(cmd_adban_stop, cmd_adban_start);
-    adban_button.label = 'AdBan ' + _('on');
   }
   else {
     stateToggle(cmd_adban_start, cmd_adban_stop);
-    adban_button.label = 'AdBan ' + _('off');
   }
 };
 
@@ -143,8 +128,6 @@ let init = function() {
   // defer first run verification due to stupid FF bug, which prevents from
   // toolbar updating immediately in the window.onload event handler.
   // Read more at http://blog.pearlcrescent.com/archives/24 .
-  // Also adban-button isn't accessible via $('adban-button') during
-  // the first run.
   const first_run_callback = function() {
     if (!pref_branch.prefHasUserValue('first-run')) {
       logging.info('first run of AdBan');

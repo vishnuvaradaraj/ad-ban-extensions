@@ -8,6 +8,5 @@
 
 <!ENTITY adban.complaint-button.label "Report ads">
 <!ENTITY adban.fennec-complaint-button.label "R">
-<!ENTITY adban.complaint-button.tooltiptext "Report ads or problems on the current page">
-<!ENTITY adban.button.tooltiptext "AdBan - block ads on the web">
+<!ENTITY adban.complaint-button.tooltiptext "AdBan: report ads or problems on the current page">
 
