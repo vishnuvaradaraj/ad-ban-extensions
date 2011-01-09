@@ -15,16 +15,18 @@
     <command id="cmd-adban-help"/>
   </commandset>
 
-  <popupset>
-    <menupopup id="adban-menupopup" position="after_end">
-      <menuitem label="&adban.menuitem.complaint;" command="cmd-adban-complaint" tooltiptext="&adban.menuitem.complaint.tooltiptext;"/>
-      <menuseparator/>
-      <menuitem label="&adban.menuitem.start;" command="cmd-adban-start" tooltiptext="&adban.menuitem.start.tooltiptext;"/>
-      <menuitem label="&adban.menuitem.stop;" command="cmd-adban-stop" tooltiptext="&adban.menuitem.stop.tooltiptext;"/>
-      <menuseparator/>
-      <menuitem label="&adban.menuitem.help;" command="cmd-adban-help"/>
-    </menupopup>
-  </popupset>
+  <menupopup id="menu_ToolsPopup">
+    <menu id="adban-menuitem" label="AdBan" insertafter="javascriptConsole">
+      <menupopup id="adban-menupopup">
+        <menuitem label="&adban.menuitem.complaint;" command="cmd-adban-complaint" tooltiptext="&adban.menuitem.complaint.tooltiptext;"/>
+        <menuseparator/>
+        <menuitem label="&adban.menuitem.start;" command="cmd-adban-start" tooltiptext="&adban.menuitem.start.tooltiptext;"/>
+        <menuitem label="&adban.menuitem.stop;" command="cmd-adban-stop" tooltiptext="&adban.menuitem.stop.tooltiptext;"/>
+        <menuseparator/>
+        <menuitem label="&adban.menuitem.help;" command="cmd-adban-help"/>
+      </menupopup>
+    </menu>
+  </menupopup>
 
   <toolbarpalette id="BrowserToolbarPalette">
     <toolbarbutton
@@ -33,14 +35,6 @@
       class="toolbarbutton-1"
       tooltiptext="&adban.complaint-button.tooltiptext;"
       command="cmd-adban-complaint"
-    />
-    <toolbarbutton
-      id="adban-button"
-      label="AdBan"
-      type="menu"
-      popup="adban-menupopup"
-      class="toolbarbutton-1"
-      tooltiptext="&adban.button.tooltiptext;"
     />
   </toolbarpalette>
 
