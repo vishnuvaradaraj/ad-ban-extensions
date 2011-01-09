@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<!DOCTYPE window SYSTEM "chrome://adban/locale/browser-overlay.dtd">
+
+<overlay id="adban-browser-overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <script type="application/x-javascript" src="browser-overlay.js"/>
+
+  <stringbundleset>
+    <stringbundle id="adban-strings" src="chrome://adban/locale/strings.properties"/>
+  </stringbundleset>
+
+  <commandset>
+    <command id="cmd-adban-complaint"/>
+  </commandset>
+
+  <vbox id="browser-controls">
+    <toolbarbutton
+      id="adban-complaint-button"
+      label="&adban.complaint-button.label;"
+      class="toolbarbutton-1"
+      tooltiptext="&adban.complaint-button.tooltiptext;"
+      command="cmd-adban-complaint"
+    />
+  </vbox>
+
+</overlay>
+
