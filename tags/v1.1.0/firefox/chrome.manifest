@@ -1,0 +1,15 @@
+content adban chrome/content/
+skin adban classic/1.0 chrome/skin/
+
+overlay chrome://browser/content/browser.xul chrome://adban/content/browser-overlay.xul application={ec8030f7-c20a-464f-9b0e-13a3a9e97384}
+overlay chrome://browser/content/browser.xul chrome://adban/content/fennec-browser-overlay.xul application={a23983c0-fd0e-11dc-95ff-0800200c9a66}
+
+style chrome://global/content/customizeToolbar.xul chrome://adban/skin/browser-overlay.css
+style chrome://browser/content/browser.xul chrome://adban/skin/browser-overlay.css
+
+locale adban en-US chrome/locale/en-US/
+
+component {02f31d71-1c0b-48f3-a3b5-100c18dc771e} components/adban.js
+contract @ad-ban.appspot.com/adban;1 {02f31d71-1c0b-48f3-a3b5-100c18dc771e}
+category profile-after-change @ad-ban.appspot.com/adban;1 @ad-ban.appspot.com/adban;1
+
