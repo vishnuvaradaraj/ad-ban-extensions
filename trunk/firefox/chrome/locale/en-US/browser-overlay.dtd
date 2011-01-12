@@ -7,6 +7,4 @@
 <!ENTITY adban.menuitem.help "Help">
 
 <!ENTITY adban.complaint-button.label "Report banners">
-<!ENTITY adban.fennec-complaint-button.label "R">
 <!ENTITY adban.complaint-button.tooltiptext "AdBan: report banners or problems on the current page">
-
