@@ -15,15 +15,9 @@
     <command id="cmd-adban-help"/>
   </commandset>
 
-  <vbox id="browser-controls">
-    <toolbarbutton
-      id="adban-complaint-button"
-      label="&adban.fennec-complaint-button.label;"
-      class="toolbarbutton-1"
-      tooltiptext="&adban.complaint-button.tooltiptext;"
-      command="cmd-adban-complaint"
-    />
-  </vbox>
+  <hbox id="pageactions-container">
+    <pageaction id="pageaction-adban-complaint" title="&adban.complaint-button.label;" command="cmd-adban-complaint"/>
+  </hbox>
 
 </overlay>
 
