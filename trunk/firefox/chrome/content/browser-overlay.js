@@ -12,6 +12,11 @@ let getBrowser = function() {
   return adban.is_fennec ? Browser : gBrowser;
 };
 
+let getBrowserWithEvents = function() {
+  // see https://wiki.mozilla.org/Mobile/Fennec/CodeSnippets#Listening_for_Browser_Events .
+  return adban.is_fennec ? $('browsers') : gBrowser;
+};
+
 let $ = function(id) {
   return document.getElementById(id);
 };
@@ -153,7 +158,7 @@ let init = function() {
   // DOMFrameContentLoaded doesn't work as expected,
   // while DOMContentLoaded catches iframes and frames.
   // see https://developer.mozilla.org/en/Gecko-Specific_DOM_Events .
-  getBrowser().addEventListener('DOMContentLoaded', adban, true);
+  getBrowserWithEvents().addEventListener('DOMContentLoaded', adban, true);
 
   window.addEventListener('unload', shutdown, false);
   logging.info('browser-overlay has been initialized');
@@ -162,7 +167,7 @@ let init = function() {
 let shutdown = function() {
   logging.info('shutting down browser-overlay');
   adban.unsubscribeFromStateChange(state_listener_id);
-  getBrowser().removeEventListener('DOMContentLoaded', adban, true);
+  getBrowserWithEvents().removeEventListener('DOMContentLoaded', adban, true);
 
   $('cmd-adban-stop').removeEventListener('command', cmdStop, false);
   $('cmd-adban-start').removeEventListener('command', cmdStart, false);
