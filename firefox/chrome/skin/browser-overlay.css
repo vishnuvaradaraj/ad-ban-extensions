@@ -7,14 +7,9 @@
 
 #adban-complaint-button .toolbarbutton-text {
   display: -moz-box !important;
-  margin: 0;
 }
 
 #adban-complaint-button .toolbarbutton-icon {
   display: none !important;
-}
-
-#adban-complaint-button .toolbarbutton-menu-dropmarker {
-  -moz-padding-start: 5px;
 }
 
