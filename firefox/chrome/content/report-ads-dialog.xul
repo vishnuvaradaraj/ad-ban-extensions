@@ -12,7 +12,7 @@
     buttonlabelaccept="&adban.complaint-dialog.accept-button.label;">
   <script type="application/x-javascript" src="report-ads-dialog.js"/>
 
-  <groupbox id="adban-complaint-dialog-groupbox">
+  <groupbox>
     <caption label="&adban.complaint-dialog.title;"/>
 
     <label control="adban-complaint-site-url">&adban.complaint-dialog.site-url.label;</label>
