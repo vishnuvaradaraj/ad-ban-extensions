@@ -69,7 +69,7 @@ let setupToolbarButtons = function() {
 
 let showNotification = function(message, id) {
   const notification_box = getBrowser().getNotificationBox();
-  notification_box.appendNotification(message, id, '', notification_box.PRIORITY_INFO_MEDIUM, null);
+  notification_box.appendNotification(message, 'adban-' + id, '', notification_box.PRIORITY_INFO_MEDIUM, null);
 };
 
 let stateToggle = function(from, to) {
@@ -103,19 +103,20 @@ let cmdComplaint = function() {
     const success_callback = function() {
       conditionalAlert('complaint-sent', _('complaint-sent', [site_url]));
     };
-    adban.sendUrlComplaint(site_url, comment, success_callback);
+    const failure_callback = function(error) {
+      conditionalAlert('complaint-send-error', _('complaint-send-error', [site_url, error]));
+    };
+    adban.sendUrlComplaint(site_url, comment, success_callback, failure_callback);
   };
 
-  //const initial_site_url = getBrowser().currentURI.spec;
-  let initial_site_url;
+  // Don't use $('urlbar').value as initial_site_url, since this value can be broken.
+  // For example, Chrome likes cutting url scheme, while Opera 11 cuts query parameters
+  // from the urlbar.
+  const initial_site_url = getBrowser().currentURI.spec;
   if (adban.is_fennec) {
-    // see http://hg.mozilla.org/mobile-browser/file/f8add7971e4b/chrome/content/browser.xul .
-    initial_site_url = $('urlbar-edit').value;
     complaint_callback(initial_site_url, 'Ad report from Fennec');
   }
   else {
-    // see http://mxr.mozilla.org/mozilla-central/source/browser/base/content/browser.xul .
-    initial_site_url = $('urlbar').value;
     const complaint_window = openDialog('chrome://adban/content/report-ads-dialog.xul',
         'adban-complaint-window', '', complaint_callback, initial_site_url);
     complaint_window.focus();
@@ -137,7 +138,7 @@ let init = function() {
     if (!pref_branch.prefHasUserValue('first-run')) {
       logging.info('first run of AdBan');
       setupToolbarButtons();
-      showNotification(_('report-banners-notification'), 'adban-report-banners-notification');
+      showNotification(_('report-banners-notification'), 'report-banners-notification');
       pref_branch.setBoolPref('first-run', true);
     }
     state_listener_id = adban.subscribeToStateChange(onStateChange);

@@ -497,6 +497,7 @@ AdBan.prototype = {
     is_url_verifier_active: false,
     is_active: false,
     is_in_private_mode: false,
+    is_app_startup_called: false,
   },
 
   _state_listeners: {},
@@ -556,9 +557,11 @@ AdBan.prototype = {
     const vars = this._vars;
     if (topic == 'app-startup') {
       logging.info('app-startup');
-      // perform initialization at 'profile-after-change' step,
+      // The 'app-startup' event isn't fired in FF4, so perform
+      // all initialization at 'profile-after-change' step,
       // which is the only available in FF4.
       // See https://developer.mozilla.org/en/XPCOM/XPCOM_changes_in_Gecko_2.0 .
+      vars.is_app_startup_called = true;
       observer_service.addObserver(this, 'profile-after-change', false);
     }
     else if (topic == 'profile-after-change') {
@@ -622,8 +625,10 @@ AdBan.prototype = {
         this._saveCachesSync();
       }
       observer_service.removeObserver(this, 'private-browsing');
-      observer_service.removeObserver(this, 'profile-after-change');
       observer_service.removeObserver(this, 'quit-application');
+      if (vars.is_app_startup_called) {
+        observer_service.removeObserver(this, 'profile-after-change');
+      }
     }
   },
 
@@ -658,7 +663,7 @@ AdBan.prototype = {
     logging.info('AdBan component has been stopped');
   },
 
-  sendUrlComplaint: function(site_url, comment, success_callback) {
+  sendUrlComplaint: function(site_url, comment, success_callback, failure_callback) {
     logging.info('sending url complaint for site_url=[%s], comment=[%s]', site_url, comment);
     const request_data = [site_url, comment];
     const request_url = this._SERVER_HOST + '/c';
@@ -666,7 +671,12 @@ AdBan.prototype = {
     const response_callback = function() {
       success_callback();
     };
-    this._startJsonRequest(this._url_complaint_xhr, request_url, request_data, response_callback);
+    const finish_callback = function(message) {
+      if (message) {
+        failure_callback(message);
+      }
+    };
+    this._startJsonRequest(this._url_complaint_xhr, request_url, request_data, response_callback, finish_callback);
   },
 
   subscribeToStateChange: function(state_change_callback) {
@@ -1135,11 +1145,13 @@ AdBan.prototype = {
 
   _startJsonRequest: function(xhr, request_url, request_data, response_callback, finish_callback) {
     const auth_token = this._vars.auth_token;
+    let finish_callback_message;
     if (auth_token == '') {
       logging.info('the user must be authenticated');
       this._showLoginPage();
       if (finish_callback) {
-        finish_callback();
+        finish_callback_message = 'authentication required';
+        finish_callback(finish_callback_message);
       }
       return;
     };
@@ -1158,14 +1170,16 @@ AdBan.prototype = {
           }
           else {
             logging.error('unexpected HTTP status code for the request_url=[%s], request_text=[%s], http_status=[%s]', request_url, request_text, http_status);
+            finish_callback_message = 'server error';
           }
         }
         catch(e) {
           logging.error('error when processing json response=[%s] for the request_url=[%s], request_text=[%s]: [%s]', xhr.responseText, request_url, request_text, e);
+          finish_callback_message = 'protocol error';
         }
         finally {
           if (finish_callback) {
-            finish_callback();
+            finish_callback(finish_callback_message);
           }
         }
       }
