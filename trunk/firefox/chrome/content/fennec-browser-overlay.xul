@@ -4,11 +4,11 @@
 <overlay id="adban-browser-overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
   <script type="application/x-javascript" src="browser-overlay.js"/>
 
-  <stringbundleset id="adban-stringbundleset">
+  <stringbundleset>
     <stringbundle id="adban-strings" src="chrome://adban/locale/strings.properties"/>
   </stringbundleset>
 
-  <commandset id="adban-commandset">
+  <commandset>
     <command id="cmd-adban-complaint" observes="cmd-adban-stop"/>
     <command id="cmd-adban-start" disabled="true"/>
     <command id="cmd-adban-stop"/>
