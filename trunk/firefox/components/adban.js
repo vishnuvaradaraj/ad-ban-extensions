@@ -541,13 +541,19 @@ AdBan.prototype = {
     }
 
     if (e.type == 'DOMContentLoaded') {
-      const doc = e.target;
+      const doc = e.originalTarget;
+      const node_name = doc.nodeName;
+      if (node_name != '#document') {
+        logging.info('the current DOMContentLoaded target=[%s] isn\'t html document', node_name);
+        return;
+      }
+      logging.info('DOMContentLoaded event on url=[%s]', doc.location.href);
       if (doc.location.href == this.LOGIN_URL) {
         const cookie = doc.cookie;
         logging.info('login page captured. cookie=[%s]', cookie);
         this._readAuthTokenFromCookie(cookie);
       }
-      this._injectCssToDocument(e.target);
+      this._injectCssToDocument(doc);
     }
   },
 
