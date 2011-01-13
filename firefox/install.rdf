@@ -7,14 +7,14 @@
     <em:id>adban@ad-ban.appspot.com</em:id>
     <em:name>AdBan</em:name>
     <em:version>1.2.0</em:version>
-    <em:description>Blocks banners, spyware and third-party trackers on the web</em:description>
+    <em:description>Blocks ads, spyware and third-party trackers on the web</em:description>
     <em:creator>support@ad-ban.appspotmail.com</em:creator>
     <em:homepageURL>https://ad-ban.appspot.com/</em:homepageURL>
     <em:type>2</em:type>
 
     <em:localized>
       <em:locale>en-US</em:locale>
-      <em:description>Blocks banners, spyware and third-party trackers on the web</em:description>
+      <em:description>Blocks ads, spyware and third-party trackers on the web</em:description>
     </em:localized>
 
     <!-- Firefox -->
