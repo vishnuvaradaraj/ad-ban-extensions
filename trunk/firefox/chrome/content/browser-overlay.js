@@ -6,17 +6,6 @@ let adban = Cc['@ad-ban.appspot.com/adban;1'].getService().wrappedJSObject;
 let logging = adban.logging;
 let pref_branch = adban.pref_branch;
 
-let getBrowser = function() {
-  // in FF4 gBrowser isn't defined yet when the script is loaded,
-  // so the getBrowser() must be called only after onload event.
-  return adban.is_fennec ? Browser : gBrowser;
-};
-
-let getBrowserWithEvents = function() {
-  // see https://wiki.mozilla.org/Mobile/Fennec/CodeSnippets#Listening_for_Browser_Events .
-  return adban.is_fennec ? $('browsers') : gBrowser;
-};
-
 let $ = function(id) {
   return document.getElementById(id);
 };
@@ -47,10 +36,6 @@ let conditionalAlert = function(alert_name, msg) {
 };
 
 let setupToolbarButtons = function() {
-  if (adban.is_fennec) {
-    return;
-  }
-
   const nav_bar = $('nav-bar');
   if (!nav_bar) {
     logging.warning('there is no navigation bar in the current window');
@@ -73,7 +58,7 @@ let setupToolbarButtons = function() {
 };
 
 let showNotification = function(message, id) {
-  const notification_box = getBrowser().getNotificationBox();
+  const notification_box = gBrowser.getNotificationBox();
   notification_box.appendNotification(message, 'adban-' + id, '', notification_box.PRIORITY_INFO_MEDIUM, null);
 };
 
@@ -117,15 +102,10 @@ let cmdComplaint = function() {
   // Don't use $('urlbar').value as initial_site_url, since this value can be broken.
   // For example, Chrome likes cutting url scheme, while Opera 11 cuts query parameters
   // from the urlbar.
-  const initial_site_url = getBrowser().currentURI.spec;
-  if (adban.is_fennec) {
-    complaint_callback(initial_site_url, 'Ad report from Fennec');
-  }
-  else {
-    const complaint_window = openDialog('chrome://adban/content/report-ads-dialog.xul',
-        'adban-complaint-window', '', complaint_callback, initial_site_url);
-    complaint_window.focus();
-  }
+  const initial_site_url = gBrowser.currentURI.spec;
+  const complaint_window = openDialog('chrome://adban/content/report-ads-dialog.xul',
+      'adban-complaint-window', '', complaint_callback, initial_site_url);
+  complaint_window.focus();
 };
 
 let cmdHelp = function() {
@@ -158,7 +138,7 @@ let init = function() {
   // DOMFrameContentLoaded doesn't work as expected,
   // while DOMContentLoaded catches iframes and frames.
   // see https://developer.mozilla.org/en/Gecko-Specific_DOM_Events .
-  getBrowserWithEvents().addEventListener('DOMContentLoaded', adban, true);
+  gBrowser.addEventListener('DOMContentLoaded', adban, true);
 
   window.addEventListener('unload', shutdown, false);
   logging.info('browser-overlay has been initialized');
@@ -167,7 +147,7 @@ let init = function() {
 let shutdown = function() {
   logging.info('shutting down browser-overlay');
   adban.unsubscribeFromStateChange(state_listener_id);
-  getBrowserWithEvents().removeEventListener('DOMContentLoaded', adban, true);
+  gBrowser.removeEventListener('DOMContentLoaded', adban, true);
 
   $('cmd-adban-stop').removeEventListener('command', cmdStop, false);
   $('cmd-adban-start').removeEventListener('command', cmdStart, false);

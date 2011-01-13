@@ -374,7 +374,6 @@ const urlExceptionValueConstructor = function(d) {
 const AdBan = function() {
   logging.info('entering AdBan constructor');
   this.pref_branch = this._pref_service.getBranch('extensions.' + this.EXTENSION_ID + '.');
-  this.is_fennec = (app_info.ID == '{a23983c0-fd0e-11dc-95ff-0800200c9a66}');
   this.LOGIN_URL = this._SERVER_HOST + '/ff/login';
   this.HELP_URL = this._SERVER_HOST + '/ff/help';
 
@@ -727,30 +726,14 @@ AdBan.prototype = {
       return;
     }
 
-    const is_fennec = this.is_fennec;
-    let tab_browser, tabs, has_attrubute;
-    if (is_fennec) {
-      // see http://hg.mozilla.org/mobile-browser/file/f8add7971e4b/chrome/content/browser.js .
-      tab_browser = browser_window.Browser;
-      tabs = tab_browser.tabs;
-      has_attribute = function(tab, attribute_name) {
-        return tab.chromeTab.hasAttribute(attribute_name);
-      };
-    }
-    else {
-      // see http://mxr.mozilla.org/mozilla-central/source/browser/base/content/browser.js
-      tab_browser = browser_window.gBrowser;
-      tabs = tab_browser.tabContainer.childNodes;
-      has_attribute = function(tab, attribute_name) {
-        return tab.hasAttribute(attribute_name);
-      };
-    }
+    const tab_browser = browser_window.gBrowser;
+    const tabs = tab_browser.tabContainer.childNodes;
     const tabs_count = tabs.length;
     const attribute_name = 'adban-tab-' + tab_name;
     let tab;
     for (let i = 0; i < tabs_count; i++) {
       tab = tabs[i];
-      if (has_attribute(tab, attribute_name)) {
+      if (tab.hasAttribute(attribute_name)) {
         logging.info('the tab [%s] is already opened', tab_name);
         tab_browser.selectedTab = tab;
         return;
@@ -759,12 +742,7 @@ AdBan.prototype = {
 
     logging.info('openining new tab [%s]', tab_name);
     tab = tab_browser.addTab(url);
-    if (is_fennec) {
-      tab.chromeTab.setAttribute(attribute_name, 'true');
-    }
-    else {
-      tab.setAttribute(attribute_name, 'true');
-    }
+    tab.setAttribute(attribute_name, 'true');
     tab_browser.selectedTab = tab;
     logging.info('the tab [%s], url=[%s] has been opened', tab_name, url);
   },
