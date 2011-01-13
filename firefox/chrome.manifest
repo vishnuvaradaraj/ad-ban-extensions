@@ -1,8 +1,7 @@
 content adban chrome/content/
 skin adban classic/1.0 chrome/skin/
 
-overlay chrome://browser/content/browser.xul chrome://adban/content/browser-overlay.xul application={ec8030f7-c20a-464f-9b0e-13a3a9e97384}
-overlay chrome://browser/content/browser.xul chrome://adban/content/fennec-browser-overlay.xul application={a23983c0-fd0e-11dc-95ff-0800200c9a66}
+overlay chrome://browser/content/browser.xul chrome://adban/content/browser-overlay.xul
 
 style chrome://global/content/customizeToolbar.xul chrome://adban/skin/browser-overlay.css
 style chrome://browser/content/browser.xul chrome://adban/skin/browser-overlay.css
