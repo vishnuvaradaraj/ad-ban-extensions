@@ -107,7 +107,7 @@ const getCommonPrefixLength = function(s1, s2) {
   return s1_length;
 };
 
-const compressStrings = function(s_list, max_s_length) {
+const compressStrings = function(s_list) {
   // s_list must be sorted in order to achieve better differential compression.
   const result = [];
   let prev_s = '';
@@ -116,12 +116,9 @@ const compressStrings = function(s_list, max_s_length) {
   for (let i = 0; i < s_list_length; i++) {
     s = s_list[i];
     common_prefix_length = getCommonPrefixLength(prev_s, s);
-    if (common_prefix_length > max_s_length) {
-      common_prefix_length = max_s_length;
-    }
     result.push(
         common_prefix_length,
-        s.substring(common_prefix_length, max_s_length));
+        s.substring(common_prefix_length));
     prev_s = s;
   }
   return result;
@@ -1192,7 +1189,6 @@ AdBan.prototype = {
 
   _verifyUrls: function(verification_complete_callback) {
     const vars = this._vars;
-    const settings = this._settings;
     const urls = this._getDictionaryKeys(vars.unverified_urls);
     const url_exceptions = this._getDictionaryKeys(vars.unverified_url_exceptions);
 
@@ -1201,8 +1197,8 @@ AdBan.prototype = {
     url_exceptions.sort();
 
     const request_data = [
-        compressStrings(urls, settings.max_url_length),
-        compressStrings(url_exceptions, settings.max_url_exception_length),
+        compressStrings(urls),
+        compressStrings(url_exceptions),
     ];
     vars.unverified_urls = {};
     vars.unverified_url_exceptions = {};
@@ -1262,24 +1258,24 @@ AdBan.prototype = {
     return (this._vars.current_date - cache_node.last_check_date > this._settings.stale_node_timeout);
   },
 
-  _getUrlValue: function(url) {
-    const vars = this._vars;
-    const cache_node = vars.url_cache.get(url, vars.current_date);
+  _getCacheValue: function(cache, unverified_urls, url, max_url_length) {
+    const cache_node = cache.get(url, this._vars.current_date);
     if (this._isStaleCacheNode(cache_node)) {
-      vars.unverified_urls[url] = true;
+      url = url.substring(0, max_url_length);
+      unverified_urls[url] = true;
       this._launchUrlVerifier();
     }
     return cache_node.value;
   },
 
+  _getUrlValue: function(url) {
+    const vars = this._vars;
+    return this._getCacheValue(vars.url_cache, vars.unverified_urls, url, this._settings.max_url_length);
+  },
+
   _getUrlExceptionValue: function(url) {
     const vars = this._vars;
-    const cache_node = vars.url_exception_cache.get(url, vars.current_date);
-    if (this._isStaleCacheNode(cache_node)) {
-      vars.unverified_url_exceptions[url] = true;
-      this._launchUrlVerifier();
-    }
-    return cache_node.value;
+    return this._getCacheValue(vars.url_exception_cache, vars.unverified_url_exceptions, url, this._settings.max_url_exception_length);
   },
 
   _isIp: function(host_parts) {
