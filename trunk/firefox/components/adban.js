@@ -371,8 +371,8 @@ const urlExceptionValueConstructor = function(d) {
 const AdBan = function() {
   logging.info('entering AdBan constructor');
   this.pref_branch = this._pref_service.getBranch('extensions.' + this.EXTENSION_ID + '.');
-  this.LOGIN_URL = this._SERVER_HOST + '/ff/login';
   this.HELP_URL = this._SERVER_HOST + '/ff/help';
+  this.USER_STATUS_URL = this._SERVER_HOST + '/ff/user_status';
 
   // allow direct access to the XPCOM object from javascript.
   // see https://developer.mozilla.org/en/wrappedJSObject .
@@ -409,6 +409,7 @@ AdBan.prototype = {
       ftp: true,
   },
   _SERVER_HOST: 'https://ad-ban.appspot.com',
+  _AUTH_COOKIE_HOST: 'ad-ban.appspot.com',
   _ERROR_CODES: {
       NO_ERRORS: 0,
       REQUEST_PARSING_ERROR: 1,
@@ -428,7 +429,8 @@ AdBan.prototype = {
   _directory_service: Cc['@mozilla.org/file/directory_service;1'].getService(Ci.nsIProperties),
   _io_service: Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService),
   _observer_service: Cc['@mozilla.org/observer-service;1'].getService(Ci.nsIObserverService),
-  _pref_service: Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefService),
+  _pref_service: Cc['@mozilla.org/preferences-service;1'].getService(Ci.nsIPrefService),
+  _cookie_manager: Cc['@mozilla.org/cookiemanager;1'].getService(Ci.nsICookieManager2),
   _main_thread: Cc['@mozilla.org/thread-manager;1'].getService().mainThread,
   _verify_urls_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _read_settings_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
@@ -544,11 +546,6 @@ AdBan.prototype = {
         return;
       }
       logging.info('DOMContentLoaded event on url=[%s]', doc.location.href);
-      if (doc.location.href == this.LOGIN_URL) {
-        const cookie = doc.cookie;
-        logging.info('login page captured. cookie=[%s]', cookie);
-        this._readAuthTokenFromCookie(cookie);
-      }
       this._injectCssToDocument(doc);
     }
   },
@@ -755,10 +752,10 @@ AdBan.prototype = {
   _setupLogging: function() {
     logging.info('initializing global log stream');
     const log_file = this._getFileForLogs();
-    const log_file_stream = Cc["@mozilla.org/network/file-output-stream;1"].createInstance(Ci.nsIFileOutputStream);
+    const log_file_stream = Cc['@mozilla.org/network/file-output-stream;1'].createInstance(Ci.nsIFileOutputStream);
     const io_flags = 0x02 | 0x08 | 0x10;  // open for writing (0x02), create if doesn't exist (0x08) and appending (0x10).
     log_file_stream.init(log_file, io_flags, -1, 0);
-    const log_stream = Cc["@mozilla.org/intl/converter-output-stream;1"].createInstance(Ci.nsIConverterOutputStream);
+    const log_stream = Cc['@mozilla.org/intl/converter-output-stream;1'].createInstance(Ci.nsIConverterOutputStream);
     log_stream.init(log_file_stream, 'UTF-8', 0, 0);
     logging.setLogStream(log_stream);
     logging.info('global log stream has been initialized');
@@ -772,25 +769,6 @@ AdBan.prototype = {
         logging.setLogLevel(log_level);
       }
     }
-  },
-
-  _readAuthTokenFromCookie: function(cookie) {
-    const cookies = cookie.split(/;\s*/);
-    const cookies_length = cookies.length;
-    let cookie_pair;
-    for (let i = 0; i < cookies_length; i++) {
-      cookie_pair = cookies[i].split('=');
-      if (cookie_pair[0] == 'a') {
-        const auth_token = cookie_pair[1];
-        logging.info('auth_token=[%s] obtained from cookie', auth_token);
-        this._vars.auth_token = auth_token;
-        // Initiate reading settings from the server after new auth token
-        // has been obtained.
-        this._readSettingsFromServer();
-        return;
-      }
-    }
-    logging.warning('cannot find auth token in cookie=[%s]', cookie);
   },
 
   _startRepeatingTimer: function(timer, callback, interval) {
@@ -1094,12 +1072,12 @@ AdBan.prototype = {
     }
   },
 
-  _showLoginPage: function() {
-    // login screen must be displayed for this user.
-    // if the user isn't authorized, then the login screen must redirect
-    // to the landing page, where the reason for the authorization error
-    // must be displayed.
-    this.openTab('login', this.LOGIN_URL);
+  _injectAuthTokenToCookie: function(auth_token) {
+    const host = this._AUTH_COOKIE_HOST;
+    logging.info('injecting auth_token=[%s] into cookie for the host=[%s]', auth_token, host);
+    const expiration_time = 0x7fffffff;
+    // see https://developer.mozilla.org/en/XPCOM_Interface_Reference/nsICookieManager2#add() .
+    this._cookie_manager.add(host, '/', 'a', auth_token, true, false, false, expiration_time);
   },
 
   _processJsonResponse: function(request_text, response_text, response_callback) {
@@ -1110,14 +1088,23 @@ AdBan.prototype = {
     const response_data = this._json_encoder.decode(response_text);
     const error_code = response_data[0];
     if (error_code == error_codes.NO_ERRORS) {
+      const new_auth_token = response_data[2];
+      if (new_auth_token) {
+        logging.info('obtained new auth_token=[%s] from the response_text=[%s]. request_text=[%s]', new_auth_token, response_text, request_text);
+        vars.auth_token = new_auth_token;
+        this._injectAuthTokenToCookie(new_auth_token);
+      }
       if (response_callback) {
         response_callback(response_data[1]);
       }
     }
-    else if (error_code == error_codes.AUTHENTICATION_ERROR ||
-             error_code == error_codes.AUTHORIZATION_ERROR) {
-      logging.warning('authentication or authorization failed for auth_token=[%s]. error_code=[%s]', vars.auth_token, error_code);
+    else if (error_code == error_codes.AUTHENTICATION_ERROR) {
+      logging.error('authentication failed for auth_token=[%s]. Resetting the auth_token.', vars.auth_token);
       vars.auth_token = '';
+    }
+    else if (error_code == error_codes.AUTHORIZATION_ERROR) {
+      logging.warning('authorization failed for auth_token=[%s]', vars.auth_token);
+      this.openTab('user-status', this.USER_STATUS_URL);
     }
     else {
       logging.error('server responded with the error_code=[%s] for the request_text=[%s]. response_text=[%s]', error_code, request_text, response_text);
@@ -1127,15 +1114,6 @@ AdBan.prototype = {
   _startJsonRequest: function(xhr, request_url, request_data, response_callback, finish_callback) {
     const auth_token = this._vars.auth_token;
     let finish_callback_message;
-    if (auth_token == '') {
-      logging.info('the user must be authenticated');
-      this._showLoginPage();
-      if (finish_callback) {
-        finish_callback_message = 'authentication required';
-        finish_callback(finish_callback_message);
-      }
-      return;
-    };
 
     const request_text = this._json_encoder.encode([auth_token, request_data]);
     logging.info('request_url=[%s], request_text=[%s]', request_url, request_text);
