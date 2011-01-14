@@ -461,8 +461,7 @@ AdBan.prototype = {
 
     import: function(data) {
       this.url_verifier_delay = data[0];
-//      this.stale_node_timeout = data[1];
-      this.stale_node_timeout = 1000 * 60;
+      this.stale_node_timeout = data[1];
       this.node_delete_timeout = data[2];
       this.current_date_granularity = data[3];
       this.update_settings_interval = data[4];
