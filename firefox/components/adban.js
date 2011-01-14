@@ -1,3 +1,6 @@
+// it is safe defining objects in the global scope of the XPCOM component,
+// since they aren't visible outside the component.
+
 const Cu = Components.utils;
 const Ci = Components.interfaces;
 const Cc = Components.classes;
@@ -458,7 +461,8 @@ AdBan.prototype = {
 
     import: function(data) {
       this.url_verifier_delay = data[0];
-      this.stale_node_timeout = data[1];
+//      this.stale_node_timeout = data[1];
+      this.stale_node_timeout = 1000 * 60;
       this.node_delete_timeout = data[2];
       this.current_date_granularity = data[3];
       this.update_settings_interval = data[4];
