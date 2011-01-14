@@ -1087,6 +1087,7 @@ AdBan.prototype = {
   _processJsonResponse: function(request_text, response_text, response_callback) {
     const error_codes = this._ERROR_CODES;
     const vars = this._vars;
+    let error_message;
 
     logging.info('response_text=[%s]', response_text);
     const response_data = this._json_encoder.decode(response_text);
@@ -1105,14 +1106,18 @@ AdBan.prototype = {
     else if (error_code == error_codes.AUTHENTICATION_ERROR) {
       logging.error('authentication failed for auth_token=[%s]. Resetting the auth_token.', vars.auth_token);
       vars.auth_token = '';
+      error_message = 'authentication error';
     }
     else if (error_code == error_codes.AUTHORIZATION_ERROR) {
       logging.warning('authorization failed for auth_token=[%s]', vars.auth_token);
       this.openTab('user-status', this.USER_STATUS_URL);
+      error_message = 'authorization error';
     }
     else {
       logging.error('server responded with the error_code=[%s] for the request_text=[%s]. response_text=[%s]', error_code, request_text, response_text);
+      error_message = 'unexpected server error';
     }
+    return error_message;
   },
 
   _startJsonRequest: function(xhr, request_url, request_data, response_callback, finish_callback) {
@@ -1129,7 +1134,7 @@ AdBan.prototype = {
         try {
           const http_status = xhr.status;
           if (http_status == 200) {
-            that._processJsonResponse(request_text, xhr.responseText, response_callback);
+            finish_callback_message = that._processJsonResponse(request_text, xhr.responseText, response_callback);
           }
           else {
             logging.error('unexpected HTTP status code for the request_url=[%s], request_text=[%s], http_status=[%s]', request_url, request_text, http_status);
