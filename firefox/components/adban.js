@@ -1014,11 +1014,13 @@ AdBan.prototype = {
     const css_selectors = url_exception_value.css_selectors;
 
     if (css_selectors) {
-      const s = doc.createElement('style');
-      s.type = 'text/css';
-      s.innerHTML = css_selectors + '{display: none !important;}';
-      logging.info('adding css selector=[%s] to the site_url=[%s]', s.innerHTML, site_url);
-      doc.getElementsByTagName('head')[0].appendChild(s);
+      const style = doc.createElement('style');
+      style.type = 'text/css';
+      const style_text = css_selectors + '{display: none !important;}';
+      const style_text_node = doc.createTextNode(style_text);
+      style.appendChild(style_text_node);
+      logging.info('adding css selector=[%s] to the site_url=[%s]', style_text, site_url);
+      doc.getElementsByTagName('head')[0].appendChild(style);
     }
   },
 
