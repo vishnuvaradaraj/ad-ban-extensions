@@ -10,8 +10,8 @@
 
   <keyset>
     <key id="adban-key-complaint" modifiers="accel shift" key="K" command="adban-cmd-complaint"/>
-    <key id="adban-key-start" modifiers="accel shift" key="L" command="adban-cmd-start"/>
-    <key id="adban-key-stop" modifiers="accel shift" key="M" command="adban-cmd-stop"/>
+    <key id="adban-key-start" modifiers="accel shift" key="B" command="adban-cmd-start"/>
+    <key id="adban-key-stop" modifiers="accel shift" key="E" command="adban-cmd-stop"/>
   </keyset>
 
   <commandset>
