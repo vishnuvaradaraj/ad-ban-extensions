@@ -10,7 +10,13 @@
 
   <keyset>
     <key id="adban-key-complaint" modifiers="accel shift" key="V" command="adban-cmd-complaint"/>
-    <key id="adban-key-start" modifiers="accel shift" key="B" command="adban-cmd-start"/>
+    <!--
+      This is a hack with two identical key bindings, which are associated
+      with different commands. It works, because adban-cmd-start and adban-cmd-stop
+      are exclusive - i.e. if adban-cmd-start is enabled, then adban-cmd-stop
+      is disabled and vice versa.
+    -->
+    <key id="adban-key-start" modifiers="accel shift" key="E" command="adban-cmd-start"/>
     <key id="adban-key-stop" modifiers="accel shift" key="E" command="adban-cmd-stop"/>
   </keyset>
 
