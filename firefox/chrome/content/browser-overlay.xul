@@ -8,22 +8,51 @@
     <stringbundle id="adban-strings" src="chrome://adban/locale/strings.properties"/>
   </stringbundleset>
 
+  <keyset>
+    <key id="adban-key-complaint" modifiers="accel shift" key="K" command="cmd-adban-complaint"/>
+    <key id="adban-key-start" modifiers="accel shift" key="L" command="cmd-adban-start"/>
+    <key id="adban-key-stop" modifiers="accel shift" key="M" command="cmd-adban-stop"/>
+  </keyset>
+
   <commandset>
-    <command id="cmd-adban-complaint" observes="cmd-adban-stop"/>
-    <command id="cmd-adban-start" disabled="true"/>
-    <command id="cmd-adban-stop"/>
+    <!-- fake oncommand attribute is used as a workaround for the bug https://bugzilla.mozilla.org/show_bug.cgi?id=371900 -->
+    <command id="cmd-adban-complaint" observes="cmd-adban-stop" oncommand="void(0)"/>
+    <command id="cmd-adban-start" disabled="true" oncommand="void(0)"/>
+    <command id="cmd-adban-stop" oncommand="void(0)"/>
     <command id="cmd-adban-help"/>
   </commandset>
 
   <menupopup id="menu_ToolsPopup">
     <menu id="adban-menuitem" label="AdBan" insertafter="javascriptConsole" accesskey="b">
       <menupopup id="adban-menupopup">
-        <menuitem label="&adban.menuitem.complaint;" command="cmd-adban-complaint" tooltiptext="&adban.menuitem.complaint.tooltiptext;" accesskey="&adban.menuitem.complaint.accesskey;"/>
+        <menuitem
+          label="&adban.menuitem.complaint;"
+          command="cmd-adban-complaint"
+          tooltiptext="&adban.menuitem.complaint.tooltiptext;"
+          accesskey="&adban.menuitem.complaint.accesskey;"
+          key="adban-key-complaint"
+        />
         <menuseparator/>
-        <menuitem label="&adban.menuitem.start;" command="cmd-adban-start" tooltiptext="&adban.menuitem.start.tooltiptext;" accesskey="&adban.menuitem.start.accesskey;"/>
-        <menuitem label="&adban.menuitem.stop;" command="cmd-adban-stop" tooltiptext="&adban.menuitem.stop.tooltiptext;" accesskey="&adban.menuitem.stop.accesskey;"/>
+        <menuitem
+          label="&adban.menuitem.start;"
+          command="cmd-adban-start"
+          tooltiptext="&adban.menuitem.start.tooltiptext;"
+          accesskey="&adban.menuitem.start.accesskey;"
+          key="adban-key-start"
+        />
+        <menuitem
+          label="&adban.menuitem.stop;"
+          command="cmd-adban-stop"
+          tooltiptext="&adban.menuitem.stop.tooltiptext;"
+          accesskey="&adban.menuitem.stop.accesskey;"
+          key="adban-key-stop"
+        />
         <menuseparator/>
-        <menuitem label="&adban.menuitem.help;" command="cmd-adban-help" accesskey="&adban.menuitem.help.accesskey;"/>
+        <menuitem
+          label="&adban.menuitem.help;"
+          command="cmd-adban-help"
+          accesskey="&adban.menuitem.help.accesskey;"
+        />
       </menupopup>
     </menu>
   </menupopup>
