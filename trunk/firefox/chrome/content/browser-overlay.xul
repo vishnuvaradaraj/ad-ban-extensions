@@ -9,17 +9,17 @@
   </stringbundleset>
 
   <keyset>
-    <key id="adban-key-complaint" modifiers="accel shift" key="K" command="cmd-adban-complaint"/>
-    <key id="adban-key-start" modifiers="accel shift" key="L" command="cmd-adban-start"/>
-    <key id="adban-key-stop" modifiers="accel shift" key="M" command="cmd-adban-stop"/>
+    <key id="adban-key-complaint" modifiers="accel shift" key="K" command="adban-cmd-complaint"/>
+    <key id="adban-key-start" modifiers="accel shift" key="L" command="adban-cmd-start"/>
+    <key id="adban-key-stop" modifiers="accel shift" key="M" command="adban-cmd-stop"/>
   </keyset>
 
   <commandset>
     <!-- fake oncommand attribute is used as a workaround for the bug https://bugzilla.mozilla.org/show_bug.cgi?id=371900 -->
-    <command id="cmd-adban-complaint" observes="cmd-adban-stop" oncommand="void(0)"/>
-    <command id="cmd-adban-start" disabled="true" oncommand="void(0)"/>
-    <command id="cmd-adban-stop" oncommand="void(0)"/>
-    <command id="cmd-adban-help"/>
+    <command id="adban-cmd-complaint" observes="adban-cmd-stop" oncommand="void(0)"/>
+    <command id="adban-cmd-start" disabled="true" oncommand="void(0)"/>
+    <command id="adban-cmd-stop" oncommand="void(0)"/>
+    <command id="adban-cmd-help"/>
   </commandset>
 
   <menupopup id="menu_ToolsPopup">
@@ -27,7 +27,7 @@
       <menupopup id="adban-menupopup">
         <menuitem
           label="&adban.menuitem.complaint;"
-          command="cmd-adban-complaint"
+          command="adban-cmd-complaint"
           tooltiptext="&adban.menuitem.complaint.tooltiptext;"
           accesskey="&adban.menuitem.complaint.accesskey;"
           key="adban-key-complaint"
@@ -35,14 +35,14 @@
         <menuseparator/>
         <menuitem
           label="&adban.menuitem.start;"
-          command="cmd-adban-start"
+          command="adban-cmd-start"
           tooltiptext="&adban.menuitem.start.tooltiptext;"
           accesskey="&adban.menuitem.start.accesskey;"
           key="adban-key-start"
         />
         <menuitem
           label="&adban.menuitem.stop;"
-          command="cmd-adban-stop"
+          command="adban-cmd-stop"
           tooltiptext="&adban.menuitem.stop.tooltiptext;"
           accesskey="&adban.menuitem.stop.accesskey;"
           key="adban-key-stop"
@@ -50,7 +50,7 @@
         <menuseparator/>
         <menuitem
           label="&adban.menuitem.help;"
-          command="cmd-adban-help"
+          command="adban-cmd-help"
           accesskey="&adban.menuitem.help.accesskey;"
         />
       </menupopup>
@@ -63,7 +63,7 @@
       label="&adban.complaint-button.label;"
       class="toolbarbutton-1"
       tooltiptext="&adban.complaint-button.tooltiptext;"
-      command="cmd-adban-complaint"
+      command="adban-cmd-complaint"
     />
   </toolbarpalette>
 
