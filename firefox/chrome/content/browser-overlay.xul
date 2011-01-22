@@ -9,7 +9,7 @@
   </stringbundleset>
 
   <keyset>
-    <key id="adban-key-complaint" modifiers="accel shift" key="K" command="adban-cmd-complaint"/>
+    <key id="adban-key-complaint" modifiers="accel shift" key="V" command="adban-cmd-complaint"/>
     <key id="adban-key-start" modifiers="accel shift" key="B" command="adban-cmd-start"/>
     <key id="adban-key-stop" modifiers="accel shift" key="E" command="adban-cmd-stop"/>
   </keyset>
