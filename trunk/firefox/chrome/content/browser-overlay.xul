@@ -16,14 +16,14 @@
   </commandset>
 
   <menupopup id="menu_ToolsPopup">
-    <menu id="adban-menuitem" label="AdBan" insertafter="javascriptConsole">
+    <menu id="adban-menuitem" label="AdBan" insertafter="javascriptConsole" accesskey="b">
       <menupopup id="adban-menupopup">
-        <menuitem label="&adban.menuitem.complaint;" command="cmd-adban-complaint" tooltiptext="&adban.menuitem.complaint.tooltiptext;"/>
+        <menuitem label="&adban.menuitem.complaint;" command="cmd-adban-complaint" tooltiptext="&adban.menuitem.complaint.tooltiptext;" accesskey="&adban.menuitem.complaint.accesskey;"/>
         <menuseparator/>
-        <menuitem label="&adban.menuitem.start;" command="cmd-adban-start" tooltiptext="&adban.menuitem.start.tooltiptext;"/>
-        <menuitem label="&adban.menuitem.stop;" command="cmd-adban-stop" tooltiptext="&adban.menuitem.stop.tooltiptext;"/>
+        <menuitem label="&adban.menuitem.start;" command="cmd-adban-start" tooltiptext="&adban.menuitem.start.tooltiptext;" accesskey="&adban.menuitem.start.accesskey;"/>
+        <menuitem label="&adban.menuitem.stop;" command="cmd-adban-stop" tooltiptext="&adban.menuitem.stop.tooltiptext;" accesskey="&adban.menuitem.stop.accesskey;"/>
         <menuseparator/>
-        <menuitem label="&adban.menuitem.help;" command="cmd-adban-help"/>
+        <menuitem label="&adban.menuitem.help;" command="cmd-adban-help" accesskey="&adban.menuitem.help.accesskey;"/>
       </menupopup>
     </menu>
   </menupopup>

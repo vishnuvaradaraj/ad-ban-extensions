@@ -1,10 +1,14 @@
 <!ENTITY adban.menuitem.start "On">
 <!ENTITY adban.menuitem.start.tooltiptext "Enable AdBan">
+<!ENTITY adban.menuitem.start.accesskey "o">
 <!ENTITY adban.menuitem.stop "Off">
 <!ENTITY adban.menuitem.stop.tooltiptext "Disable AdBan">
+<!ENTITY adban.menuitem.stop.accesskey "f">
 <!ENTITY adban.menuitem.complaint "Report ads">
 <!ENTITY adban.menuitem.complaint.tooltiptext "Report ads or problems on the current page">
+<!ENTITY adban.menuitem.complaint.accesskey "r">
 <!ENTITY adban.menuitem.help "Help">
+<!ENTITY adban.menuitem.help.accesskey "h">
 
 <!ENTITY adban.complaint-button.label "Report ads">
 <!ENTITY adban.complaint-button.tooltiptext "AdBan: report ads or problems on the current page">
