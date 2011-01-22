@@ -71,13 +71,13 @@ if (true) {
   };
 
   let onStateChange = function(is_active) {
-    const cmd_adban_stop = $('adban-cmd-stop');
-    const cmd_adban_start = $('adban-cmd-start');
+    const cmd_stop = $('adban-cmd-stop');
+    const cmd_start = $('adban-cmd-start');
     if (is_active) {
-      stateToggle(cmd_adban_stop, cmd_adban_start);
+      stateToggle(cmd_stop, cmd_start);
     }
     else {
-      stateToggle(cmd_adban_start, cmd_adban_stop);
+      stateToggle(cmd_start, cmd_stop);
     }
   };
 
