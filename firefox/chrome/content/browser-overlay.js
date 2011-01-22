@@ -71,8 +71,8 @@ if (true) {
   };
 
   let onStateChange = function(is_active) {
-    const cmd_adban_stop = $('cmd-adban-stop');
-    const cmd_adban_start = $('cmd-adban-start');
+    const cmd_adban_stop = $('adban-cmd-stop');
+    const cmd_adban_start = $('adban-cmd-start');
     if (is_active) {
       stateToggle(cmd_adban_stop, cmd_adban_start);
     }
@@ -133,10 +133,10 @@ if (true) {
     };
     adban.executeDeferred(first_run_callback);
 
-    $('cmd-adban-stop').addEventListener('command', cmdStop, false);
-    $('cmd-adban-start').addEventListener('command', cmdStart, false);
-    $('cmd-adban-complaint').addEventListener('command', cmdComplaint, false);
-    $('cmd-adban-help').addEventListener('command', cmdHelp, false);
+    $('adban-cmd-stop').addEventListener('command', cmdStop, false);
+    $('adban-cmd-start').addEventListener('command', cmdStart, false);
+    $('adban-cmd-complaint').addEventListener('command', cmdComplaint, false);
+    $('adban-cmd-help').addEventListener('command', cmdHelp, false);
 
     // DOMFrameContentLoaded doesn't work as expected,
     // while DOMContentLoaded catches iframes and frames.
@@ -152,10 +152,10 @@ if (true) {
     adban.unsubscribeFromStateChange(state_listener_id);
     gBrowser.removeEventListener('DOMContentLoaded', adban, true);
 
-    $('cmd-adban-stop').removeEventListener('command', cmdStop, false);
-    $('cmd-adban-start').removeEventListener('command', cmdStart, false);
-    $('cmd-adban-complaint').removeEventListener('command', cmdComplaint, false);
-    $('cmd-adban-help').removeEventListener('command', cmdHelp, false);
+    $('adban-cmd-stop').removeEventListener('command', cmdStop, false);
+    $('adban-cmd-start').removeEventListener('command', cmdStart, false);
+    $('adban-cmd-complaint').removeEventListener('command', cmdComplaint, false);
+    $('adban-cmd-help').removeEventListener('command', cmdHelp, false);
 
     window.removeEventListener('load', init, false);
     window.removeEventListener('unload', shutdown, false);
