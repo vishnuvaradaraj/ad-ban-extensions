@@ -10,6 +10,8 @@
     <em:description>Blocks ads, spyware and third-party trackers on the web</em:description>
     <em:creator>support@ad-ban.appspotmail.com</em:creator>
     <em:homepageURL>https://ad-ban.appspot.com/</em:homepageURL>
+    <em:iconURL>chrome://adban/skin/icons/32px.png</em:iconURL>
+    <em:icon64URL>chrome://adban/skin/icons/64px.png</em:icon64URL>
     <em:type>2</em:type>
 
     <em:localized>
