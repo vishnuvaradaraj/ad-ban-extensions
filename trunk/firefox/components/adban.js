@@ -384,7 +384,7 @@ const AdBan = function() {
 };
 
 AdBan.prototype = {
-  // this shit is for XPCOM
+  // XPCOM stuff.
   classDescription: 'AdBan XPCOM component',
   classID:          Components.ID('{02f31d71-1c0b-48f3-a3b5-100c18dc771e}'),
   contractID:       '@ad-ban.appspot.com/adban;1',
@@ -439,6 +439,7 @@ AdBan.prototype = {
   _read_settings_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _update_current_date_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _update_settings_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
+  _save_cache_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
 
   // this logging must be accessible outside the AdBan component.
   logging: logging,
@@ -456,6 +457,7 @@ AdBan.prototype = {
     update_settings_interval: 1000 * 3600 * 24,
     max_url_length: 100,
     max_url_exception_length: 100,
+    save_cache_interval: 1000 * 60 * 20,
 
     read_settings_delay: 1000 * 5,  // this value isn't changed.
 
@@ -467,6 +469,13 @@ AdBan.prototype = {
       this.update_settings_interval = data[4];
       this.max_url_length = data[5];
       this.max_url_exception_length = data[6];
+
+      // the following condition is required for backwards compatibility
+      // if the save_cache_interval is missing in the file with old settings.
+      const save_cache_interval = data[7];
+      if (save_cache_interval) {
+        this.save_cache_interval = save_cache_interval;
+      }
     },
 
     export: function() {
@@ -478,6 +487,7 @@ AdBan.prototype = {
           this.update_settings_interval,
           this.max_url_length,
           this.max_url_exception_length,
+          this.save_cache_interval,
       ];
     },
   },
@@ -591,25 +601,25 @@ AdBan.prototype = {
       }
       this._converter.charset = 'UTF-8';
       this._loadSettingsAsync();
-      this._loadCachesAsync();
+      this._loadCacheAsync();
       this.start();
     }
     else if (topic == 'private-browsing') {
       if (data == 'enter') {
-        // save current caches to local storage, so they can be loaded later
-        // after exiting the private mode. Caches created during private mode
+        // save the current cache to local storage, so it can be loaded later
+        // after exiting the private mode. The cache created during private mode
         // won't be saved to local storage.
 
-        // caches cannot be stored asynchronously here, since this can lead
+        // The cache cannot be stored asynchronously here, since this can lead
         // to the following race conditions:
-        // - saveCaches operation has been started, browser enters private
-        //   mode and adds new entries to caches, so they eventually are saved
-        //   to local storage after saveCaches is complete.
-        // - saveCaches operation has been started, browser exits private mode
-        //   and starts loading caches back from the local storage, which can
-        //   be in inconsistent state because of saveCaches operation isn't
+        // - saveCache operation has been started, browser enters private
+        //   mode and adds new entries to cache, so they eventually are saved
+        //   to local storage after saveCache is complete.
+        // - saveCache operation has been started, browser exits private mode
+        //   and starts loading cache back from the local storage, which can
+        //   be in inconsistent state because of saveCache operation isn't
         //   complete yet.
-        this._saveCachesSync();
+        this._saveCacheSync();
         logging.info('entering private browsing mode');
         logging.stop();
         vars.is_in_private_mode = true;
@@ -617,22 +627,22 @@ AdBan.prototype = {
       else if (data == 'exit') {
         logging.start();
         logging.info('exiting private browsing mode');
-        // load caches from local storage, which were saved before entering
-        // the private mode. These caches will overwrite current caches, wich
-        // can contain private data.
-        this._loadCachesAsync();
+        // load cache from local storage, which were saved before entering
+        // the private mode. The loaded cache will overwrite the current cache,
+        // wich can contain private data.
+        this._loadCacheAsync();
         vars.is_in_private_mode = false;
       }
     }
     else if (topic == 'quit-application') {
       logging.info('quit-application');
       this.stop();
-      if (!vars.is_in_private_mode) {
-        // caches cannot be stored asynchronously here, since the browser
-        // process can exit before the saveCaches operation is complete.
-        // This can leave locally stored caches in inconsistent state.
-        this._saveCachesSync();
-      }
+
+      // The cache cannot be stored asynchronously here, since the browser
+      // process can exit before the saveCache operation is complete.
+      // This can leave locally stored cache in inconsistent state.
+      this._saveCacheSync();
+
       observer_service.removeObserver(this, 'private-browsing');
       observer_service.removeObserver(this, 'quit-application');
       if (vars.is_app_startup_called) {
@@ -812,13 +822,21 @@ AdBan.prototype = {
         update_current_date_callback,
         settings.current_date_granularity);
 
-    const read_settings_callback = function() {
+    const update_settings_callback = function() {
       that._readSettingsFromServer();
     };
     this._startRepeatingTimer(
         this._update_settings_timer,
-        read_settings_callback,
+        update_settings_callback,
         settings.update_settings_interval);
+
+    const save_cache_callback = function() {
+      that._saveCacheSync();
+    };
+    this._startRepeatingTimer(
+        this._save_cache_timer,
+        save_cache_callback,
+        settings.save_cache_interval);
     logging.info('AdBan component timers have been started');
   },
 
@@ -828,6 +846,7 @@ AdBan.prototype = {
     // See https://developer.mozilla.org/En/nsITimer#cancel() .
     this._update_current_date_timer.cancel();
     this._update_settings_timer.cancel();
+    this._save_cache_timer.cancel();
     logging.info('AdBan component timers have been stopped');
   },
 
@@ -966,8 +985,8 @@ AdBan.prototype = {
     logging.info('AdBan settings have been saved to file');
   },
 
-  _loadCachesAsync: function() {
-    logging.info('loading AdBan caches from file');
+  _loadCacheAsync: function() {
+    logging.info('loading AdBan cache from file');
     const that = this;
     const vars = this._vars;
     const node_delete_timeout = this._settings.node_delete_timeout;
@@ -985,14 +1004,18 @@ AdBan.prototype = {
           urlExceptionValueConstructor);
       vars.url_cache = url_cache;
       vars.url_exception_cache = url_exception_cache;
-      logging.info('AdBan caches have been loaded from file');
+      logging.info('AdBan cache has been loaded from file');
     };
     this._readJsonFromFileAsync(file, read_complete_callback);
   },
 
-  _saveCachesSync: function() {
-    logging.info('saving AdBan caches to file');
+  _saveCacheSync: function() {
+    logging.info('saving AdBan cache to file');
     const vars = this._vars;
+    if (vars.is_in_private_mode) {
+      logging.info('cache shouldn\'t be saved while in private mode');
+      return;
+    }
     const current_date = vars.current_date;
     const url_cache = vars.url_cache;
     const url_exception_cache = vars.url_exception_cache;
@@ -1002,7 +1025,7 @@ AdBan.prototype = {
     ]
     const file = this._getFileForCaches();
     this._writeJsonToFileSync(file, data);
-    logging.info('AdBan caches have been saved to file');
+    logging.info('AdBan cache has been saved to file');
   },
 
   _shouldProcessUri: function(url) {
