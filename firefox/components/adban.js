@@ -548,8 +548,15 @@ AdBan.prototype = {
         logging.info('the current DOMContentLoaded target=[%s] isn\'t html document', node_name);
         return;
       }
-      logging.info('DOMContentLoaded event on url=[%s]', doc.location.href);
-      this._injectCssToDocument(doc);
+      const site_url = doc.location.href;
+      logging.info('DOMContentLoaded event on url=[%s]', site_url);
+      const site_uri = this._createUri(site_url);
+      if (!this._shouldProcessUri(site_uri)) {
+        logging.info('there is no need in processing the url=[%s]', site_url);
+        return;
+      }
+      this._injectCssToDocument(doc, site_uri);
+      this._prefetchAdFiltersForDocumentLinks(doc);
     }
   },
 
@@ -1002,12 +1009,7 @@ AdBan.prototype = {
     return (url.scheme in this._FILTERED_SCHEMES);
   },
 
-  _injectCssToDocument: function(doc) {
-    const site_url = doc.location.href;
-    const site_uri = this._createUri(site_url);
-    if (!this._shouldProcessUri(site_uri)) {
-      return;
-    }
+  _injectCssToDocument: function(doc, site_uri) {
     const canonical_site_url = this._getCanonicalUrl(site_uri);
     const url_exception_value = this._getUrlExceptionValue(canonical_site_url);
     const css_selectors = url_exception_value.css_selectors;
@@ -1018,8 +1020,29 @@ AdBan.prototype = {
       const style_text = css_selectors + '{display: none !important;}';
       const style_text_node = doc.createTextNode(style_text);
       style.appendChild(style_text_node);
-      logging.info('adding css selector=[%s] to the site_url=[%s]', style_text, site_url);
+      logging.info('adding css selector=[%s] to the site_url=[%s]', style_text, site_uri.spec);
       doc.getElementsByTagName('head')[0].appendChild(style);
+    }
+  },
+
+  _prefetchAdFiltersForDocumentLinks: function(doc) {
+    const links = doc.links;
+    const links_length = links.length;
+    for (let i = 0; i < links_length; i++) {
+      let link = links[i];
+      let uri = this._createUri(link.href);
+      if (!this._shouldProcessUri(uri)) {
+        logging.info('there is no need in processing the link=[%s]', uri.spec);
+        continue;
+      }
+      let canonical_url = this._getCanonicalUrl(uri);
+      let value = this._getUrlValue(canonical_url);
+      let is_whitelist = value.is_whitelist;
+      logging.info('pre-fetching ad filter for the link=[%s]. is_whitelist=[%s]', canonical_url, is_whitelist);
+      if (!is_whitelist) {
+        logging.info('hiding the link=[%s]', canonical_url);
+        link.style.display = 'none';
+      }
     }
   },
 
