@@ -833,7 +833,6 @@ AdBan.prototype = {
     // I don't know how this code works. It has been copy-pasted from
     // https://developer.mozilla.org/en/Code_snippets/Tabbed_browser#Getting_the_browser_that_fires_the_http-on-modify-request_notification .
     let request_origin = null;
-    return null;
     const cb = channel.notificationCallbacks ? channel.notificationCallbacks : channel.loadGroup.notificationCallbacks;
     if (cb) {
       try {
