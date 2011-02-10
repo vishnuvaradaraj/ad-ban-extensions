@@ -181,14 +181,14 @@ Trie.prototype = {
       }
     }
   },
-  _get: function(key_chars, current_date) {
-    const key_length = key_chars.length;
+  _get: function(key, current_date) {
+    const key_length = key.length;
     let node = this._root;
     let node_with_value = node;
     let node_depth = 0;
     let tmp_node, c;
     while (node_depth < key_length) {
-      c = key_chars[node_depth];
+      c = key[node_depth];
       tmp_node = node.children[c];
       if (!tmp_node) {
         break;
@@ -206,28 +206,11 @@ Trie.prototype = {
     }
     return [node, node_with_value, node_depth];
   },
-  _add: function(key_chars, value, current_date) {
-    const key_length = key_chars.length;
-    const tmp = this._get(key_chars, current_date);
-    let node = tmp[0];
-    let node_depth = tmp[2];
-    let new_node, c;
-    while (node_depth < key_length) {
-      c = key_chars[node_depth];
-      new_node = this._createNode();
-      node.children[c] = new_node;
-      node = new_node;
-      node_depth++;
-    }
-    node.value = value;
-    node.last_check_date = current_date;
-  },
   _clearNodesWithValue: function(node, node_depth, end_key) {
-    const end_key_chars = end_key.split('');
-    const end_key_length = end_key_chars.length;
+    const end_key_length = end_key.length;
     let tmp_node, c;
     while (node_depth < end_key_length) {
-      c = end_key_chars[node_depth];
+      c = end_key[node_depth];
       tmp_node = node.children[c];
       if (!tmp_node) {
         break;
@@ -262,25 +245,35 @@ Trie.prototype = {
     }
   },
   get: function(key, current_date) {
-    const key_chars = key.split('');
-    return this._get(key_chars, current_date)[1];
+    return this._get(key, current_date)[1];
   },
   add: function(key, value, current_date) {
-    const key_chars = key.split('');
-    this._add(key_chars, value, current_date);
+    const key_length = key.length;
+    const tmp = this._get(key, current_date);
+    let node = tmp[0];
+    let node_depth = tmp[2];
+    let new_node, c;
+    while (node_depth < key_length) {
+      c = key[node_depth];
+      new_node = this._createNode();
+      node.children[c] = new_node;
+      node = new_node;
+      node_depth++;
+    }
+    node.value = value;
+    node.last_check_date = current_date;
   },
   update: function(start_key, end_keys, value, current_date) {
-    const start_key_chars = start_key.split('');
-    const tmp = this._get(start_key_chars, current_date);
+    const tmp = this._get(start_key, current_date);
     const node = tmp[0];
     const node_depth = tmp[2];
-    if (node_depth == start_key_chars.length) {
+    if (node_depth == start_key.length) {
       const end_keys_length = end_keys.length;
       for (let i = 0; i < end_keys_length; i++) {
         this._clearNodesWithValue(node, node_depth, end_keys[i]);
       }
     }
-    this._add(start_key_chars, value, current_date);
+    this.add(start_key, value, current_date);
   },
   exportToNodes: function(node_constructor, current_date) {
     const nodes = [];
@@ -1089,14 +1082,13 @@ AdBan.prototype = {
       let value = value_constructor(properties);
       cache.update(url, end_urls, value, this._vars.current_date);
 
-      const todo_chars = todo.split('');
-      const todo_length = todo_chars.length;
+      const todo_length = todo.length;
       for (let j = 0; j < todo_length; j++) {
         // value must be created each time it is added into cache,
         // otherwise a single modification of the value will modify other
         // values.
         value = default_value_constructor();
-        cache.add(url + todo_chars[j], value, 0);
+        cache.add(url + todo[j], value, 0);
       }
     }
   },
