@@ -1055,7 +1055,6 @@ AdBan.prototype = {
       let value = this._getUrlValue(canonical_url);
       let is_whitelist = value.is_whitelist;
       this._getUrlExceptionValue(canonical_url);
-      logging.info('pre-fetching ad filter for the link=[%s]. is_whitelist=[%s]', canonical_url, is_whitelist);
       if (!is_whitelist) {
         logging.info('hiding the link=[%s]', canonical_url);
         link.style.display = 'none';
