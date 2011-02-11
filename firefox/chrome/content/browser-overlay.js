@@ -126,6 +126,7 @@ if (true) {
       if (!pref_branch.prefHasUserValue('first-run')) {
         logging.info('first run of AdBan');
         setupToolbarButtons();
+        cmdHelp();
         showNotification(_('report-ads-notification'), 'report-ads-notification');
         pref_branch.setBoolPref('first-run', true);
       }
