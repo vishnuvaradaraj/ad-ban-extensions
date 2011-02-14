@@ -116,6 +116,7 @@ if (true) {
   };
 
   let state_listener_id;
+  let is_initially_active;
 
   let init = function() {
     logging.info('initializing browser-overlay');
@@ -130,7 +131,7 @@ if (true) {
         showNotification(_('report-ads-notification'), 'report-ads-notification');
         pref_branch.setBoolPref('first-run', true);
       }
-      state_listener_id = adban.subscribeToStateChange(onStateChange);
+      onStateChange(is_initially_active);
     };
     adban.executeDeferred(first_run_callback);
 
@@ -145,6 +146,11 @@ if (true) {
     gBrowser.addEventListener('DOMContentLoaded', adban, true);
 
     window.addEventListener('unload', shutdown, false);
+
+    const state_change_results = adban.subscribeToStateChange(onStateChange);
+    state_listener_id = state_change_results[0];
+    is_initially_active = state_change_results[1];
+
     logging.info('browser-overlay has been initialized');
   };
 
