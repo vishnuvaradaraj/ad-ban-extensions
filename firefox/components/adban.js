@@ -695,8 +695,7 @@ AdBan.prototype = {
     logging.info('subscribing to AdBan component state change');
     const listener_id = this._last_state_listener_id++;
     this._state_listeners[listener_id] = state_change_callback;
-    state_change_callback(this._vars.is_active);
-    return listener_id;
+    return [listener_id, this._vars.is_active];
   },
 
   unsubscribeFromStateChange: function(listener_id) {
