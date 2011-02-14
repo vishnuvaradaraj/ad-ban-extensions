@@ -532,6 +532,20 @@ AdBan.prototype = {
     if (this._verifyLocation(content_location, request_origin)) {
       return this._ACCEPT;
     }
+
+    if (content_type == Ci.nsIContentPolicy.TYPE_DOCUMENT) {
+      const w = node.contentWindow;
+      if (w && w.opener && w.top != w.opener.top) {
+        try {
+          logging.info('closing the popup [%s] opened by the [%s]', content_location.spec, w.opener.location.href);
+          w.close();
+        }
+        catch(e) {
+          logging.error('cannot close the popup [%s]: [%s]', content_location.spec, e);
+        }
+      }
+    }
+
     return this._REJECT;
   },
   shouldProcess: function(content_type, content_location, request_origin, node, mime_type, extra) {
@@ -848,7 +862,7 @@ AdBan.prototype = {
   },
 
   _getRequestOriginFromChannel: function(channel) {
-    // I don't know how this code works. It has been copy-pasted from
+    // I don't know how does this code work. It has been copy-pasted from
     // https://developer.mozilla.org/en/Code_snippets/Tabbed_browser#Getting_the_browser_that_fires_the_http-on-modify-request_notification .
     let request_origin = null;
     const cb = channel.notificationCallbacks ? channel.notificationCallbacks : channel.loadGroup.notificationCallbacks;
