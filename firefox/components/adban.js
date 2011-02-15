@@ -162,6 +162,7 @@ Trie.prototype = {
     const last_check_date = node.last_check_date;
     return (last_check_date != 0 && current_date - last_check_date > this._node_delete_timeout);
   },
+
   _deleteNode: function(node) {
     if (node == this._root) {
       // don't delete root node.
