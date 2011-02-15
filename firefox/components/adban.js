@@ -157,6 +157,7 @@ Trie.prototype = {
         children: {},
     };
   },
+
   _mustDeleteNode: function(node, current_date) {
     const last_check_date = node.last_check_date;
     return (last_check_date != 0 && current_date - last_check_date > this._node_delete_timeout);
@@ -171,7 +172,6 @@ Trie.prototype = {
       delete node.last_check_date;
     }
 
-    // delete TODO nodes for the given node.
     const children = node.children;
     for (let c in children) {
       node = children[c];
@@ -181,6 +181,7 @@ Trie.prototype = {
       }
     }
   },
+
   _get: function(key, current_date) {
     const key_length = key.length;
     let node = this._root;
@@ -206,6 +207,7 @@ Trie.prototype = {
     }
     return [node, node_with_value, node_depth];
   },
+
   _clearNodesWithValue: function(node, node_depth, end_key) {
     const end_key_length = end_key.length;
     let tmp_node, c;
@@ -223,6 +225,7 @@ Trie.prototype = {
       node_depth++;
     }
   },
+
   _getNodes: function(key, node) {
     if ('value' in node) {
       if (this._mustDeleteNode(node, this._current_date)) {
@@ -244,9 +247,11 @@ Trie.prototype = {
       this._getNodes(key + c, children[c]);
     }
   },
+
   get: function(key, current_date) {
     return this._get(key, current_date)[1];
   },
+
   add: function(key, value, current_date) {
     const key_length = key.length;
     const tmp = this._get(key, current_date);
@@ -263,6 +268,7 @@ Trie.prototype = {
     node.value = value;
     node.last_check_date = current_date;
   },
+
   update: function(start_key, end_keys, value, current_date) {
     const tmp = this._get(start_key, current_date);
     const node = tmp[0];
@@ -275,6 +281,7 @@ Trie.prototype = {
     }
     this.add(start_key, value, current_date);
   },
+
   exportToNodes: function(node_constructor, current_date) {
     const nodes = [];
     this._prev_key = '';
@@ -284,6 +291,7 @@ Trie.prototype = {
     this._getNodes('', this._root);
     return nodes;
   },
+
   setNodeDeleteTimeout: function(node_delete_timeout) {
     this._node_delete_timeout = node_delete_timeout;
   },
