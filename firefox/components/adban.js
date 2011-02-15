@@ -1199,7 +1199,7 @@ AdBan.prototype = {
 
   _startJsonRequest: function(xhr, request_url, request_data, response_callback, finish_callback) {
     const auth_token = this._vars.auth_token;
-    let finish_callback_message;
+    let error_message;
 
     const request_text = this._json_encoder.encode([auth_token, request_data]);
     logging.info('request_url=[%s], request_text=[%s]', request_url, request_text);
@@ -1211,20 +1211,20 @@ AdBan.prototype = {
         try {
           const http_status = xhr.status;
           if (http_status == 200) {
-            finish_callback_message = that._processJsonResponse(request_text, xhr.responseText, response_callback);
+            error_message = that._processJsonResponse(request_text, xhr.responseText, response_callback);
           }
           else {
             logging.error('unexpected HTTP status code for the request_url=[%s], request_text=[%s], http_status=[%s]', request_url, request_text, http_status);
-            finish_callback_message = 'server error';
+            error_message = 'server error';
           }
         }
         catch(e) {
           logging.error('error when processing json response=[%s] for the request_url=[%s], request_text=[%s]: [%s]', xhr.responseText, request_url, request_text, e);
-          finish_callback_message = 'protocol error';
+          error_message = 'protocol error';
         }
         finally {
           if (finish_callback) {
-            finish_callback(finish_callback_message);
+            finish_callback(error_message);
           }
         }
       }
