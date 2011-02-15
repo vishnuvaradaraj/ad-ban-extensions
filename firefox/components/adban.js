@@ -486,8 +486,16 @@ AdBan.prototype = {
     max_url_length: 50,
     max_url_exception_length: 50,
     save_cache_interval: 1000 * 60 * 20,
+    min_backoff_timeout: 1000,
+    max_backoff_timeout: 1000 * 3600 * 24,
 
     read_settings_delay: 1000 * 5,  // this value isn't changed.
+
+    _bc_import: function(property_name, value) {
+      if (value) {
+        this[property_name] = value;
+      }
+    },
 
     import: function(data) {
       this.url_verifier_delay = data[0];
@@ -498,12 +506,9 @@ AdBan.prototype = {
       this.max_url_length = data[5];
       this.max_url_exception_length = data[6];
 
-      // the following condition is required for backwards compatibility
-      // if the save_cache_interval is missing in the file with old settings.
-      const save_cache_interval = data[7];
-      if (save_cache_interval) {
-        this.save_cache_interval = save_cache_interval;
-      }
+      this._bc_import('save_cache_interval', data[7]);
+      this._bc_import('min_backoff_timeout', data[8]);
+      this._bc_import('max_backoff_timeout', data[9]);
     },
 
     export: function() {
@@ -516,6 +521,8 @@ AdBan.prototype = {
           this.max_url_length,
           this.max_url_exception_length,
           this.save_cache_interval,
+          this.min_backoff_timeout,
+          this.max_backoff_timeout,
       ];
     },
   },
@@ -1197,7 +1204,7 @@ AdBan.prototype = {
     return error_message;
   },
 
-  _startJsonRequest: function(xhr, request_url, request_data, response_callback, finish_callback) {
+  _startJsonRequestInternal: function(xhr, request_url, request_data, response_callback, finish_callback) {
     const auth_token = this._vars.auth_token;
     let error_message;
 
@@ -1223,14 +1230,56 @@ AdBan.prototype = {
           error_message = 'protocol error';
         }
         finally {
-          if (finish_callback) {
-            finish_callback(error_message);
-          }
+          finish_callback(error_message);
         }
       }
     };
     const encoded_request = encodeURIComponent(request_text);
     xhr.send(encoded_request);
+  },
+
+  _startJsonRequest: function(xhr, request_url, request_data, response_callback, finish_callback) {
+    // don't use this._vars.current_date here, since it may be too coarse
+    // for the backoff algorithm to work properly.
+    const current_date = getCurrentDate();
+    const last_failed_request_date = xhr._last_failed_request_date;
+    if (last_failed_request_date && current_date - last_failed_request_date < xhr._backoff_timeout) {
+      const time_to_wait = xhr._backoff_timeout - (current_date - last_failed_request_date);
+      logging.warning('backoff timeout=[%s] since the previous unsuccessful request to the url=[%s] isn\'t over yet. Time to wait=[%s]', xhr._backoff_timeout, request_url, time_to_wait);
+      if (finish_callback) {
+        finish_callback('remote service is temporarily unavailable');
+      }
+      return;
+    }
+
+    const that = this;
+    const finish_callback_wrapper = function(error_message) {
+      if (error_message) {
+        logging.warning('something unexpected happened when communicating with the url=[%s] (see previous log messages for details).', request_url);
+
+        // don't use this._vars.current_date here, since it is too coarse
+        // for the backoff algorithm to work properly.
+        xhr._last_failed_request_date = getCurrentDate();
+        const settings = that._settings;
+        const backoff_timeout = xhr._backoff_timeout;
+        if (!backoff_timeout) {
+          xhr._backoff_timeout = settings.min_backoff_timeout;
+        }
+        else if (backoff_timeout < settings.max_backoff_timeout) {
+          backoff_timeout *= 2;
+          xhr._backoff_timeout = backoff_timeout;
+        }
+        logging.info('setting the backoff timeout for subsequent requests to [%s] milliseconds', backoff_timeout);
+      }
+      else if ('_last_failed_request_date' in xhr) {
+        delete xhr._last_failed_request_date;
+        delete xhr._backoff_timeout;
+      }
+      if (finish_callback) {
+        finish_callback(error_message);
+      }
+    };
+    this._startJsonRequestInternal(xhr, request_url, request_data, response_callback, finish_callback_wrapper);
   },
 
   _readSettingsFromServer: function() {
