@@ -10,6 +10,10 @@ Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
 const app_info = Cc['@mozilla.org/xre/app-info;1'].getService(Ci.nsIXULAppInfo);
 
+const getCurrentDate = function() {
+  return (new Date()).getTime();
+};
+
 const logging = {
   levels: {
       INFO: ['INFO', 10],
@@ -523,7 +527,7 @@ AdBan.prototype = {
   // among all instances of the component, which could be created by FireFox
   // via createInstance() call instead of getService() call.
   _vars: {
-    current_date: (new Date()).getTime(),
+    current_date: getCurrentDate(),
     auth_token: '',
     url_cache: createEmptyUrlCache(0),
     url_exception_cache: createEmptyUrlExceptionCache(0),
@@ -851,7 +855,7 @@ AdBan.prototype = {
     // in this case the first callback will be automatically canceled.
     // See https://developer.mozilla.org/En/nsITimer .
     const update_current_date_callback = function() {
-      that._vars.current_date = (new Date()).getTime();
+      that._vars.current_date = getCurrentDate();
     };
     update_current_date_callback();
     this._startRepeatingTimer(
