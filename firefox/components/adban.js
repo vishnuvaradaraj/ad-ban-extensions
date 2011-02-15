@@ -298,23 +298,19 @@ Trie.prototype = {
   },
 };
 
-const createUrlCacheDefaultValue = function() {
-  return {
-      is_whitelist: true,
-  };
+const defaultUrlValue = {
+    is_whitelist: true,
 };
 
-const createUrlExceptionCacheDefaultValue = function() {
-  return {
-  };
+const defaultUrlExceptionValue = {
 };
 
 const createEmptyUrlCache = function(node_delete_timeout) {
-  return new Trie(createUrlCacheDefaultValue(), node_delete_timeout);
+  return new Trie(defaultUrlValue, node_delete_timeout);
 };
 
 const createEmptyUrlExceptionCache = function(node_delete_timeout) {
-  return new Trie(createUrlExceptionCacheDefaultValue(), node_delete_timeout);
+  return new Trie(defaultUrlExceptionValue, node_delete_timeout);
 };
 
 const BLACKLISTED_CANONICAL_URLS_BIT_MASK = (1 << 0);
@@ -1008,12 +1004,12 @@ AdBan.prototype = {
     const file = this._getFileForCaches();
     const read_complete_callback = function(data) {
       const url_cache = Trie.importFromNodes(
-          createUrlCacheDefaultValue(),
+          defaultUrlValue,
           node_delete_timeout,
           data[0],
           urlValueConstructor);
       const url_exception_cache = Trie.importFromNodes(
-          createUrlExceptionCacheDefaultValue(),
+          defaultUrlExceptionValue,
           node_delete_timeout,
           data[1],
           urlExceptionValueConstructor);
@@ -1084,7 +1080,7 @@ AdBan.prototype = {
     }
   },
 
-  _updateCache: function(response_data, urls, cache, value_constructor, default_value_constructor) {
+  _updateCache: function(response_data, urls, cache, value_constructor, default_value) {
     const response_data_length = response_data.length;
 
     for (let i = 0; i < response_data_length; i++) {
@@ -1105,11 +1101,10 @@ AdBan.prototype = {
 
       const todo_length = todo.length;
       for (let j = 0; j < todo_length; j++) {
-        // value must be created each time it is added into cache,
-        // otherwise a single modification of the value will modify other
-        // values.
-        value = default_value_constructor();
-        cache.add(url + todo[j], value, 0);
+        // it is OK to share a single reference to the default_value among
+        // multiple cache nodes, since values in cache nodes are considered
+        // immutable.
+        cache.add(url + todo[j], default_value, 0);
       }
     }
   },
@@ -1257,13 +1252,13 @@ AdBan.prototype = {
           urls,
           vars.url_cache,
           urlValueConstructor,
-          createUrlCacheDefaultValue);
+          defaultUrlValue);
       that._updateCache(
           response[1],
           url_exceptions,
           vars.url_exception_cache,
           urlExceptionValueConstructor,
-          createUrlExceptionCacheDefaultValue);
+          defaultUrlExceptionValue);
       that._cleanupUnverifiedUrls(vars.unverified_urls, vars.url_cache);
       that._cleanupUnverifiedUrls(vars.unverified_url_exceptions, vars.url_exception_cache);
     };
