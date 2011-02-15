@@ -1263,12 +1263,12 @@ AdBan.prototype = {
         const settings = that._settings;
         const backoff_timeout = xhr._backoff_timeout;
         if (!backoff_timeout) {
-          xhr._backoff_timeout = settings.min_backoff_timeout;
+          backoff_timeout = settings.min_backoff_timeout;
         }
         else if (backoff_timeout < settings.max_backoff_timeout) {
           backoff_timeout *= 2;
-          xhr._backoff_timeout = backoff_timeout;
         }
+        xhr._backoff_timeout = backoff_timeout;
         logging.info('setting the backoff timeout for subsequent requests to [%s] milliseconds', backoff_timeout);
       }
       else if ('_last_failed_request_date' in xhr) {
