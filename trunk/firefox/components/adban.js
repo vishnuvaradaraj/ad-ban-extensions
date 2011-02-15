@@ -268,9 +268,10 @@ Trie.prototype = {
     }
     node.value = value;
     node.last_check_date = current_date;
+    return node;
   },
 
-  update: function(start_key, end_keys, value, current_date) {
+  update: function(start_key, end_keys, value, current_date, todo, todo_value) {
     const tmp = this._get(start_key, current_date);
     const node = tmp[0];
     const node_depth = tmp[2];
@@ -280,7 +281,28 @@ Trie.prototype = {
         this._clearNodesWithValue(node, node_depth, end_keys[i]);
       }
     }
-    this.add(start_key, value, current_date);
+
+    const added_node = this.add(start_key, value, current_date);
+    const children = added_node.children;
+    const todo_length = todo.length;
+    for (let i = 0; i < todo_length; i++) {
+      let c = todo[i];
+      let child_node = children[c];
+      if (!child_node) {
+        child_node = this._createNode();
+        children[c] = child_node;
+      }
+      else if (child_node.last_check_date) {
+        // do not modify already existing node.
+        continue;
+      }
+      // it is OK that multiple nodes share the same reference
+      // to the todo_value if the value contents is immutable.
+      // Otherwise modification of a node's value could break other node's
+      // value.
+      child_node.value = todo_value;
+      child_node.last_check_date = 0;
+    }
   },
 
   exportToNodes: function(node_constructor, current_date) {
@@ -298,6 +320,10 @@ Trie.prototype = {
   },
 };
 
+// It is OK to share default values by reference among multiple Trie nodes,
+// because node values are considered immutable.
+// WARNING: if sometimes node values will become mutable, then these default values
+// must be distinctly cloned for each Trie node.
 const defaultUrlValue = {
     is_whitelist: true,
 };
@@ -1096,16 +1122,8 @@ AdBan.prototype = {
         end_urls[j] = urls[url_idx[j]];
       }
       const url = urls[url_idx[0]].substring(0, url_length);
-      let value = value_constructor(properties);
-      cache.update(url, end_urls, value, this._vars.current_date);
-
-      const todo_length = todo.length;
-      for (let j = 0; j < todo_length; j++) {
-        // it is OK to share a single reference to the default_value among
-        // multiple cache nodes, since values in cache nodes are considered
-        // immutable.
-        cache.add(url + todo[j], default_value, 0);
-      }
+      const value = value_constructor(properties);
+      cache.update(url, end_urls, value, this._vars.current_date, todo, default_value);
     }
   },
 
