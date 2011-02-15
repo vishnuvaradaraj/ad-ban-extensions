@@ -1261,7 +1261,7 @@ AdBan.prototype = {
         // for the backoff algorithm to work properly.
         xhr._last_failed_request_date = getCurrentDate();
         const settings = that._settings;
-        const backoff_timeout = xhr._backoff_timeout;
+        let backoff_timeout = xhr._backoff_timeout;
         if (!backoff_timeout) {
           backoff_timeout = settings.min_backoff_timeout;
         }
