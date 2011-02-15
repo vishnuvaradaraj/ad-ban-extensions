@@ -1255,8 +1255,6 @@ AdBan.prototype = {
     const that = this;
     const finish_callback_wrapper = function(error_message) {
       if (error_message) {
-        logging.warning('something unexpected happened when communicating with the url=[%s] (see previous log messages for details).', request_url);
-
         // don't use this._vars.current_date here, since it is too coarse
         // for the backoff algorithm to work properly.
         xhr._last_failed_request_date = getCurrentDate();
@@ -1269,7 +1267,7 @@ AdBan.prototype = {
           backoff_timeout *= 2;
         }
         xhr._backoff_timeout = backoff_timeout;
-        logging.info('setting the backoff timeout for subsequent requests to [%s] milliseconds', backoff_timeout);
+        logging.warning('Request to the url=[%s] failed. Setting the backoff timeout for subsequent requests to [%s] milliseconds', request_url, backoff_timeout);
       }
       else if ('_last_failed_request_date' in xhr) {
         delete xhr._last_failed_request_date;
