@@ -615,7 +615,7 @@ AdBan.prototype = {
         return;
       }
       this._injectCssToDocument(doc, site_uri);
-      this._prefetchAdFiltersForDocumentLinks(doc);
+      this._prefetchAdFiltersForDocumentLinks(doc, site_uri);
     }
   },
 
@@ -1096,21 +1096,15 @@ AdBan.prototype = {
     }
   },
 
-  _prefetchAdFiltersForDocumentLinks: function(doc) {
+  _prefetchAdFiltersForDocumentLinks: function(doc, site_uri) {
     const links = doc.links;
     const links_length = links.length;
     for (let i = 0; i < links_length; i++) {
       let link = links[i];
       let uri = this._createUri(link.href);
-      if (!this._shouldProcessUri(uri)) {
-        logging.info('there is no need in processing the link=[%s]', uri.spec);
-        continue;
-      }
       let canonical_url = this._getCanonicalUrl(uri);
-      let value = this._getUrlValue(canonical_url);
-      let is_whitelist = value.is_whitelist;
       this._getUrlExceptionValue(canonical_url);
-      if (!is_whitelist) {
+      if (!this._verifyLocation(uri, site_uri)) {
         logging.info('hiding the link=[%s]', canonical_url);
         link.style.display = 'none';
       }
