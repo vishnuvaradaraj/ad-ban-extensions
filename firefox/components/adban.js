@@ -1102,6 +1102,10 @@ AdBan.prototype = {
     for (let i = 0; i < links_length; i++) {
       let link = links[i];
       let uri = this._createUri(link.href);
+      if (!this._shouldProcessUri(uri)) {
+        logging.info('there is no need in processing the link=[%s]', uri.spec);
+        continue;
+      }
       let canonical_url = this._getCanonicalUrl(uri);
       this._getUrlExceptionValue(canonical_url);
       if (!this._verifyLocation(uri, site_uri)) {
