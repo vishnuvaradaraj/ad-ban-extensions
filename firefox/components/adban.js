@@ -213,6 +213,21 @@ Trie.prototype = {
     return [node, node_with_value, node_depth];
   },
 
+  _add: function(node, node_depth, key, value, current_date) {
+    const key_length = key.length;
+    let new_node, c;
+    while (node_depth < key_length) {
+      c = key[node_depth];
+      new_node = this._createNode();
+      node.children[c] = new_node;
+      node = new_node;
+      node_depth++;
+    }
+    node.value = value;
+    node.last_check_date = current_date;
+    return node;
+  },
+
   _clearNodesWithValue: function(node, node_depth, end_key) {
     const end_key_length = end_key.length;
     let tmp_node, c;
@@ -258,21 +273,10 @@ Trie.prototype = {
   },
 
   add: function(key, value, current_date) {
-    const key_length = key.length;
     const tmp = this._get(key, current_date);
-    let node = tmp[0];
-    let node_depth = tmp[2];
-    let new_node, c;
-    while (node_depth < key_length) {
-      c = key[node_depth];
-      new_node = this._createNode();
-      node.children[c] = new_node;
-      node = new_node;
-      node_depth++;
-    }
-    node.value = value;
-    node.last_check_date = current_date;
-    return node;
+    const node = tmp[0];
+    const node_depth = tmp[2];
+    return this._add(node, node_depth, key, value, current_date);
   },
 
   update: function(start_key, end_keys, value, current_date, todo, todo_value) {
@@ -286,7 +290,7 @@ Trie.prototype = {
       }
     }
 
-    const added_node = this.add(start_key, value, current_date);
+    const added_node = this._add(node, node_depth, start_key, value, current_date);
     const children = added_node.children;
     const todo_length = todo.length;
     for (let i = 0; i < todo_length; i++) {
