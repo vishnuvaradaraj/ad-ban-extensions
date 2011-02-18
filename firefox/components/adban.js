@@ -187,32 +187,6 @@ Trie.prototype = {
     }
   },
 
-  _get: function(key, current_date) {
-    const key_length = key.length;
-    let node = this._root;
-    let node_with_value = node;
-    let node_depth = 0;
-    let tmp_node, c;
-    while (node_depth < key_length) {
-      c = key[node_depth];
-      tmp_node = node.children[c];
-      if (!tmp_node) {
-        break;
-      }
-      if ('value' in tmp_node) {
-        if (this._mustDeleteNode(tmp_node, current_date)) {
-          this._deleteNode(tmp_node);
-        }
-        else {
-          node_with_value = tmp_node;
-        }
-      }
-      node_depth++;
-      node = tmp_node;
-    }
-    return [node, node_with_value, node_depth];
-  },
-
   _add: function(node, node_depth, key, value, current_date) {
     const key_length = key.length;
     let new_node, c;
@@ -269,18 +243,40 @@ Trie.prototype = {
   },
 
   get: function(key, current_date) {
-    return this._get(key, current_date)[1];
+    const key_length = key.length;
+    let node = this._root;
+    let node_with_value = node;
+    let node_depth = 0;
+    let tmp_node, c;
+    while (node_depth < key_length) {
+      c = key[node_depth];
+      tmp_node = node.children[c];
+      if (!tmp_node) {
+        break;
+      }
+      if ('value' in tmp_node) {
+        if (this._mustDeleteNode(tmp_node, current_date)) {
+          this._deleteNode(tmp_node);
+        }
+        else {
+          node_with_value = tmp_node;
+        }
+      }
+      node_depth++;
+      node = tmp_node;
+    }
+    return [node, node_with_value, node_depth];
   },
 
   add: function(key, value, current_date) {
-    const tmp = this._get(key, current_date);
+    const tmp = this.get(key, current_date);
     const node = tmp[0];
     const node_depth = tmp[2];
     return this._add(node, node_depth, key, value, current_date);
   },
 
   update: function(start_key, end_keys, value, current_date, todo, todo_value) {
-    const tmp = this._get(start_key, current_date);
+    const tmp = this.get(start_key, current_date);
     const node = tmp[0];
     const node_depth = tmp[2];
     if (node_depth == start_key.length) {
@@ -1154,7 +1150,8 @@ AdBan.prototype = {
     const urls_length = urls.length;
     for (let i = 0; i < urls_length; i++) {
       let url = urls[i];
-      let cache_node = cache.get(url, current_date);
+      let tmp = cache.get(url, current_date);
+      let cache_node = tmp[1];
       if (!this._isStaleCacheNode(cache_node)) {
         logging.info('the url [%s] is already verified', url);
         delete unverified_urls[url];
@@ -1371,9 +1368,31 @@ AdBan.prototype = {
     return (this._vars.current_date - cache_node.last_check_date > this._settings.stale_node_timeout);
   },
 
+  _isTodoCacheNode: function(cache_node) {
+    return (cache_node.last_check_date == 0);
+  },
+
   _getCacheValue: function(cache, unverified_urls, url, max_url_length) {
-    const cache_node = cache.get(url, this._vars.current_date);
+    const tmp = cache.get(url, this._vars.current_date);
+    const cache_node = tmp[1];
+    const cache_node_depth = tmp[2];
     if (this._isStaleCacheNode(cache_node)) {
+      // An optimization: if the matching cache node isn't TODO node,
+      // then it is safe to truncate the url to the cache node's depth,
+      // which is usually shorter than the max_url_length. If children nodes
+      // were added to this node on the server, then the server will return
+      // the corresponding TODO nodes on the first request. Then these TODO
+      // nodes will be resolved to leaf nodes on subsequent requests.
+      // If the url matches TODO node, then it cannot be truncated to
+      // the node's length, because this will significantly slow down fetching
+      // of the leaf node. The leaf node will be fetched only after N requests,
+      // where N is the difference between depths of the leaf node and
+      // the TODO node.
+      // This optimization should significantly reduce request sizes sent
+      // to the server.
+      if (!this._isTodoCacheNode(cache_node)) {
+        max_url_length = cache_node_depth;
+      }
       url = url.substring(0, max_url_length);
       unverified_urls[url] = true;
       this._launchUrlVerifier();
