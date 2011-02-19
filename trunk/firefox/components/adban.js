@@ -1181,6 +1181,10 @@ AdBan.prototype = {
         logging.info('obtained new auth_token=[%s] from the response_text=[%s]. request_text=[%s]', new_auth_token, response_text, request_text);
         vars.auth_token = new_auth_token;
       }
+      // refresh the auth token in cookie after each request to the server
+      // in order to properly open pages protected by authentication such
+      // as user status page (this.USER_STATUS_URL).
+      this._injectAuthTokenToCookie(vars.auth_token);
       if (response_callback) {
         response_callback(response_data[1]);
       }
@@ -1192,10 +1196,6 @@ AdBan.prototype = {
     }
     else if (error_code == error_codes.AUTHORIZATION_ERROR) {
       logging.warning('authorization failed for the auth_token=[%s]. Opening a user status tab', vars.auth_token);
-
-      // inject auth token to cookie before opening the user status page,
-      // because the auth token is used for the page authentication.
-      this._injectAuthTokenToCookie(vars.auth_token);
       this.openTab('user-status', this.USER_STATUS_URL);
       error_message = 'authorization error';
     }
