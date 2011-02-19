@@ -1180,19 +1180,22 @@ AdBan.prototype = {
       if (new_auth_token) {
         logging.info('obtained new auth_token=[%s] from the response_text=[%s]. request_text=[%s]', new_auth_token, response_text, request_text);
         vars.auth_token = new_auth_token;
-        this._injectAuthTokenToCookie(new_auth_token);
       }
       if (response_callback) {
         response_callback(response_data[1]);
       }
     }
     else if (error_code == error_codes.AUTHENTICATION_ERROR) {
-      logging.error('authentication failed for auth_token=[%s]. Resetting the auth_token.', vars.auth_token);
+      logging.error('authentication failed for the auth_token=[%s]. Resetting the auth_token.', vars.auth_token);
       vars.auth_token = '';
       error_message = 'authentication error';
     }
     else if (error_code == error_codes.AUTHORIZATION_ERROR) {
-      logging.warning('authorization failed for auth_token=[%s]', vars.auth_token);
+      logging.warning('authorization failed for the auth_token=[%s]. Opening a user status tab', vars.auth_token);
+
+      // inject auth token to cookie before opening the user status page,
+      // because the auth token is used for the page authentication.
+      this._injectAuthTokenToCookie(vars.auth_token);
       this.openTab('user-status', this.USER_STATUS_URL);
       error_message = 'authorization error';
     }
