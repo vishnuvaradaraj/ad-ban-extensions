@@ -441,7 +441,6 @@ AdBan.prototype = {
   },
   _SERVER_HOST: 'https://ad-ban.appspot.com',
   _AUTH_COOKIE_HOST: 'ad-ban.appspot.com',
-  _PROTOCOL_VERSION: '1',
   _ERROR_CODES: {
       NO_ERRORS: 0,
       REQUEST_PARSING_ERROR: 1,
@@ -1212,7 +1211,6 @@ AdBan.prototype = {
     let error_message;
 
     const request_text = this._json_encoder.encode([auth_token, request_data]);
-    request_url += '/' + this._PROTOCOL_VERSION;
     logging.info('request_url=[%s], request_text=[%s]', request_url, request_text);
 
     const that = this;
