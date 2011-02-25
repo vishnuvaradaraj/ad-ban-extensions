@@ -1076,8 +1076,8 @@ AdBan.prototype = {
     logging.info('AdBan cache has been saved to file');
   },
 
-  _shouldProcessUri: function(url) {
-    return (url.scheme in this._FILTERED_SCHEMES);
+  _shouldProcessUri: function(uri) {
+    return (uri.scheme in this._FILTERED_SCHEMES);
   },
 
   _injectCssToDocument: function(doc, site_uri) {
@@ -1433,20 +1433,20 @@ AdBan.prototype = {
     return false;
   },
 
-  _getCanonicalUrl: function(content_location) {
-    content_location = content_location.clone();
+  _getCanonicalUrl: function(uri) {
+    uri = uri.clone();
 
     // reverse domain parts if this is not an IP
-    const host_parts = content_location.host.split('.');
+    const host_parts = uri.host.split('.');
     if (!this._isIp(host_parts)) {
-      content_location.host = host_parts.reverse().join('.');
+      uri.host = host_parts.reverse().join('.');
     }
-    content_location.userPass = '';
+    uri.userPass = '';
 
     // Use dummy scheme, which will be removed later.
-    content_location.scheme = 'http';
+    uri.scheme = 'http';
     // remove dummy scheme and lowercase the url
-    return content_location.spec.substring(7).toLowerCase();
+    return uri.spec.substring(7).toLowerCase();
   },
 
   _matchesRegexp: function(reg_exp, s) {
