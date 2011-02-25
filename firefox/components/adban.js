@@ -614,8 +614,9 @@ AdBan.prototype = {
         logging.info('there is no need in processing the url=[%s]', site_url);
         return;
       }
-      this._injectCssToDocument(doc, site_uri);
-      this._prefetchAdFiltersForDocumentLinks(doc, site_uri);
+      const canonical_site_url = this._getCanonicalUrl(site_uri);
+      this._injectCssToDocument(doc, canonical_site_url);
+      this._prefetchAdFiltersForDocumentLinks(doc, canonical_site_url);
     }
   },
 
@@ -1080,8 +1081,7 @@ AdBan.prototype = {
     return (uri.scheme in this._FILTERED_SCHEMES);
   },
 
-  _injectCssToDocument: function(doc, site_uri) {
-    const canonical_site_url = this._getCanonicalUrl(site_uri);
+  _injectCssToDocument: function(doc, canonical_site_url) {
     const url_exception_value = this._getUrlExceptionValue(canonical_site_url);
     const css_selectors = url_exception_value.css_selectors;
 
@@ -1091,14 +1091,15 @@ AdBan.prototype = {
       const style_text = css_selectors + '{display: none !important;}';
       const style_text_node = doc.createTextNode(style_text);
       style.appendChild(style_text_node);
-      logging.info('adding css selector=[%s] to the site_url=[%s]', style_text, site_uri.spec);
+      logging.info('adding css selector=[%s] to the canonical_site_url=[%s]', style_text, canonical_site_url);
       doc.getElementsByTagName('head')[0].appendChild(style);
     }
   },
 
-  _prefetchAdFiltersForDocumentLinks: function(doc, site_uri) {
+  _prefetchAdFiltersForDocumentLinks: function(doc, canonical_site_url) {
     const links = doc.links;
     const links_length = links.length;
+    const url_exception_value = this._getUrlExceptionValue(canonical_site_url);
     for (let i = 0; i < links_length; i++) {
       let link = links[i];
       let uri = this._createUri(link.href);
@@ -1107,8 +1108,9 @@ AdBan.prototype = {
         continue;
       }
       let canonical_url = this._getCanonicalUrl(uri);
+      let url_value = this._getUrlValue(canonical_url);
       this._getUrlExceptionValue(canonical_url);
-      if (!this._verifyLocation(uri, site_uri)) {
+      if (!this._verifyUrlException(url_value.is_whitelist, canonical_url, url_exception_value)) {
         logging.info('hiding the link=[%s]', canonical_url);
         link.style.display = 'none';
       }
@@ -1456,6 +1458,18 @@ AdBan.prototype = {
     return (s.search(reg_exp) != -1);
   },
 
+  _verifyUrlException: function(is_whitelist, canonical_url, url_exception_value) {
+    if (this._matchesRegexp(url_exception_value.whitelisted_canonical_urls, canonical_url)) {
+      logging.info('the canonical_url=[%s] is whitelisted via url exceptions for request_origin_url=[%s]', canonical_url, request_origin_url);
+      return true;
+    }
+    if (this._matchesRegexp(url_exception_value.blacklisted_canonical_urls, canonical_url)) {
+      logging.info('the canonical_url=[%s] is blacklisted via url exceptions for request_origin_url=[%s]', canonical_url, request_origin_url);
+      return false;
+    }
+    return is_whitelist;
+  },
+
   _verifyLocation: function(content_location, request_origin) {
     if (!this._shouldProcessUri(content_location)) {
       return true;
@@ -1467,17 +1481,8 @@ AdBan.prototype = {
     let request_origin_url;
     if (request_origin && this._shouldProcessUri(request_origin)) {
       request_origin_url = this._getCanonicalUrl(request_origin);
-
-      // override is_whitelist by per-site exception value if required.
       const url_exception_value = this._getUrlExceptionValue(request_origin_url);
-      if (this._matchesRegexp(url_exception_value.whitelisted_canonical_urls, content_location_url)) {
-        logging.info('the content_location_url=[%s] is whitelisted via url exceptions for request_origin_url=[%s]', content_location_url, request_origin_url);
-        is_whitelist = true;
-      }
-      else if (this._matchesRegexp(url_exception_value.blacklisted_canonical_urls, content_location_url)) {
-        logging.info('the content_location_url=[%s] is blacklisted via url exceptions for request_origin_url=[%s]', content_location_url, request_origin_url);
-        is_whitelist = false;
-      }
+      is_whitelist = this._verifyUrlException(is_whitelist, content_location_url, url_exception_value);
     }
 
     logging.info('is_whitelist=[%s], original=[%s], conten_location_url=[%s], request_origin_url=[%s]', is_whitelist, content_location.spec, content_location_url, request_origin_url);
