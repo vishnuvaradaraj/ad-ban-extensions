@@ -488,6 +488,7 @@ AdBan.prototype = {
     save_cache_interval: 1000 * 60 * 20,
     min_backoff_timeout: 1000,
     max_backoff_timeout: 1000 * 3600 * 24,
+    max_urls_per_request: 200,
 
     read_settings_delay: 1000 * 5,  // this value isn't changed.
 
@@ -509,6 +510,7 @@ AdBan.prototype = {
       this._bc_import('save_cache_interval', data[7]);
       this._bc_import('min_backoff_timeout', data[8]);
       this._bc_import('max_backoff_timeout', data[9]);
+      this._bc_import('max_urls_per_request', data[10]);
     },
 
     export: function() {
@@ -523,6 +525,7 @@ AdBan.prototype = {
           this.save_cache_interval,
           this.min_backoff_timeout,
           this.max_backoff_timeout,
+          this.max_urls_per_request,
       ];
     },
   },
@@ -1138,17 +1141,25 @@ AdBan.prototype = {
     }
   },
 
-  _getDictionaryKeys: function(dict) {
+  _getDictionaryKeys: function(dict, max_keys_to_return) {
     const keys = [];
     for (let key in dict) {
+      if (max_keys_to_return <= 0) {
+        break;
+      }
+      --max_keys_to_return;
       keys.push(key);
     }
     return keys;
   },
 
+  _getAllDictionaryKeys: function(dict) {
+    return this._getDictionaryKeys(dict, Infinity);
+  },
+
   _cleanupUnverifiedUrls: function(unverified_urls, cache) {
     const current_date = this._vars.current_date;
-    const urls = this._getDictionaryKeys(unverified_urls);
+    const urls = this._getAllDictionaryKeys(unverified_urls);
     const urls_length = urls.length;
     for (let i = 0; i < urls_length; i++) {
       let url = urls[i];
@@ -1304,8 +1315,9 @@ AdBan.prototype = {
 
   _verifyUrls: function(verification_complete_callback) {
     const vars = this._vars;
-    const urls = this._getDictionaryKeys(vars.unverified_urls);
-    const url_exceptions = this._getDictionaryKeys(vars.unverified_url_exceptions);
+    const settings = this._settings;
+    const urls = this._getDictionaryKeys(vars.unverified_urls, settings.max_urls_per_request);
+    const url_exceptions = this._getDictionaryKeys(vars.unverified_url_exceptions, settings.max_urls_per_request);
 
     // sort urls and url_exceptions in order to achieve better compression.
     urls.sort();
@@ -1315,8 +1327,6 @@ AdBan.prototype = {
         compressStrings(urls),
         compressStrings(url_exceptions),
     ];
-    vars.unverified_urls = {};
-    vars.unverified_url_exceptions = {};
 
     const that = this;
     const response_callback = function(response) {
