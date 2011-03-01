@@ -126,6 +126,7 @@ if (true) {
     const first_run_callback = function() {
       if (!pref_branch.prefHasUserValue('first-run')) {
         logging.info('first run of AdBan');
+        adban.firstRun();
         setupToolbarButtons();
         showNotification(_('report-ads-notification'), 'report-ads-notification');
         pref_branch.setBoolPref('first-run', true);
