@@ -461,6 +461,7 @@ AdBan.prototype = {
   _io_service: Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService),
   _observer_service: Cc['@mozilla.org/observer-service;1'].getService(Ci.nsIObserverService),
   _pref_service: Cc['@mozilla.org/preferences-service;1'].getService(Ci.nsIPrefService),
+  _cache_service: Cc['@mozilla.org/network/cache-service;1'].getService(Ci.nsICacheService),
   _cookie_manager: Cc['@mozilla.org/cookiemanager;1'].getService(Ci.nsICookieManager2),
   _main_thread: Cc['@mozilla.org/thread-manager;1'].getService().mainThread,
   _verify_urls_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
@@ -490,7 +491,9 @@ AdBan.prototype = {
     max_backoff_timeout: 1000 * 3600 * 24,
     max_urls_per_request: 200,
 
-    read_settings_delay: 1000 * 5,  // this value isn't changed.
+    // the following values cannot be modified by the server.
+    read_settings_delay: 1000 * 5,
+    max_disk_cache_entries_to_read: 10000,
 
     _bc_import: function(property_name, value) {
       if (value) {
@@ -733,6 +736,10 @@ AdBan.prototype = {
     vars.is_active = false;
     this._notifyStateListeners(false);
     logging.info('AdBan component has been stopped');
+  },
+
+  firstRun: function() {
+    this._prefetchAdFiltersForDiskCache();
   },
 
   sendUrlComplaint: function(site_url, comment, success_callback, failure_callback) {
@@ -1097,6 +1104,33 @@ AdBan.prototype = {
       logging.info('adding css selector=[%s] to the canonical_site_url=[%s]', style_text, canonical_site_url);
       doc.getElementsByTagName('head')[0].appendChild(style);
     }
+  },
+
+  _prefetchAdFiltersForDiskCache: function() {
+    logging.info('prefetching ad filters for resources from the disk cache');
+    let disk_cache_entries_read = 0;
+    const max_disk_cache_entries_to_read = this._settings.max_disk_cache_entries_to_read;
+    const that = this;
+    const cache_visitor = {
+        visitDevice: function(device_id, device_info) {
+          logging.info('visitDevice([%s])', device_id);
+          return (device_id == 'disk');
+        },
+        visitEntry: function(device_id, entry_info) {
+          if (device_id != 'disk') {
+            return false;
+          }
+          const uri = that._createUri(entry_info.key);
+          if (that._shouldProcessUri(uri)) {
+            const canonical_url = that._getCanonicalUrl(uri);
+            that._getUrlValue(canonical_url);
+            that._getUrlExceptionValue(canonical_url);
+          }
+          ++disk_cache_entries_read;
+          return (disk_cache_entries_read < max_disk_cache_entries_to_read);
+        },
+    };
+    this._cache_service.visitEntries(cache_visitor);
   },
 
   _prefetchAdFiltersForDocumentLinks: function(doc, canonical_site_url) {
