@@ -404,9 +404,9 @@ const urlExceptionValueConstructor = function(d) {
 const AdBan = function() {
   logging.info('entering AdBan constructor');
   const server_host = 'https://' + SERVER_DOMAIN;
-  this._SEND_URL_COMPLAINT_ENDPOINT = server_host + '/c';
-  this._READ_SETTINGS_ENDPOINT = server_host + '/s';
-  this._VERIFY_URLS_ENDPOINT = server_host + '/g';
+  this._SEND_URL_COMPLAINT_ENDPOINT = server_host + '/c/' + ADDON_VERSION;
+  this._READ_SETTINGS_ENDPOINT = server_host + '/s/' + ADDON_VERSION;
+  this._VERIFY_URLS_ENDPOINT = server_host + '/g/' + ADDON_VERSION;
 
   this.pref_branch = this._pref_service.getBranch('extensions.' + this.EXTENSION_ID + '.');
   this.HELP_URL = server_host + '/ff/help';
