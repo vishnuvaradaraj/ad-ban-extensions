@@ -401,10 +401,14 @@ const urlExceptionValueConstructor = function(d) {
 
 const AdBan = function() {
   logging.info('entering AdBan constructor');
+  const server_host = 'https://' + this._AUTH_COOKIE_HOST;
+  this._SEND_URL_COMPLAINT_ENDPOINT = server_host + '/c';
+  this._READ_SETTINGS_ENDPOINT = server_host + '/s';
+  this._VERIFY_URLS_ENDPOINT = server_host + '/g';
+
   this.pref_branch = this._pref_service.getBranch('extensions.' + this.EXTENSION_ID + '.');
-  this._SERVER_HOST = 'https://' + this._AUTH_COOKIE_HOST;
-  this.HELP_URL = this._SERVER_HOST + '/ff/help';
-  this.USER_STATUS_URL = this._SERVER_HOST + '/ff/user_status';
+  this.HELP_URL = server_host + '/ff/help';
+  this.USER_STATUS_URL = server_host + '/ff/user_status';
 
   // allow direct access to the XPCOM object from javascript.
   // see https://developer.mozilla.org/en/wrappedJSObject .
@@ -745,8 +749,6 @@ AdBan.prototype = {
   sendUrlComplaint: function(site_url, comment, success_callback, failure_callback) {
     logging.info('sending url complaint for site_url=[%s], comment=[%s]', site_url, comment);
     const request_data = [site_url, comment];
-    const request_url = this._SERVER_HOST + '/c';
-
     const response_callback = function() {
       success_callback();
     };
@@ -755,7 +757,7 @@ AdBan.prototype = {
         failure_callback(message);
       }
     };
-    this._startJsonRequest(this._url_complaint_xhr, request_url, request_data, response_callback, finish_callback);
+    this._startJsonRequest(this._url_complaint_xhr, this._SEND_URL_COMPLAINT_ENDPOINT, request_data, response_callback, finish_callback);
   },
 
   subscribeToStateChange: function(state_change_callback) {
@@ -1343,8 +1345,7 @@ AdBan.prototype = {
       vars.url_cache.setNodeDeleteTimeout(settings.node_delete_timeout);
       vars.url_exception_cache.setNodeDeleteTimeout(settings.node_delete_timeout);
     };
-    const request_url = this._SERVER_HOST + '/s';
-    this._startJsonRequest(this._update_settings_xhr, request_url, request_data, response_callback);
+    this._startJsonRequest(this._update_settings_xhr, this._READ_SETTINGS_ENDPOINT, request_data, response_callback);
   },
 
   _verifyUrls: function(verification_complete_callback) {
@@ -1379,8 +1380,7 @@ AdBan.prototype = {
       that._cleanupUnverifiedUrls(vars.unverified_urls, vars.url_cache);
       that._cleanupUnverifiedUrls(vars.unverified_url_exceptions, vars.url_exception_cache);
     };
-    const request_url = this._SERVER_HOST + '/g';
-    this._startJsonRequest(this._verify_urls_xhr, request_url, request_data, response_callback, verification_complete_callback);
+    this._startJsonRequest(this._verify_urls_xhr, this._VERIFY_URLS_ENDPOINT, request_data, response_callback, verification_complete_callback);
   },
 
   _isUnverifiedUrlsEmpty: function() {
