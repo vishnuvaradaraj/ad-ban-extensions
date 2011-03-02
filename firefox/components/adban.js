@@ -1199,7 +1199,6 @@ AdBan.prototype = {
       let tmp = cache.get(url, current_date);
       let cache_node = tmp[1];
       if (!this._isStaleCacheNode(cache_node)) {
-        logging.info('the url [%s] is already verified', url);
         delete unverified_urls[url];
       }
     }
