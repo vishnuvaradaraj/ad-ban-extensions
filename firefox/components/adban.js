@@ -205,21 +205,37 @@ Trie.prototype = {
     return node;
   },
 
-  _clearNodesWithValue: function(node, node_depth, end_key) {
-    const end_key_length = end_key.length;
-    let tmp_node, c;
-    while (node_depth < end_key_length) {
-      c = end_key[node_depth];
-      tmp_node = node.children[c];
-      if (!tmp_node) {
-        break;
+  _deleteObsoleteChildren: function(children, node_depth, end_keys) {
+    const end_keys_length = end_keys.length;
+    for (let i = 0; i < end_keys_length; i++) {
+      let end_key = end_keys[i];
+      if (node_depth < end_key.length) {
+        let c = end_key[node_depth];
+        delete children[c];
       }
-      node = tmp_node;
-      if ('value' in node) {
-        delete node.value;
-        delete node.last_check_date;
+    }
+  },
+
+  _addTodoChildren: function(children, todo, todo_value) {
+    const children = added_node.children;
+    const todo_length = todo.length;
+    for (let i = 0; i < todo_length; i++) {
+      let c = todo[i];
+      let child_node = children[c];
+      if (!child_node) {
+        child_node = this._createNode();
+        children[c] = child_node;
       }
-      node_depth++;
+      else if (child_node.last_check_date) {
+        // do not modify already existing node.
+        continue;
+      }
+      // it is OK that multiple nodes share the same reference
+      // to the todo_value if the value contents is immutable.
+      // Otherwise modification of a node's value could break other nodes'
+      // values.
+      child_node.value = todo_value;
+      child_node.last_check_date = 0;
     }
   },
 
@@ -283,33 +299,11 @@ Trie.prototype = {
     const node = tmp[0];
     const node_depth = tmp[2];
     if (node_depth == start_key.length) {
-      const end_keys_length = end_keys.length;
-      for (let i = 0; i < end_keys_length; i++) {
-        this._clearNodesWithValue(node, node_depth, end_keys[i]);
-      }
+      this._deleteObsoleteChildren(node.children, node_depth, end_keys);
     }
 
     const added_node = this._add(node, node_depth, start_key, value, current_date);
-    const children = added_node.children;
-    const todo_length = todo.length;
-    for (let i = 0; i < todo_length; i++) {
-      let c = todo[i];
-      let child_node = children[c];
-      if (!child_node) {
-        child_node = this._createNode();
-        children[c] = child_node;
-      }
-      else if (child_node.last_check_date) {
-        // do not modify already existing node.
-        continue;
-      }
-      // it is OK that multiple nodes share the same reference
-      // to the todo_value if the value contents is immutable.
-      // Otherwise modification of a node's value could break other node's
-      // value.
-      child_node.value = todo_value;
-      child_node.last_check_date = 0;
-    }
+    this._addTodoChildren(added_node.children, todo, todo_value);
   },
 
   exportToNodes: function(node_constructor, current_date) {
