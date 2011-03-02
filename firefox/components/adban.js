@@ -8,6 +8,7 @@ const Cr = Components.results;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
+const ADDON_VERSION = '1.5.0';
 const app_info = Cc['@mozilla.org/xre/app-info;1'].getService(Ci.nsIXULAppInfo);
 
 const getCurrentDate = function() {
@@ -28,8 +29,8 @@ const logging = {
   _pending_messages: [],
 
   init: function() {
-    this.log(this.levels.NONE, 'name=[%s], version=[%s], appBuildId=[%s], ID=[%s], vendor=[%s], platformBuildID=[%s], platformVersion=[%s]',
-        [null, app_info.name, app_info.version, app_info.appBuildID, app_info.ID, app_info.vendor, app_info.platformBuildID, app_info.platformVersion]);
+    this.log(this.levels.NONE, 'addon_version=[%s], app: name=[%s], version=[%s], appBuildId=[%s], ID=[%s], vendor=[%s], platformBuildID=[%s], platformVersion=[%s]',
+        [null, ADDON_VERSION, app_info.name, app_info.version, app_info.appBuildID, app_info.ID, app_info.vendor, app_info.platformBuildID, app_info.platformVersion]);
   },
 
   start: function() {
