@@ -1184,6 +1184,7 @@ AdBan.prototype = {
     const keys = [];
     for (let key in dict) {
       if (max_keys_to_return <= 0) {
+        logging.info('hit the maximum number of keys to return: [%s]', keys.length);
         break;
       }
       --max_keys_to_return;
@@ -1232,6 +1233,8 @@ AdBan.prototype = {
       if (new_auth_token) {
         logging.info('obtained new auth_token=[%s] from the response_text=[%s]. request_text=[%s]', new_auth_token, response_text, request_text);
         vars.auth_token = new_auth_token;
+        // immediately save new auth_token into the file.
+        this._saveSettingsSync();
       }
       // refresh the auth token in cookie after each request to the server
       // in order to properly open pages protected by authentication such
