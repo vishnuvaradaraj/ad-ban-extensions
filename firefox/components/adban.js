@@ -9,6 +9,7 @@ const Cr = Components.results;
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
 const ADDON_VERSION = '1.5.0';
+const SERVER_DOMAIN = 'ad-ban.appspot.com';
 const app_info = Cc['@mozilla.org/xre/app-info;1'].getService(Ci.nsIXULAppInfo);
 
 const getCurrentDate = function() {
@@ -402,7 +403,7 @@ const urlExceptionValueConstructor = function(d) {
 
 const AdBan = function() {
   logging.info('entering AdBan constructor');
-  const server_host = 'https://' + this._AUTH_COOKIE_HOST;
+  const server_host = 'https://' + SERVER_DOMAIN;
   this._SEND_URL_COMPLAINT_ENDPOINT = server_host + '/c';
   this._READ_SETTINGS_ENDPOINT = server_host + '/s';
   this._VERIFY_URLS_ENDPOINT = server_host + '/g';
@@ -445,7 +446,7 @@ AdBan.prototype = {
       https: true,
       ftp: true,
   },
-  _AUTH_COOKIE_HOST: 'ad-ban.appspot.com',
+  _AUTH_COOKIE_HOST: SERVER_DOMAIN,
   _ERROR_CODES: {
       NO_ERRORS: 0,
       REQUEST_PARSING_ERROR: 1,
