@@ -402,6 +402,7 @@ const urlExceptionValueConstructor = function(d) {
 const AdBan = function() {
   logging.info('entering AdBan constructor');
   this.pref_branch = this._pref_service.getBranch('extensions.' + this.EXTENSION_ID + '.');
+  this._SERVER_HOST = 'https://' + this._AUTH_COOKIE_HOST;
   this.HELP_URL = this._SERVER_HOST + '/ff/help';
   this.USER_STATUS_URL = this._SERVER_HOST + '/ff/user_status';
 
@@ -439,7 +440,6 @@ AdBan.prototype = {
       https: true,
       ftp: true,
   },
-  _SERVER_HOST: 'https://ad-ban.appspot.com',
   _AUTH_COOKIE_HOST: 'ad-ban.appspot.com',
   _ERROR_CODES: {
       NO_ERRORS: 0,
