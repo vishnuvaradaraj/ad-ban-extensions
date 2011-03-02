@@ -217,7 +217,6 @@ Trie.prototype = {
   },
 
   _addTodoChildren: function(children, todo, todo_value) {
-    const children = added_node.children;
     const todo_length = todo.length;
     for (let i = 0; i < todo_length; i++) {
       let c = todo[i];
