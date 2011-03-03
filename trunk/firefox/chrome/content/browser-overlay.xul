@@ -24,6 +24,7 @@
     <command id="adban-cmd-complaint" observes="adban-cmd-stop" oncommand="void(0)"/>
     <command id="adban-cmd-start" disabled="true" oncommand="void(0)"/>
     <command id="adban-cmd-stop" oncommand="void(0)"/>
+    <command id="adban-cmd-toggle"/>
     <command id="adban-cmd-help"/>
   </commandset>
 
@@ -69,6 +70,13 @@
       class="toolbarbutton-1"
       tooltiptext="&adban.complaint-button.tooltiptext;"
       command="adban-cmd-complaint"
+    />
+    <toolbarbutton
+      id="adban-toggle-button"
+      label="&adban.toggle-button.label;"
+      class="toolbarbutton-1"
+      tooltiptext="&adban.toggle-button.tooltiptext;"
+      command="adban-cmd-toggle"
     />
   </toolbarpalette>
 

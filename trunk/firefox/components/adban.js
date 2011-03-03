@@ -719,7 +719,7 @@ AdBan.prototype = {
     category_manager.addCategoryEntry('net-channel-event-sinks', this.classDescription, this.contractID, false, false);
     this._startTimers();
     vars.is_active = true;
-    this._notifyStateListeners(true);
+    this._notifyStateListeners();
     logging.info('AdBan component has been started');
   },
 
@@ -734,8 +734,12 @@ AdBan.prototype = {
     category_manager.deleteCategoryEntry('net-channel-event-sinks', this.classDescription, false);
     category_manager.deleteCategoryEntry('content-policy', this.classDescription, false);
     vars.is_active = false;
-    this._notifyStateListeners(false);
+    this._notifyStateListeners();
     logging.info('AdBan component has been stopped');
+  },
+
+  isActive: function() {
+    return this._vars.is_active;
   },
 
   firstRun: function() {
@@ -818,11 +822,11 @@ AdBan.prototype = {
     logging.info('the tab [%s], url=[%s] has been opened', tab_name, url);
   },
 
-  _notifyStateListeners: function(is_active) {
+  _notifyStateListeners: function() {
     const state_listeners = this._state_listeners;
     for (let listener_id in state_listeners) {
       logging.info('notifying AdBan component state listener [%s]', listener_id);
-      state_listeners[listener_id](is_active);
+      state_listeners[listener_id]();
     }
   },
 
