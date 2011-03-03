@@ -65,30 +65,24 @@ if (true) {
     notification_box.appendNotification(message, 'adban-' + id, '', notification_box.PRIORITY_INFO_MEDIUM, null);
   };
 
-  let stateToggle = function(from, to) {
-    to.setAttribute('disabled', 'true');
-    from.removeAttribute('disabled');
-  };
-
-  let onStateChange = function(is_active) {
+  let onStateChange = function() {
     const cmd_stop = $('adban-cmd-stop');
     const cmd_start = $('adban-cmd-start');
-    if (is_active) {
-      stateToggle(cmd_stop, cmd_start);
+    const toggle_button = $('adban-toggle-button');
+    if (adban.isActive()) {
+      cmd_start.setAttribute('disabled', 'true');
+      cmd_stop.removeAttribute('disabled');
+      if (toggle_button) {
+        toggle_button.setAttribute('label', _('toggle-button-disable'));
+      }
     }
     else {
-      stateToggle(cmd_start, cmd_stop);
+      cmd_stop.setAttribute('disabled', 'true');
+      cmd_start.removeAttribute('disabled');
+      if (toggle_button) {
+        toggle_button.setAttribute('label', _('toggle-button-enable'));
+      }
     }
-  };
-
-  let cmdStop = function() {
-    adban.stop();
-    conditionalAlert('adban-stopped', _('adban-stopped'));
-  };
-
-  let cmdStart = function() {
-    adban.start();
-    conditionalAlert('adban-started', _('adban-started'));
   };
 
   let cmdComplaint = function() {
@@ -109,6 +103,25 @@ if (true) {
     const complaint_window = openDialog('chrome://adban/content/report-ads-dialog.xul',
         'adban-complaint-window', '', complaint_callback, initial_site_url);
     complaint_window.focus();
+  };
+
+  let cmdStop = function() {
+    adban.stop();
+    conditionalAlert('adban-stopped', _('adban-stopped'));
+  };
+
+  let cmdStart = function() {
+    adban.start();
+    conditionalAlert('adban-started', _('adban-started'));
+  };
+
+  let cmdToggle = function() {
+    logging.info('toggling AdBan\'s state');
+    if (adban.isActive()) {
+      cmdStop();
+    } else {
+      cmdStart();
+    }
   };
 
   let cmdHelp = function() {
@@ -139,9 +152,10 @@ if (true) {
     };
     adban.executeDeferred(first_run_callback);
 
+    $('adban-cmd-complaint').addEventListener('command', cmdComplaint, false);
     $('adban-cmd-stop').addEventListener('command', cmdStop, false);
     $('adban-cmd-start').addEventListener('command', cmdStart, false);
-    $('adban-cmd-complaint').addEventListener('command', cmdComplaint, false);
+    $('adban-cmd-toggle').addEventListener('command', cmdToggle, false);
     $('adban-cmd-help').addEventListener('command', cmdHelp, false);
 
     // DOMFrameContentLoaded doesn't work as expected,
@@ -163,9 +177,10 @@ if (true) {
     adban.unsubscribeFromStateChange(state_listener_id);
     gBrowser.removeEventListener('DOMContentLoaded', adban, true);
 
+    $('adban-cmd-complaint').removeEventListener('command', cmdComplaint, false);
     $('adban-cmd-stop').removeEventListener('command', cmdStop, false);
     $('adban-cmd-start').removeEventListener('command', cmdStart, false);
-    $('adban-cmd-complaint').removeEventListener('command', cmdComplaint, false);
+    $('adban-cmd-toggle').removeEventListener('command', cmdToggle, false);
     $('adban-cmd-help').removeEventListener('command', cmdHelp, false);
 
     window.removeEventListener('load', init, false);
