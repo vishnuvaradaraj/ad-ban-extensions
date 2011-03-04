@@ -8,7 +8,7 @@ const Cr = Components.results;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
-const ADDON_VERSION = '1.5.0';
+const ADDON_VERSION = '1.5.1';
 const SERVER_DOMAIN = 'ad-ban.appspot.com';
 const SERVER_PROTOCOL = 'https';
 const app_info = Cc['@mozilla.org/xre/app-info;1'].getService(Ci.nsIXULAppInfo);
