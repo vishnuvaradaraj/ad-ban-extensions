@@ -73,14 +73,16 @@ if (true) {
       cmd_start.setAttribute('disabled', 'true');
       cmd_stop.removeAttribute('disabled');
       if (toggle_button) {
-        toggle_button.setAttribute('label', _('toggle-button-disable'));
+        toggle_button.setAttribute('label', _('toggle-button-label-enabled'));
+        toggle_button.setAttribute('tooltiptext', _('toggle-button-tooltiptext-enabled'));
       }
     }
     else {
       cmd_stop.setAttribute('disabled', 'true');
       cmd_start.removeAttribute('disabled');
       if (toggle_button) {
-        toggle_button.setAttribute('label', _('toggle-button-enable'));
+        toggle_button.setAttribute('label', _('toggle-button-label-disabled'));
+        toggle_button.setAttribute('tooltiptext', _('toggle-button-tooltiptext-disabled'));
       }
     }
   };
