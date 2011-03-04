@@ -12,5 +12,5 @@
 
 <!ENTITY adban.complaint-button.label "Report ads">
 <!ENTITY adban.complaint-button.tooltiptext "AdBan: report ads or problems on the current page">
-<!ENTITY adban.toggle-button.label "AdBan off">
+<!ENTITY adban.toggle-button.label "AdBan on">
 <!ENTITY adban.toggle-button.tooltiptext "Toggle AdBan's state">
