@@ -1,0 +1,16 @@
+<!ENTITY adban.menuitem.start "Engedélyezés">
+<!ENTITY adban.menuitem.start.tooltiptext "AdBan engedélyezése">
+<!ENTITY adban.menuitem.start.accesskey "E">
+<!ENTITY adban.menuitem.stop "Letiltás">
+<!ENTITY adban.menuitem.stop.tooltiptext "AdBan letiltása">
+<!ENTITY adban.menuitem.stop.accesskey "L">
+<!ENTITY adban.menuitem.complaint "Reklámok jelentése">
+<!ENTITY adban.menuitem.complaint.tooltiptext "Reklámok vagy problémák jelentése az aktuális oldalon">
+<!ENTITY adban.menuitem.complaint.accesskey "j">
+<!ENTITY adban.menuitem.help "Súgó">
+<!ENTITY adban.menuitem.help.accesskey "S">
+
+<!ENTITY adban.complaint-button.label "Reklámok jelentése">
+<!ENTITY adban.complaint-button.tooltiptext "AdBan: reklámok vagy problémák jelentése az aktuális oldalon">
+<!ENTITY adban.toggle-button.label "AdBan be">
+<!ENTITY adban.toggle-button.tooltiptext "Kattintson ide az AdBan kikapcsolásához">
