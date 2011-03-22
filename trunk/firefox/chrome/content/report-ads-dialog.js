@@ -1,6 +1,6 @@
 // use this scoping hack in order to hide objects defined inside the branch
 // with the 'let' statement from the global scope.
-if (true) {
+(function() {
   let $ = function(id) {
     return document.getElementById(id);
   };
@@ -24,5 +24,5 @@ if (true) {
   };
 
   window.addEventListener('load', init, false);
-}
+})();
 
