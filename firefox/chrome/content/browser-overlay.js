@@ -1,6 +1,6 @@
 // use this scoping hack in order to hide objects defined inside the branch
 // with the 'let' statement from the global scope.
-if (true) {
+(function() {
   let Cc = Components.classes;
   let Ci = Components.interfaces;
 
@@ -191,5 +191,5 @@ if (true) {
   };
 
   window.addEventListener('load', init, false);
-}
+})();
 
