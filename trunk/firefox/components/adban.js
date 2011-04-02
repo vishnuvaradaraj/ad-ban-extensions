@@ -234,8 +234,7 @@ Trie.prototype = {
         node = this._createNode();
         children[c] = node;
       }
-      else if (node.last_check_date) {
-        // do not modify already existing node.
+      else if (this._isNodeWithValue(node)) {
         continue;
       }
       // it is OK that multiple nodes share the same reference
