@@ -217,7 +217,7 @@ Trie.prototype = {
     }
   },
 
-  _addTodoChildren: function(children, todo, todo_value) {
+  _updateTodoChildren: function(children, todo, todo_value) {
     const todo_length = todo.length;
     for (let i = 0; i < todo_length; i++) {
       let c = todo[i];
@@ -306,7 +306,7 @@ Trie.prototype = {
     }
 
     const added_node = this._add(node, node_depth, start_key, value, current_date);
-    this._addTodoChildren(added_node.children, todo, todo_value);
+    this._updateTodoChildren(added_node.children, todo, todo_value);
   },
 
   exportToNodes: function(node_constructor, current_date) {
