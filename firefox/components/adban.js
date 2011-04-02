@@ -167,6 +167,10 @@ Trie.prototype = {
     };
   },
 
+  _isNodeWithValue: function(node) {
+    return ('value' in node);
+  },
+
   _mustDeleteNode: function(node, current_date) {
     return (!this.isTodoNode(node) && current_date - node.last_check_date > this._node_delete_timeout);
   },
@@ -240,7 +244,7 @@ Trie.prototype = {
   },
 
   _getNodes: function(key, node) {
-    if ('value' in node) {
+    if (this._isNodeWithValue(node)) {
       if (this._mustDeleteNode(node, this._current_date)) {
         this._deleteNode(node);
       }
@@ -281,7 +285,7 @@ Trie.prototype = {
       if (!tmp_node) {
         break;
       }
-      if ('value' in tmp_node) {
+      if (this._isNodeWithValue(tmp_node)) {
         node_with_value = tmp_node;
       }
       node_depth++;
