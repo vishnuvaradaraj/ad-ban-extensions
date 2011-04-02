@@ -218,6 +218,18 @@ Trie.prototype = {
   },
 
   _updateTodoChildren: function(children, todo, todo_value) {
+    const children_to_delete = [];
+    for (let c in children) {
+      if (todo.indexOf(c) == -1) {
+        children_to_delete.push(c);
+      }
+    }
+    const children_to_delete_length = children_to_delete.length;
+    for (let i = 0; i < children_to_delete_length; i++) {
+      let c = children_to_delete[i];
+      delete children[c];
+    }
+
     const todo_length = todo.length;
     for (let i = 0; i < todo_length; i++) {
       let c = todo[i];
