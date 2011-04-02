@@ -270,7 +270,7 @@ Trie.prototype = {
     return (current_date - node.last_check_date > this._stale_node_timeout);
   },
 
-  get: function(key, current_date) {
+  get: function(key) {
     const key_length = key.length;
     let node = this._root;
     let node_with_value = node;
@@ -283,12 +283,7 @@ Trie.prototype = {
         break;
       }
       if ('value' in tmp_node) {
-        if (this._mustDeleteNode(tmp_node, current_date)) {
-          this._deleteNode(tmp_node);
-        }
-        else {
-          node_with_value = tmp_node;
-        }
+        node_with_value = tmp_node;
       }
       node_depth++;
       node = tmp_node;
@@ -297,14 +292,14 @@ Trie.prototype = {
   },
 
   add: function(key, value, current_date) {
-    const tmp = this.get(key, current_date);
+    const tmp = this.get(key);
     const node = tmp[0];
     const node_depth = tmp[2];
     return this._add(node, node_depth, key, value, current_date);
   },
 
   update: function(start_key, end_keys, value, current_date, todo, todo_value) {
-    const tmp = this.get(start_key, current_date);
+    const tmp = this.get(start_key);
     const node = tmp[0];
     const node_depth = tmp[2];
     if (node_depth == start_key.length) {
@@ -1218,7 +1213,7 @@ AdBan.prototype = {
     const urls_length = urls.length;
     for (let i = 0; i < urls_length; i++) {
       let url = urls[i];
-      let tmp = cache.get(url, current_date);
+      let tmp = cache.get(url);
       let node_with_value = tmp[1];
       if (!cache.isStaleNode(node_with_value, current_date)) {
         delete unverified_urls[url];
@@ -1439,7 +1434,7 @@ AdBan.prototype = {
 
   _getCacheValue: function(cache, unverified_urls, url, max_url_length) {
     const current_date = this._vars.current_date;
-    const tmp = cache.get(url, current_date);
+    const tmp = cache.get(url);
     const node_with_value = tmp[1];
     const node_depth = tmp[2];
     if (cache.isStaleNode(node_with_value, current_date)) {
