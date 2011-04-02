@@ -239,25 +239,25 @@ Trie.prototype = {
     }
   },
 
-  _getNodes: function(key, node) {
+  _getNodes: function(ctx, key, node) {
     if (this._isNodeWithValue(node)) {
-      if (this._mustDeleteNode(node, this._current_date)) {
+      if (this._mustDeleteNode(node, ctx.current_date)) {
         this._deleteNode(node);
       }
       else {
-        const common_prefix_length = getCommonPrefixLength(this._prev_key, key);
-        this._nodes.push([
+        const common_prefix_length = getCommonPrefixLength(ctx.prev_key, key);
+        ctx.nodes.push([
             common_prefix_length,
             key.substring(common_prefix_length),
-            this._node_constructor(node.value),
+            ctx.node_constructor(node.value),
             node.last_check_date,
         ]);
-        this._prev_key = key;
+        ctx.prev_key = key;
       }
     }
     const children = node.children;
     for (let c in children) {
-      this._getNodes(key + c, children[c]);
+      this._getNodes(ctx, key + c, children[c]);
     }
   },
 
@@ -311,11 +311,13 @@ Trie.prototype = {
 
   exportToNodes: function(node_constructor, current_date) {
     const nodes = [];
-    this._prev_key = '';
-    this._nodes = nodes;
-    this._node_constructor = node_constructor;
-    this._current_date = current_date;
-    this._getNodes('', this._root);
+    const ctx = {
+        prev_key: '',
+        nodes: nodes,
+        node_constructor: node_constructor,
+        current_date: current_date,
+    };
+    this._getNodes(ctx, '', this._root);
     return nodes;
   },
 
