@@ -221,12 +221,12 @@ Trie.prototype = {
     const todo_length = todo.length;
     for (let i = 0; i < todo_length; i++) {
       let c = todo[i];
-      let child_node = children[c];
-      if (!child_node) {
-        child_node = this._createNode();
-        children[c] = child_node;
+      let node = children[c];
+      if (!node) {
+        node = this._createNode();
+        children[c] = node;
       }
-      else if (child_node.last_check_date) {
+      else if (node.last_check_date) {
         // do not modify already existing node.
         continue;
       }
@@ -234,8 +234,8 @@ Trie.prototype = {
       // to the todo_value if the value contents is immutable.
       // Otherwise modification of a node's value could break other nodes'
       // values.
-      child_node.value = todo_value;
-      child_node.last_check_date = 0;
+      node.value = todo_value;
+      node.last_check_date = 0;
     }
   },
 
