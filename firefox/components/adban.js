@@ -171,10 +171,6 @@ Trie.prototype = {
     return ('value' in node);
   },
 
-  _mustDeleteNode: function(node, current_date) {
-    return (!this.isTodoNode(node) && current_date - node.last_check_date > this._node_delete_timeout);
-  },
-
   _deleteNode: function(node) {
     if (node != this._root) {
       delete node.value;
@@ -253,7 +249,7 @@ Trie.prototype = {
 
   _getNodes: function(ctx, key, node) {
     if (this._isNodeWithValue(node)) {
-      if (this._mustDeleteNode(node, ctx.current_date)) {
+      if (!this.isTodoNode(node) && ctx.current_date - node.last_check_date > this._node_delete_timeout) {
         this._deleteNode(node);
       }
       else {
