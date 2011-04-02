@@ -168,8 +168,7 @@ Trie.prototype = {
   },
 
   _mustDeleteNode: function(node, current_date) {
-    const last_check_date = node.last_check_date;
-    return (last_check_date != 0 && current_date - last_check_date > this._node_delete_timeout);
+    return (!this.isTodoNode(node) && current_date - node.last_check_date > this._node_delete_timeout);
   },
 
   _deleteNode: function(node) {
@@ -185,7 +184,7 @@ Trie.prototype = {
     const children = node.children;
     for (let c in children) {
       node = children[c];
-      if ('value' in node && node.last_check_date == 0) {
+      if (this.isTodoNode(node)) {
         delete node.value;
         delete node.last_check_date;
       }
