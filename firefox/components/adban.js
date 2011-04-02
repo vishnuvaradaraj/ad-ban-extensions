@@ -139,11 +139,13 @@ const Trie = function(root_value) {
   root.value = root_value;
   root.last_check_date = 0;
   this._root = root;
+  this._stale_node_timeout = 0;
   this._node_delete_timeout = 0;
 };
 
-Trie.importFromNodes = function(root_value, node_delete_timeout, nodes, value_constructor) {
+Trie.importFromNodes = function(root_value, stale_node_timeout, node_delete_timeout, nodes, value_constructor) {
   const trie = new Trie(root_value);
+  trie.setStaleNodeTimeout(stale_node_timeout);
   trie.setNodeDeleteTimeout(node_delete_timeout);
   const nodes_length = nodes.length;
   let key = '';
@@ -261,6 +263,10 @@ Trie.prototype = {
     }
   },
 
+  isStaleNode: function(node, current_date) {
+    return (current_date - node.last_check_date > this._stale_node_timeout);
+  },
+
   get: function(key, current_date) {
     const key_length = key.length;
     let node = this._root;
@@ -314,6 +320,10 @@ Trie.prototype = {
     this._current_date = current_date;
     this._getNodes('', this._root);
     return nodes;
+  },
+
+  setStaleNodeTimeout: function(stale_node_timeout) {
+    this._stale_node_timeout = stale_node_timeout;
   },
 
   setNodeDeleteTimeout: function(node_delete_timeout) {
@@ -1051,16 +1061,20 @@ AdBan.prototype = {
     logging.info('loading AdBan cache from file');
     const that = this;
     const vars = this._vars;
-    const node_delete_timeout = this._settings.node_delete_timeout;
+    const settings = this._settings;
+    const stale_node_timeout = settings.stale_node_timeout;
+    const node_delete_timeout = settings.node_delete_timeout;
     const file = this._getFileForCaches();
     const read_complete_callback = function(data) {
       const url_cache = Trie.importFromNodes(
           defaultUrlValue,
+          stale_node_timeout,
           node_delete_timeout,
           data[0],
           urlValueConstructor);
       const url_exception_cache = Trie.importFromNodes(
           defaultUrlExceptionValue,
+          stale_node_timeout,
           node_delete_timeout,
           data[1],
           urlExceptionValueConstructor);
@@ -1203,7 +1217,7 @@ AdBan.prototype = {
       let url = urls[i];
       let tmp = cache.get(url, current_date);
       let cache_node = tmp[1];
-      if (!this._isStaleCacheNode(cache_node)) {
+      if (!this.isStaleNode(cache_node, current_date)) {
         delete unverified_urls[url];
       }
     }
@@ -1338,6 +1352,8 @@ AdBan.prototype = {
     const request_data = [];
     const settings = this._settings;
     const vars = this._vars;
+    const url_cache = vars.url_cache;
+    const url_exception_cache = vars.url_exception_cache;
     const that = this;
     const response_callback = function(response) {
       settings.import(response);
@@ -1345,8 +1361,10 @@ AdBan.prototype = {
       // are stored in a consistent state.
       that._saveSettingsSync();
       that._startTimers();
-      vars.url_cache.setNodeDeleteTimeout(settings.node_delete_timeout);
-      vars.url_exception_cache.setNodeDeleteTimeout(settings.node_delete_timeout);
+      url_cache.setStaleNodeTimeout(settings.stale_node_timeout);
+      url_cache.setNodeDeleteTimeout(settings.node_delete_timeout);
+      url_exception_cache.setStaleNodeTimeout(settings.stale_node_timeout);
+      url_exception_cache.setNodeDeleteTimeout(settings.node_delete_timeout);
     };
     this._startJsonRequest(this._update_settings_xhr, this._READ_SETTINGS_ENDPOINT, request_data, response_callback);
   },
@@ -1416,19 +1434,16 @@ AdBan.prototype = {
     this._executeDelayed(this._verify_urls_timer, verify_urls_callback, this._settings.url_verifier_delay);
   },
 
-  _isStaleCacheNode: function(cache_node) {
-    return (this._vars.current_date - cache_node.last_check_date > this._settings.stale_node_timeout);
-  },
-
   _isTodoCacheNode: function(cache_node) {
     return (cache_node.last_check_date == 0);
   },
 
   _getCacheValue: function(cache, unverified_urls, url, max_url_length) {
-    const tmp = cache.get(url, this._vars.current_date);
+    const current_date = this._vars.current_date;
+    const tmp = cache.get(url, current_date);
     const cache_node = tmp[1];
     const cache_node_depth = tmp[2];
-    if (this._isStaleCacheNode(cache_node)) {
+    if (cache._isStaleNode(cache_node, current_date)) {
       // An optimization: if the matching cache node isn't TODO node,
       // then it is safe to truncate the url to the cache node's depth,
       // which is usually shorter than the max_url_length. If children nodes
