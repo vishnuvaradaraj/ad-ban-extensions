@@ -149,13 +149,12 @@ Trie.importFromNodes = function(root_value, stale_node_timeout, node_delete_time
   trie.setNodeDeleteTimeout(node_delete_timeout);
   const nodes_length = nodes.length;
   let key = '';
-  let node, common_prefix_length, value, last_check_date;
   for (let i = 0; i < nodes_length; i++) {
-    node = nodes[i];
-    common_prefix_length = node[0];
+    let node = nodes[i];
+    let common_prefix_length = node[0];
     key = key.substring(0, common_prefix_length) + node[1];
-    value = value_constructor(node[2]);
-    last_check_date = node[3];
+    let value = value_constructor(node[2]);
+    let last_check_date = node[3];
     trie.add(key, value, last_check_date);
   }
   return trie;
