@@ -1219,8 +1219,8 @@ AdBan.prototype = {
     for (let i = 0; i < urls_length; i++) {
       let url = urls[i];
       let tmp = cache.get(url, current_date);
-      let cache_node = tmp[1];
-      if (!cache.isStaleNode(cache_node, current_date)) {
+      let node_with_value = tmp[1];
+      if (!cache.isStaleNode(node_with_value, current_date)) {
         delete unverified_urls[url];
       }
     }
@@ -1440,9 +1440,9 @@ AdBan.prototype = {
   _getCacheValue: function(cache, unverified_urls, url, max_url_length) {
     const current_date = this._vars.current_date;
     const tmp = cache.get(url, current_date);
-    const cache_node = tmp[1];
-    const cache_node_depth = tmp[2];
-    if (cache.isStaleNode(cache_node, current_date)) {
+    const node_with_value = tmp[1];
+    const node_depth = tmp[2];
+    if (cache.isStaleNode(node_with_value, current_date)) {
       // An optimization: if the matching cache node isn't TODO node,
       // then it is safe to truncate the url to the cache node's depth,
       // which is usually shorter than the max_url_length. If children nodes
@@ -1456,14 +1456,14 @@ AdBan.prototype = {
       // the TODO node.
       // This optimization should significantly reduce request sizes sent
       // to the server.
-      if (!cache.isTodoNode(cache_node)) {
-        max_url_length = cache_node_depth;
+      if (!cache.isTodoNode(node_with_value)) {
+        max_url_length = node_depth;
       }
       url = url.substring(0, max_url_length);
       unverified_urls[url] = true;
       this._launchUrlVerifier();
     }
-    return cache_node.value;
+    return node_with_value.value;
   },
 
   _getUrlValue: function(url) {
