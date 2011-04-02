@@ -134,16 +134,17 @@ const compressStrings = function(s_list) {
   return result;
 };
 
-const Trie = function(root_value, node_delete_timeout) {
+const Trie = function(root_value) {
   const root = this._createNode();
   root.value = root_value;
   root.last_check_date = 0;
   this._root = root;
-  this._node_delete_timeout = node_delete_timeout;
+  this._node_delete_timeout = 0;
 };
 
 Trie.importFromNodes = function(root_value, node_delete_timeout, nodes, value_constructor) {
-  const trie = new Trie(root_value, node_delete_timeout);
+  const trie = new Trie(root_value);
+  trie.setNodeDeleteTimeout(node_delete_timeout);
   const nodes_length = nodes.length;
   let key = '';
   let node, common_prefix_length, value, last_check_date;
@@ -331,12 +332,12 @@ const defaultUrlValue = {
 const defaultUrlExceptionValue = {
 };
 
-const createEmptyUrlCache = function(node_delete_timeout) {
-  return new Trie(defaultUrlValue, node_delete_timeout);
+const createEmptyUrlCache = function() {
+  return new Trie(defaultUrlValue);
 };
 
-const createEmptyUrlExceptionCache = function(node_delete_timeout) {
-  return new Trie(defaultUrlExceptionValue, node_delete_timeout);
+const createEmptyUrlExceptionCache = function() {
+  return new Trie(defaultUrlExceptionValue);
 };
 
 const BLACKLISTED_CANONICAL_URLS_BIT_MASK = (1 << 0);
@@ -542,8 +543,8 @@ AdBan.prototype = {
   _vars: {
     current_date: getCurrentDate(),
     auth_token: '',
-    url_cache: createEmptyUrlCache(0),
-    url_exception_cache: createEmptyUrlExceptionCache(0),
+    url_cache: createEmptyUrlCache(),
+    url_exception_cache: createEmptyUrlExceptionCache(),
     unverified_urls: {},
     unverified_url_exceptions: {},
     is_url_verifier_active: false,
