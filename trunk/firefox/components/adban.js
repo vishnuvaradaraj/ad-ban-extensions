@@ -176,11 +176,7 @@ Trie.prototype = {
   },
 
   _deleteNode: function(node) {
-    if (node == this._root) {
-      // don't delete root node.
-      node.last_check_date = 0;
-    }
-    else {
+    if (node != this._root) {
       delete node.value;
       delete node.last_check_date;
     }
