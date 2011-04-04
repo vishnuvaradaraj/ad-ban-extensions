@@ -173,11 +173,11 @@ Trie.prototype = {
 
   _clearNode: function(node, is_parent_node_with_value) {
     if (node != this._root) {
+      delete node.value;
       if (is_parent_node_with_value) {
         node.last_check_date = 0;
       }
       else {
-        delete node.value;
         delete node.last_check_date;
       }
     }
@@ -186,7 +186,6 @@ Trie.prototype = {
     for (let c in children) {
       node = children[c];
       if (this.isTodoNode(node)) {
-        delete node.value;
         delete node.last_check_date;
       }
     }
@@ -202,8 +201,10 @@ Trie.prototype = {
       node = new_node;
       node_depth++;
     }
-    node.value = value;
     node.last_check_date = current_date;
+    if (!this.isTodoNode(node)) {
+      node.value = value;
+    }
     return node;
   },
 
@@ -218,7 +219,7 @@ Trie.prototype = {
     }
   },
 
-  _updateTodoChildren: function(children, todo, todo_value) {
+  _updateTodoChildren: function(children, todo) {
     const children_to_delete = [];
     for (let c in children) {
       if (todo.indexOf(c) == -1) {
@@ -242,11 +243,6 @@ Trie.prototype = {
       else if (this._isNodeWithValue(node)) {
         continue;
       }
-      // it is OK that multiple nodes share the same reference
-      // to the todo_value if the value contents is immutable.
-      // Otherwise modification of a node's value could break other nodes'
-      // values.
-      node.value = todo_value;
       node.last_check_date = 0;
     }
   },
@@ -254,23 +250,25 @@ Trie.prototype = {
   _exportSubtreeNodes: function(ctx, key, node, is_parent_node_with_value) {
     let is_node_with_value = this._isNodeWithValue(node);
     let is_todo_node = this.isTodoNode(node);
-    if (is_node_with_value && !is_todo_node && ctx.current_date - node.last_check_date > this._node_delete_timeout) {
+    if (is_node_with_value && (ctx.current_date - node.last_check_date > this._node_delete_timeout)) {
       this._clearNode(node, is_parent_node_with_value);
-      is_node_with_value = is_todo_node = is_parent_node_with_value;
+      is_todo_node = is_parent_node_with_value;
+      is_node_with_value = false;
     }
-    if (is_node_with_value) {
+    if (is_node_with_value || is_todo_node) {
       const common_prefix_length = getCommonPrefixLength(ctx.prev_key, key);
+      const value = is_todo_node ? null : node.value;
       ctx.nodes.push([
           common_prefix_length,
           key.substring(common_prefix_length),
-          ctx.node_constructor(node.value),
+          ctx.node_constructor(value),
           node.last_check_date,
       ]);
       ctx.prev_key = key;
     }
     const children = node.children;
     for (let c in children) {
-      this._exportSubtreeNodes(ctx, key + c, children[c], is_node_with_value & !is_todo_node);
+      this._exportSubtreeNodes(ctx, key + c, children[c], is_node_with_value);
     }
   },
 
@@ -286,6 +284,7 @@ Trie.prototype = {
     const key_length = key.length;
     let node = this._root;
     let node_with_value = node;
+    let non_empty_node = node;
     let node_depth = 0;
     let tmp_node, c;
     while (node_depth < key_length) {
@@ -295,31 +294,34 @@ Trie.prototype = {
         break;
       }
       if (this._isNodeWithValue(tmp_node)) {
-        node_with_value = tmp_node;
+        non_empty_node = node_with_value = tmp_node;
+      }
+      else if (this.isTodoNode(tmp_node)) {
+        non_empty_node = tmp_node;
       }
       node_depth++;
       node = tmp_node;
     }
-    return [node, node_with_value, node_depth];
+    return [node, node_with_value, non_empty_node, node_depth];
   },
 
   add: function(key, value, current_date) {
     const tmp = this.get(key);
     const node = tmp[0];
-    const node_depth = tmp[2];
+    const node_depth = tmp[3];
     return this._add(node, node_depth, key, value, current_date);
   },
 
-  update: function(start_key, end_keys, value, current_date, todo, todo_value) {
+  update: function(start_key, end_keys, value, current_date, todo) {
     const tmp = this.get(start_key);
     const node = tmp[0];
-    const node_depth = tmp[2];
+    const node_depth = tmp[3];
     if (node_depth == start_key.length) {
       this._deleteObsoleteChildren(node.children, node_depth, end_keys);
     }
 
     const added_node = this._add(node, node_depth, start_key, value, current_date);
-    this._updateTodoChildren(added_node.children, todo, todo_value);
+    this._updateTodoChildren(added_node.children, todo);
   },
 
   exportToNodes: function(node_constructor, current_date) {
@@ -343,10 +345,6 @@ Trie.prototype = {
   },
 };
 
-// It is OK to share default values by reference among multiple Trie nodes,
-// because node values are considered immutable.
-// WARNING: if sometimes node values will become mutable, then these default values
-// must be distinctly cloned for each Trie node.
 const defaultUrlValue = {
     is_whitelist: true,
 };
@@ -367,10 +365,16 @@ const WHITELISTED_CANONICAL_URLS_BIT_MASK = (1 << 1);
 const CSS_SELECTORS_BIT_MASK = (1 << 2);
 
 const urlNodeConstructor = function(v) {
+  if (!v) {
+    v = defaultUrlValue;
+  }
   return (v.is_whitelist + 0);
 };
 
 const urlExceptionNodeConstructor = function(v) {
+  if (!v) {
+    v = defaultUrlExceptionValue;
+  }
   const blacklisted_canonical_urls = v.blacklisted_canonical_urls;
   const whitelisted_canonical_urls = v.whitelisted_canonical_urls;
   const css_selectors = v.css_selectors;
@@ -1183,7 +1187,7 @@ AdBan.prototype = {
     }
   },
 
-  _updateCache: function(response_data, urls, cache, value_constructor, default_value) {
+  _updateCache: function(response_data, urls, cache, value_constructor) {
     const response_data_length = response_data.length;
 
     for (let i = 0; i < response_data_length; i++) {
@@ -1200,7 +1204,7 @@ AdBan.prototype = {
       }
       const url = urls[url_idx[0]].substring(0, url_length);
       const value = value_constructor(properties);
-      cache.update(url, end_urls, value, this._vars.current_date, todo, default_value);
+      cache.update(url, end_urls, value, this._vars.current_date, todo);
     }
   },
 
@@ -1228,8 +1232,8 @@ AdBan.prototype = {
     for (let i = 0; i < urls_length; i++) {
       let url = urls[i];
       let tmp = cache.get(url);
-      let node_with_value = tmp[1];
-      if (!cache.isStaleNode(node_with_value, current_date)) {
+      let non_empty_node = tmp[2];
+      if (!cache.isStaleNode(non_empty_node, current_date)) {
         delete unverified_urls[url];
       }
     }
@@ -1402,14 +1406,12 @@ AdBan.prototype = {
           response[0],
           urls,
           vars.url_cache,
-          urlValueConstructor,
-          defaultUrlValue);
+          urlValueConstructor);
       that._updateCache(
           response[1],
           url_exceptions,
           vars.url_exception_cache,
-          urlExceptionValueConstructor,
-          defaultUrlExceptionValue);
+          urlExceptionValueConstructor);
       that._cleanupUnverifiedUrls(vars.unverified_urls, vars.url_cache);
       that._cleanupUnverifiedUrls(vars.unverified_url_exceptions, vars.url_exception_cache);
     };
@@ -1450,8 +1452,9 @@ AdBan.prototype = {
     const current_date = this._vars.current_date;
     const tmp = cache.get(url);
     const node_with_value = tmp[1];
-    const node_depth = tmp[2];
-    if (cache.isStaleNode(node_with_value, current_date)) {
+    const non_empty_node = tmp[2];
+    const node_depth = tmp[3];
+    if (cache.isStaleNode(non_empty_node, current_date)) {
       // An optimization: if the matching cache node isn't TODO node,
       // then it is safe to truncate the url to the cache node's depth,
       // which is usually shorter than the max_url_length. If children nodes
@@ -1465,7 +1468,7 @@ AdBan.prototype = {
       // the TODO node.
       // This optimization should significantly reduce request sizes sent
       // to the server.
-      if (!cache.isTodoNode(node_with_value)) {
+      if (!cache.isTodoNode(non_empty_node)) {
         max_url_length = node_depth;
       }
       url = url.substring(0, max_url_length);
