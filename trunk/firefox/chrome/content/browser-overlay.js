@@ -65,6 +65,22 @@
     notification_box.appendNotification(message, 'adban-' + id, '', notification_box.PRIORITY_INFO_MEDIUM, null);
   };
 
+  let processDocumentEventHandler = function(e) {
+    if (e.type == 'DOMContentLoaded') {
+      adban.processDocument(e.originalTarget);
+    }
+  };
+
+  let enableDocumentsProcessing = function() {
+    logging.info('subscribing to DOMContentLoaded event on gBrowser');
+    gBrowser.addEventListener('DOMContentLoaded', processDocumentEventHandler, true);
+  };
+
+  let disableDocumentsProcessing = function() {
+    logging.info('unsubscribing from DOMContentLoaded event on gBrowser');
+    gBrowser.removeEventListener('DOMContentLoaded', processDocumentEventHandler, true);
+  };
+
   let onStateChange = function() {
     const cmd_stop = $('adban-cmd-stop');
     const cmd_start = $('adban-cmd-start');
@@ -76,9 +92,7 @@
         toggle_button.setAttribute('label', _('toggle-button-label-enabled'));
         toggle_button.setAttribute('tooltiptext', _('toggle-button-tooltiptext-enabled'));
       }
-
-      logging.info('subscribing to DOMContentLoaded event on gBrowser');
-      gBrowser.addEventListener('DOMContentLoaded', processDocumentEventHandler, true);
+      enableDocumentsProcessing();
     }
     else {
       cmd_stop.setAttribute('disabled', 'true');
@@ -87,9 +101,7 @@
         toggle_button.setAttribute('label', _('toggle-button-label-disabled'));
         toggle_button.setAttribute('tooltiptext', _('toggle-button-tooltiptext-disabled'));
       }
-
-      logging.info('unsubscribing from DOMContentLoaded event on gBrowser');
-      gBrowser.removeEventListener('DOMContentLoaded', processDocumentEventHandler, true);
+      disableDocumentsProcessing();
     }
   };
 
@@ -136,12 +148,6 @@
     adban.openTab('help', adban.HELP_URL);
   };
 
-  let processDocumentEventHandler = function(e) {
-    if (e.type == 'DOMContentLoaded') {
-      adban.processDocument(e.originalTarget);
-    }
-  };
-
   let state_listener_id;
   let is_initially_active;
 
@@ -154,6 +160,8 @@
     $('adban-cmd-start').addEventListener('command', cmdStart, false);
     $('adban-cmd-toggle').addEventListener('command', cmdToggle, false);
     $('adban-cmd-help').addEventListener('command', cmdHelp, false);
+
+    enableDocumentsProcessing();
 
     const state_change_results = adban.subscribeToStateChange(onStateChange);
     state_listener_id = state_change_results[0];
@@ -187,6 +195,8 @@
     window.removeEventListener('unload', shutdown, false);
 
     adban.unsubscribeFromStateChange(state_listener_id);
+
+    disableDocumentsProcessing();
 
     $('adban-cmd-complaint').removeEventListener('command', cmdComplaint, false);
     $('adban-cmd-stop').removeEventListener('command', cmdStop, false);
