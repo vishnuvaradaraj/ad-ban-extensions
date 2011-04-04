@@ -76,6 +76,8 @@
         toggle_button.setAttribute('label', _('toggle-button-label-enabled'));
         toggle_button.setAttribute('tooltiptext', _('toggle-button-tooltiptext-enabled'));
       }
+
+      logging.info('subscribing to DOMContentLoaded event on gBrowser');
       gBrowser.addEventListener('DOMContentLoaded', processDocumentEventHandler, true);
     }
     else {
@@ -85,6 +87,8 @@
         toggle_button.setAttribute('label', _('toggle-button-label-disabled'));
         toggle_button.setAttribute('tooltiptext', _('toggle-button-tooltiptext-disabled'));
       }
+
+      logging.info('unsubscribing from DOMContentLoaded event on gBrowser');
       gBrowser.removeEventListener('DOMContentLoaded', processDocumentEventHandler, true);
     }
   };
