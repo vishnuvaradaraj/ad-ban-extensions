@@ -251,7 +251,7 @@ Trie.prototype = {
     }
   },
 
-  _getNodes: function(ctx, key, node, is_parent_node_with_value) {
+  _exportSubtreeNodes: function(ctx, key, node, is_parent_node_with_value) {
     let is_node_with_value = this._isNodeWithValue(node);
     let is_todo_node = this.isTodoNode(node);
     if (is_node_with_value && !is_todo_node && ctx.current_date - node.last_check_date > this._node_delete_timeout) {
@@ -270,7 +270,7 @@ Trie.prototype = {
     }
     const children = node.children;
     for (let c in children) {
-      this._getNodes(ctx, key + c, children[c], is_node_with_value & !is_todo_node);
+      this._exportSubtreeNodes(ctx, key + c, children[c], is_node_with_value & !is_todo_node);
     }
   },
 
@@ -330,7 +330,7 @@ Trie.prototype = {
         node_constructor: node_constructor,
         current_date: current_date,
     };
-    this._getNodes(ctx, '', this._root, true);
+    this._exportSubtreeNodes(ctx, '', this._root, true);
     return nodes;
   },
 
