@@ -829,9 +829,8 @@ AdBan.prototype = {
     const tabs = tab_browser.tabContainer.childNodes;
     const tabs_count = tabs.length;
     const attribute_name = 'adban-tab-' + tab_name;
-    let tab;
     for (let i = 0; i < tabs_count; i++) {
-      tab = tabs[i];
+      let tab = tabs[i];
       if (tab.hasAttribute(attribute_name)) {
         logging.info('the tab [%s] is already opened', tab_name);
         tab_browser.selectedTab = tab;
@@ -1188,19 +1187,19 @@ AdBan.prototype = {
     const response_data_length = response_data.length;
 
     for (let i = 0; i < response_data_length; i++) {
-      const data = response_data[i];
-      const url_length = data[0];
-      const todo = data[1];
-      const url_idx = data[2];
-      const properties = data[3];
+      let data = response_data[i];
+      let url_length = data[0];
+      let todo = data[1];
+      let url_idx = data[2];
+      let properties = data[3];
 
-      const end_urls = [];
-      const url_idx_length = url_idx.length;
+      let end_urls = [];
+      let url_idx_length = url_idx.length;
       for (let j = 0; j < url_idx_length; j++) {
         end_urls[j] = urls[url_idx[j]];
       }
-      const url = urls[url_idx[0]].substring(0, url_length);
-      const value = value_constructor(properties);
+      let url = urls[url_idx[0]].substring(0, url_length);
+      let value = value_constructor(properties);
       cache.update(url, end_urls, value, this._vars.current_date, todo);
     }
   },
@@ -1491,10 +1490,9 @@ AdBan.prototype = {
       return true;
     }
     if (host_parts.length == 4) {
-      let part, int_part;
       for (let i = 0; i < 4; i++) {
-        part = host_parts[i];
-        int_part = parseInt(part);
+        let part = host_parts[i];
+        let int_part = parseInt(part);
         if (int_part != part || int_part < 0 || int_part > 255) {
           return false;
         }
