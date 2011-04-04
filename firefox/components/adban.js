@@ -121,11 +121,10 @@ const compressStrings = function(s_list) {
   // s_list must be sorted in order to achieve better differential compression.
   const result = [];
   let prev_s = '';
-  let common_prefix_length, s;
   const s_list_length = s_list.length;
   for (let i = 0; i < s_list_length; i++) {
-    s = s_list[i];
-    common_prefix_length = getCommonPrefixLength(prev_s, s);
+    let s = s_list[i];
+    let common_prefix_length = getCommonPrefixLength(prev_s, s);
     result.push(
         common_prefix_length,
         s.substring(common_prefix_length));
@@ -193,10 +192,9 @@ Trie.prototype = {
 
   _add: function(node, node_depth, key, value, current_date) {
     const key_length = key.length;
-    let new_node, c;
     while (node_depth < key_length) {
-      c = key[node_depth];
-      new_node = this._createNode();
+      let c = key[node_depth];
+      let new_node = this._createNode();
       node.children[c] = new_node;
       node = new_node;
       node_depth++;
@@ -286,10 +284,9 @@ Trie.prototype = {
     let node_with_value = node;
     let non_empty_node = node;
     let node_depth = 0;
-    let tmp_node, c;
     while (node_depth < key_length) {
-      c = key[node_depth];
-      tmp_node = node.children[c];
+      let c = key[node_depth];
+      let tmp_node = node.children[c];
       if (!tmp_node) {
         break;
       }
