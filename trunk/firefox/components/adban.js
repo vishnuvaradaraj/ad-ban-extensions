@@ -171,9 +171,9 @@ Trie.prototype = {
     return ('value' in node);
   },
 
-  _deleteNode: function(node, is_prev_node_with_value) {
+  _deleteNode: function(node, is_parent_node_with_value) {
     if (node != this._root) {
-      if (is_prev_node_with_value) {
+      if (is_parent_node_with_value) {
         node.last_check_date = 0;
       }
       else {
@@ -251,12 +251,12 @@ Trie.prototype = {
     }
   },
 
-  _getNodes: function(ctx, key, node, is_prev_node_with_value) {
+  _getNodes: function(ctx, key, node, is_parent_node_with_value) {
     let is_node_with_value = this._isNodeWithValue(node);
     let is_todo_node = this.isTodoNode(node);
     if (is_node_with_value && !is_todo_node && ctx.current_date - node.last_check_date > this._node_delete_timeout) {
-      this._deleteNode(node, is_prev_node_with_value);
-      is_node_with_value = is_todo_node = is_prev_node_with_value;
+      this._deleteNode(node, is_parent_node_with_value);
+      is_node_with_value = is_todo_node = is_parent_node_with_value;
     }
     if (is_node_with_value) {
       const common_prefix_length = getCommonPrefixLength(ctx.prev_key, key);
