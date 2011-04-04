@@ -1303,7 +1303,7 @@ AdBan.prototype = {
     logging.info('request_url=[%s], request_text=[%s]', request_url, request_text);
 
     const that = this;
-    xhr.open('POST', request_url);
+    xhr.open('POST', request_url, true);
     xhr.onreadystatechange = function() {
       if (xhr.readyState == 4) {
         try {
