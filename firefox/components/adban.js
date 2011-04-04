@@ -171,10 +171,15 @@ Trie.prototype = {
     return ('value' in node);
   },
 
-  _deleteNode: function(node) {
+  _deleteNode: function(node, is_prev_node_with_value) {
     if (node != this._root) {
-      delete node.value;
-      delete node.last_check_date;
+      if (is_prev_node_with_value) {
+        node.last_check_date = 0;
+      }
+      else {
+        delete node.value;
+        delete node.last_check_date;
+      }
     }
 
     const children = node.children;
@@ -246,25 +251,26 @@ Trie.prototype = {
     }
   },
 
-  _getNodes: function(ctx, key, node) {
-    if (this._isNodeWithValue(node)) {
-      if (!this.isTodoNode(node) && ctx.current_date - node.last_check_date > this._node_delete_timeout) {
-        this._deleteNode(node);
-      }
-      else {
-        const common_prefix_length = getCommonPrefixLength(ctx.prev_key, key);
-        ctx.nodes.push([
-            common_prefix_length,
-            key.substring(common_prefix_length),
-            ctx.node_constructor(node.value),
-            node.last_check_date,
-        ]);
-        ctx.prev_key = key;
-      }
+  _getNodes: function(ctx, key, node, is_prev_node_with_value) {
+    let is_node_with_value = this._isNodeWithValue(node);
+    let is_todo_node = this.isTodoNode(node);
+    if (is_node_with_value && !is_todo_node && ctx.current_date - node.last_check_date > this._node_delete_timeout) {
+      this._deleteNode(node, is_prev_node_with_value);
+      is_node_with_value = is_todo_node = is_prev_node_with_value;
+    }
+    if (is_node_with_value) {
+      const common_prefix_length = getCommonPrefixLength(ctx.prev_key, key);
+      ctx.nodes.push([
+          common_prefix_length,
+          key.substring(common_prefix_length),
+          ctx.node_constructor(node.value),
+          node.last_check_date,
+      ]);
+      ctx.prev_key = key;
     }
     const children = node.children;
     for (let c in children) {
-      this._getNodes(ctx, key + c, children[c]);
+      this._getNodes(ctx, key + c, children[c], is_node_with_value & !is_todo_node);
     }
   },
 
@@ -324,7 +330,7 @@ Trie.prototype = {
         node_constructor: node_constructor,
         current_date: current_date,
     };
-    this._getNodes(ctx, '', this._root);
+    this._getNodes(ctx, '', this._root, true);
     return nodes;
   },
 
