@@ -783,11 +783,11 @@ AdBan.prototype = {
   processDocument: function(doc) {
     const node_name = doc.nodeName;
     if (node_name != '#document') {
-      logging.info('the current DOMContentLoaded target=[%s] isn\'t html document', node_name);
+      logging.info('the ducument\'s node=[%s] isn\'t html document', node_name);
       return;
     }
     const site_url = doc.location.href;
-    logging.info('DOMContentLoaded event on url=[%s]', site_url);
+    logging.info('processing the document for the url=[%s]', site_url);
     const site_uri = this._createUri(site_url);
     if (!this._shouldProcessUri(site_uri)) {
       logging.info('there is no need in processing the url=[%s]', site_url);
