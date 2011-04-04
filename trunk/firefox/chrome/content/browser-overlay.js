@@ -76,6 +76,7 @@
         toggle_button.setAttribute('label', _('toggle-button-label-enabled'));
         toggle_button.setAttribute('tooltiptext', _('toggle-button-tooltiptext-enabled'));
       }
+      gBrowser.addEventListener('DOMContentLoaded', processDocumentEventHandler, true);
     }
     else {
       cmd_stop.setAttribute('disabled', 'true');
@@ -84,6 +85,7 @@
         toggle_button.setAttribute('label', _('toggle-button-label-disabled'));
         toggle_button.setAttribute('tooltiptext', _('toggle-button-tooltiptext-disabled'));
       }
+      gBrowser.removeEventListener('DOMContentLoaded', processDocumentEventHandler, true);
     }
   };
 
@@ -131,7 +133,7 @@
   };
 
   let processDocumentEventHandler = function(e) {
-    if (e.type == 'DOMContentLoaded' && adban.isActive()) {
+    if (e.type == 'DOMContentLoaded') {
       adban.processDocument(e.originalTarget);
     }
   };
@@ -141,19 +143,13 @@
 
   let init = function() {
     logging.info('initializing browser-overlay');
+    window.removeEventListener('load', init, false);
 
     $('adban-cmd-complaint').addEventListener('command', cmdComplaint, false);
     $('adban-cmd-stop').addEventListener('command', cmdStop, false);
     $('adban-cmd-start').addEventListener('command', cmdStart, false);
     $('adban-cmd-toggle').addEventListener('command', cmdToggle, false);
     $('adban-cmd-help').addEventListener('command', cmdHelp, false);
-
-    // DOMFrameContentLoaded doesn't work as expected,
-    // while DOMContentLoaded catches iframes and frames.
-    // see https://developer.mozilla.org/en/Gecko-Specific_DOM_Events .
-    gBrowser.addEventListener('DOMContentLoaded', processDocumentEventHandler, true);
-
-    window.addEventListener('unload', shutdown, false);
 
     const state_change_results = adban.subscribeToStateChange(onStateChange);
     state_listener_id = state_change_results[0];
@@ -178,13 +174,15 @@
     };
     adban.executeDeferred(first_run_callback);
 
+    window.addEventListener('unload', shutdown, false);
     logging.info('browser-overlay has been initialized');
   };
 
   let shutdown = function() {
     logging.info('shutting down browser-overlay');
+    window.removeEventListener('unload', shutdown, false);
+
     adban.unsubscribeFromStateChange(state_listener_id);
-    gBrowser.removeEventListener('DOMContentLoaded', processDocumentEventHandler, true);
 
     $('adban-cmd-complaint').removeEventListener('command', cmdComplaint, false);
     $('adban-cmd-stop').removeEventListener('command', cmdStop, false);
@@ -192,8 +190,6 @@
     $('adban-cmd-toggle').removeEventListener('command', cmdToggle, false);
     $('adban-cmd-help').removeEventListener('command', cmdHelp, false);
 
-    window.removeEventListener('load', init, false);
-    window.removeEventListener('unload', shutdown, false);
     logging.info('browser-overlay has been shut down');
   };
 
