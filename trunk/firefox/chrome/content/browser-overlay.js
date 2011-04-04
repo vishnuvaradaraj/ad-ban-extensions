@@ -161,8 +161,6 @@
     $('adban-cmd-toggle').addEventListener('command', cmdToggle, false);
     $('adban-cmd-help').addEventListener('command', cmdHelp, false);
 
-    enableDocumentsProcessing();
-
     const state_change_results = adban.subscribeToStateChange(onStateChange);
     state_listener_id = state_change_results[0];
     is_initially_active = state_change_results[1];
@@ -194,9 +192,11 @@
     logging.info('shutting down browser-overlay');
     window.removeEventListener('unload', shutdown, false);
 
-    adban.unsubscribeFromStateChange(state_listener_id);
+    if (adban.isActive()) {
+      disableDocumentsProcessing();
+    }
 
-    disableDocumentsProcessing();
+    adban.unsubscribeFromStateChange(state_listener_id);
 
     $('adban-cmd-complaint').removeEventListener('command', cmdComplaint, false);
     $('adban-cmd-stop').removeEventListener('command', cmdStop, false);
