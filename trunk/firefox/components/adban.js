@@ -452,7 +452,6 @@ AdBan.prototype = {
   QueryInterface: XPCOMUtils.generateQI([
       Ci.nsIChannelEventSink,
       Ci.nsIContentPolicy,
-      Ci.nsIDOMEventListener,
       Ci.nsIObserver,
   ]),
 
@@ -629,32 +628,6 @@ AdBan.prototype = {
     return this._ACCEPT;
   },
 
-  // nsIDOMEventListener implementation
-  handleEvent: function(e) {
-    if (!this._vars.is_active) {
-      return;
-    }
-
-    if (e.type == 'DOMContentLoaded') {
-      const doc = e.originalTarget;
-      const node_name = doc.nodeName;
-      if (node_name != '#document') {
-        logging.info('the current DOMContentLoaded target=[%s] isn\'t html document', node_name);
-        return;
-      }
-      const site_url = doc.location.href;
-      logging.info('DOMContentLoaded event on url=[%s]', site_url);
-      const site_uri = this._createUri(site_url);
-      if (!this._shouldProcessUri(site_uri)) {
-        logging.info('there is no need in processing the url=[%s]', site_url);
-        return;
-      }
-      const canonical_site_url = this._getCanonicalUrl(site_uri);
-      this._injectCssToDocument(doc, canonical_site_url);
-      this._prefetchAdFiltersForDocumentLinks(doc, canonical_site_url);
-    }
-  },
-
   // nsIObserver implementation
   observe: function(subject, topic, data) {
     const observer_service = this._observer_service;
@@ -736,7 +709,7 @@ AdBan.prototype = {
     }
   },
 
-  // publicly accessed methods.
+  // public methods.
   start: function() {
     const vars = this._vars;
     if (vars.is_active) {
@@ -805,6 +778,25 @@ AdBan.prototype = {
   unsubscribeFromStateChange: function(listener_id) {
     logging.info('unsubscribing from AdBan component state change. listener_id=[%s]', listener_id);
     delete this._state_listeners[listener_id];
+  },
+
+  processDocument: function(doc) {
+    const doc = e.originalTarget;
+    const node_name = doc.nodeName;
+    if (node_name != '#document') {
+      logging.info('the current DOMContentLoaded target=[%s] isn\'t html document', node_name);
+      return;
+    }
+    const site_url = doc.location.href;
+    logging.info('DOMContentLoaded event on url=[%s]', site_url);
+    const site_uri = this._createUri(site_url);
+    if (!this._shouldProcessUri(site_uri)) {
+      logging.info('there is no need in processing the url=[%s]', site_url);
+      return;
+    }
+    const canonical_site_url = this._getCanonicalUrl(site_uri);
+    this._injectCssToDocument(doc, canonical_site_url);
+    this._prefetchAdFiltersForDocumentLinks(doc, canonical_site_url);
   },
 
   executeDeferred: function(callback) {

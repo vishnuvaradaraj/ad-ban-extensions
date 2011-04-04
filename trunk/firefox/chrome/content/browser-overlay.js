@@ -130,6 +130,12 @@
     adban.openTab('help', adban.HELP_URL);
   };
 
+  let processDocumentEventHandler = function(e) {
+    if (e.type == 'DOMContentLoaded' && adban.isActive()) {
+      adban.processDocument(e.originalTarget);
+    }
+  };
+
   let state_listener_id;
   let is_initially_active;
 
@@ -163,7 +169,7 @@
     // DOMFrameContentLoaded doesn't work as expected,
     // while DOMContentLoaded catches iframes and frames.
     // see https://developer.mozilla.org/en/Gecko-Specific_DOM_Events .
-    gBrowser.addEventListener('DOMContentLoaded', adban, true);
+    gBrowser.addEventListener('DOMContentLoaded', processDocumentEventHandler, true);
 
     window.addEventListener('unload', shutdown, false);
 
@@ -177,7 +183,7 @@
   let shutdown = function() {
     logging.info('shutting down browser-overlay');
     adban.unsubscribeFromStateChange(state_listener_id);
-    gBrowser.removeEventListener('DOMContentLoaded', adban, true);
+    gBrowser.removeEventListener('DOMContentLoaded', processDocumentEventHandler, true);
 
     $('adban-cmd-complaint').removeEventListener('command', cmdComplaint, false);
     $('adban-cmd-stop').removeEventListener('command', cmdStop, false);
