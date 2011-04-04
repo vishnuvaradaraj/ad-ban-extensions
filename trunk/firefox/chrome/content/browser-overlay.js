@@ -141,6 +141,24 @@
 
   let init = function() {
     logging.info('initializing browser-overlay');
+
+    $('adban-cmd-complaint').addEventListener('command', cmdComplaint, false);
+    $('adban-cmd-stop').addEventListener('command', cmdStop, false);
+    $('adban-cmd-start').addEventListener('command', cmdStart, false);
+    $('adban-cmd-toggle').addEventListener('command', cmdToggle, false);
+    $('adban-cmd-help').addEventListener('command', cmdHelp, false);
+
+    // DOMFrameContentLoaded doesn't work as expected,
+    // while DOMContentLoaded catches iframes and frames.
+    // see https://developer.mozilla.org/en/Gecko-Specific_DOM_Events .
+    gBrowser.addEventListener('DOMContentLoaded', processDocumentEventHandler, true);
+
+    window.addEventListener('unload', shutdown, false);
+
+    const state_change_results = adban.subscribeToStateChange(onStateChange);
+    state_listener_id = state_change_results[0];
+    is_initially_active = state_change_results[1];
+
     // defer first run verification due to FF bug, which prevents from
     // toolbar updating immediately in the window.onload event handler.
     // Read more at http://blog.pearlcrescent.com/archives/24 .
@@ -159,23 +177,6 @@
       onStateChange(is_initially_active);
     };
     adban.executeDeferred(first_run_callback);
-
-    $('adban-cmd-complaint').addEventListener('command', cmdComplaint, false);
-    $('adban-cmd-stop').addEventListener('command', cmdStop, false);
-    $('adban-cmd-start').addEventListener('command', cmdStart, false);
-    $('adban-cmd-toggle').addEventListener('command', cmdToggle, false);
-    $('adban-cmd-help').addEventListener('command', cmdHelp, false);
-
-    // DOMFrameContentLoaded doesn't work as expected,
-    // while DOMContentLoaded catches iframes and frames.
-    // see https://developer.mozilla.org/en/Gecko-Specific_DOM_Events .
-    gBrowser.addEventListener('DOMContentLoaded', processDocumentEventHandler, true);
-
-    window.addEventListener('unload', shutdown, false);
-
-    const state_change_results = adban.subscribeToStateChange(onStateChange);
-    state_listener_id = state_change_results[0];
-    is_initially_active = state_change_results[1];
 
     logging.info('browser-overlay has been initialized');
   };
