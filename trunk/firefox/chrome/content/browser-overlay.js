@@ -72,12 +72,12 @@
   };
 
   let enableDocumentsProcessing = function() {
-    logging.info('subscribing to DOMContentLoaded event on gBrowser');
+    logging.info('subscribing to DOMContentLoaded event on gBrowser. state_listener_id=[%s]', state_listener_id);
     gBrowser.addEventListener('DOMContentLoaded', processDocumentEventHandler, true);
   };
 
   let disableDocumentsProcessing = function() {
-    logging.info('unsubscribing from DOMContentLoaded event on gBrowser');
+    logging.info('unsubscribing from DOMContentLoaded event on gBrowser. state_listener_id=[%s]', state_listener_id);
     gBrowser.removeEventListener('DOMContentLoaded', processDocumentEventHandler, true);
   };
 
@@ -136,7 +136,7 @@
   };
 
   let cmdToggle = function() {
-    logging.info('toggling AdBan\'s state');
+    logging.info('toggling AdBan\'s state. state_listener_id=[%s]', state_listener_id);
     if (adban.isActive()) {
       cmdStop();
     } else {
@@ -185,11 +185,11 @@
     adban.executeDeferred(first_run_callback);
 
     window.addEventListener('unload', shutdown, false);
-    logging.info('browser-overlay has been initialized');
+    logging.info('browser-overlay has been initialized. state_listener_id=[%s]', state_listener_id);
   };
 
   let shutdown = function() {
-    logging.info('shutting down browser-overlay');
+    logging.info('shutting down browser-overlay. state_listener_id=[%s]', state_listener_id);
     window.removeEventListener('unload', shutdown, false);
 
     if (adban.isActive()) {
@@ -204,7 +204,7 @@
     $('adban-cmd-toggle').removeEventListener('command', cmdToggle, false);
     $('adban-cmd-help').removeEventListener('command', cmdHelp, false);
 
-    logging.info('browser-overlay has been shut down');
+    logging.info('browser-overlay has been shut down. state_listener_id=[%s]', state_listener_id);
   };
 
   window.addEventListener('load', init, false);
