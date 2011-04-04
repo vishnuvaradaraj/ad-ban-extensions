@@ -19,10 +19,10 @@ const getCurrentDate = function() {
 
 const logging = {
   levels: {
-      INFO: ['INFO', 10],
-      WARNING: ['WARNING', 20],
-      ERROR: ['ERROR', 30],
-      NONE: ['NONE', 40],
+    INFO: ['INFO', 10],
+    WARNING: ['WARNING', 20],
+    ERROR: ['ERROR', 30],
+    NONE: ['NONE', 40],
   },
 
   _log_stream: null,
@@ -162,7 +162,7 @@ Trie.importFromNodes = function(root_value, stale_node_timeout, node_delete_time
 Trie.prototype = {
   _createNode: function() {
     return {
-        children: {},
+      children: {},
     };
   },
 
@@ -299,7 +299,12 @@ Trie.prototype = {
       node_depth++;
       node = tmp_node;
     }
-    return [node, node_with_value, non_empty_node, node_depth];
+    return [
+      node,
+      node_with_value,
+      non_empty_node,
+      node_depth,
+    ];
   },
 
   add: function(key, value, current_date) {
@@ -324,10 +329,10 @@ Trie.prototype = {
   exportToNodes: function(node_constructor, current_date) {
     const nodes = [];
     const ctx = {
-        prev_key: '',
-        nodes: nodes,
-        node_constructor: node_constructor,
-        current_date: current_date,
+      prev_key: '',
+      nodes: nodes,
+      node_constructor: node_constructor,
+      current_date: current_date,
     };
     this._exportSubtreeNodes(ctx, '', this._root, true);
     return nodes;
@@ -343,7 +348,7 @@ Trie.prototype = {
 };
 
 const defaultUrlValue = {
-    is_whitelist: true,
+  is_whitelist: true,
 };
 
 const defaultUrlExceptionValue = {
@@ -396,7 +401,7 @@ const urlExceptionNodeConstructor = function(v) {
 
 const urlValueConstructor = function(d) {
   return {
-      is_whitelist: !!(d & 1),
+    is_whitelist: !!(d & 1),
   };
 };
 
@@ -442,7 +447,7 @@ AdBan.prototype = {
   classID:          Components.ID('{02f31d71-1c0b-48f3-a3b5-100c18dc771e}'),
   contractID:       '@ad-ban.appspot.com/adban;1',
   _xpcom_categories: [
-      {category: 'app-startup', service: true},
+    {category: 'app-startup', service: true},
   ],
   QueryInterface: XPCOMUtils.generateQI([
       Ci.nsIChannelEventSink,
@@ -460,17 +465,17 @@ AdBan.prototype = {
   _CACHE_FILENAME: 'cache.json',
   _LOGS_FILENAME: 'log.txt',
   _FILTERED_SCHEMES: {
-      http: true,
-      https: true,
-      ftp: true,
+    http: true,
+    https: true,
+    ftp: true,
   },
   _AUTH_COOKIE_HOST: SERVER_DOMAIN,
   _ERROR_CODES: {
-      NO_ERRORS: 0,
-      REQUEST_PARSING_ERROR: 1,
-      AUTHENTICATION_ERROR: 3,
-      AUTHORIZATION_ERROR: 4,
-      OTHER_ERROR: -1,
+    NO_ERRORS: 0,
+    REQUEST_PARSING_ERROR: 1,
+    AUTHENTICATION_ERROR: 3,
+    AUTHORIZATION_ERROR: 4,
+    OTHER_ERROR: -1,
   },
 
   // helper XPCOM objects
@@ -542,17 +547,17 @@ AdBan.prototype = {
 
     export: function() {
       return [
-          this.url_verifier_delay,
-          this.stale_node_timeout,
-          this.node_delete_timeout,
-          this.current_date_granularity,
-          this.update_settings_interval,
-          this.max_url_length,
-          this.max_url_exception_length,
-          this.save_cache_interval,
-          this.min_backoff_timeout,
-          this.max_backoff_timeout,
-          this.max_urls_per_request,
+        this.url_verifier_delay,
+        this.stale_node_timeout,
+        this.node_delete_timeout,
+        this.current_date_granularity,
+        this.update_settings_interval,
+        this.max_url_length,
+        this.max_url_exception_length,
+        this.save_cache_interval,
+        this.min_backoff_timeout,
+        this.max_backoff_timeout,
+        this.max_urls_per_request,
       ];
     },
   },
@@ -772,7 +777,10 @@ AdBan.prototype = {
 
   sendUrlComplaint: function(site_url, comment, success_callback, failure_callback) {
     logging.info('sending url complaint for site_url=[%s], comment=[%s]', site_url, comment);
-    const request_data = [site_url, comment];
+    const request_data = [
+      site_url,
+      comment,
+    ];
     const response_callback = function() {
       success_callback();
     };
@@ -788,7 +796,10 @@ AdBan.prototype = {
     logging.info('subscribing to AdBan component state change');
     const listener_id = this._last_state_listener_id++;
     this._state_listeners[listener_id] = state_change_callback;
-    return [listener_id, this._vars.is_active];
+    return [
+      listener_id,
+      this._vars.is_active,
+    ];
   },
 
   unsubscribeFromStateChange: function(listener_id) {
@@ -799,7 +810,7 @@ AdBan.prototype = {
   executeDeferred: function(callback) {
     const main_thread = this._main_thread;
     const thread_event = {
-        run: callback,
+      run: callback,
     };
     main_thread.dispatch(thread_event, main_thread.DISPATCH_NORMAL);
   },
@@ -877,14 +888,14 @@ AdBan.prototype = {
 
   _startRepeatingTimer: function(timer, callback, interval) {
     const timer_callback = {
-        notify: callback,
+      notify: callback,
     };
     timer.initWithCallback(timer_callback, interval, timer.TYPE_REPEATING_SLACK);
   },
 
   _executeDelayed: function(timer, callback, delay) {
     const timer_callback = {
-        notify: callback,
+      notify: callback,
     };
     timer.initWithCallback(timer_callback, delay, timer.TYPE_ONE_SHOT);
   },
@@ -1004,21 +1015,21 @@ AdBan.prototype = {
     const channel = ios.newChannelFromURI(fileURI);
     const that = this;
     const observer = {
-        onStreamComplete : function(loader, context, status, length, result) {
-          if (!Components.isSuccessCode(status)) {
-            logging.error('error when reading the file=[%s], status=[%s]', file.path, status);
-            return;
-          }
-          try {
-            const json_data = that._converter.convertFromByteArray(result, length);
-            const data = that._json_encoder.decode(json_data);
-            logging.info('stop reading from the file=[%s]', file.path);
-            read_complete_callback(data);
-          }
-          catch(e) {
-            logging.error('error when reading and parsing json from the file=[%s]: [%s]', file.path, e);
-          }
-        },
+      onStreamComplete : function(loader, context, status, length, result) {
+        if (!Components.isSuccessCode(status)) {
+          logging.error('error when reading the file=[%s], status=[%s]', file.path, status);
+          return;
+        }
+        try {
+          const json_data = that._converter.convertFromByteArray(result, length);
+          const data = that._json_encoder.decode(json_data);
+          logging.info('stop reading from the file=[%s]', file.path);
+          read_complete_callback(data);
+        }
+        catch(e) {
+          logging.error('error when reading and parsing json from the file=[%s]: [%s]', file.path, e);
+        }
+      },
     };
     const stream_loader = Cc['@mozilla.org/network/stream-loader;1'].createInstance(Ci.nsIStreamLoader);
     stream_loader.init(observer);
@@ -1108,9 +1119,9 @@ AdBan.prototype = {
     const url_cache = vars.url_cache;
     const url_exception_cache = vars.url_exception_cache;
     const data = [
-        url_cache.exportToNodes(urlNodeConstructor, current_date),
-        url_exception_cache.exportToNodes(urlExceptionNodeConstructor, current_date),
-    ]
+      url_cache.exportToNodes(urlNodeConstructor, current_date),
+      url_exception_cache.exportToNodes(urlExceptionNodeConstructor, current_date),
+    ];
     const file = this._getFileForCaches();
     this._writeJsonToFileSync(file, data);
     logging.info('AdBan cache has been saved to file');
@@ -1141,23 +1152,23 @@ AdBan.prototype = {
     const max_disk_cache_entries_to_read = this._settings.max_disk_cache_entries_to_read;
     const that = this;
     const cache_visitor = {
-        visitDevice: function(device_id, device_info) {
-          logging.info('visitDevice([%s])', device_id);
-          return (device_id == 'disk');
-        },
-        visitEntry: function(device_id, entry_info) {
-          if (device_id != 'disk') {
-            return false;
-          }
-          const uri = that._createUri(entry_info.key);
-          if (that._shouldProcessUri(uri)) {
-            const canonical_url = that._getCanonicalUrl(uri);
-            that._getUrlValue(canonical_url);
-            that._getUrlExceptionValue(canonical_url);
-          }
-          ++disk_cache_entries_read;
-          return (disk_cache_entries_read < max_disk_cache_entries_to_read);
-        },
+      visitDevice: function(device_id, device_info) {
+        logging.info('visitDevice([%s])', device_id);
+        return (device_id == 'disk');
+      },
+      visitEntry: function(device_id, entry_info) {
+        if (device_id != 'disk') {
+          return false;
+        }
+        const uri = that._createUri(entry_info.key);
+        if (that._shouldProcessUri(uri)) {
+          const canonical_url = that._getCanonicalUrl(uri);
+          that._getUrlValue(canonical_url);
+          that._getUrlExceptionValue(canonical_url);
+        }
+        ++disk_cache_entries_read;
+        return (disk_cache_entries_read < max_disk_cache_entries_to_read);
+      },
     };
     this._cache_service.visitEntries(cache_visitor);
   },
@@ -1392,8 +1403,8 @@ AdBan.prototype = {
     url_exceptions.sort();
 
     const request_data = [
-        compressStrings(urls),
-        compressStrings(url_exceptions),
+      compressStrings(urls),
+      compressStrings(url_exceptions),
     ];
 
     const that = this;
