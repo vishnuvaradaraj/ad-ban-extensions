@@ -781,7 +781,6 @@ AdBan.prototype = {
   },
 
   processDocument: function(doc) {
-    const doc = e.originalTarget;
     const node_name = doc.nodeName;
     if (node_name != '#document') {
       logging.info('the current DOMContentLoaded target=[%s] isn\'t html document', node_name);
