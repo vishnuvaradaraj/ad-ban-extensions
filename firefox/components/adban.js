@@ -171,7 +171,7 @@ Trie.prototype = {
     return ('value' in node);
   },
 
-  _deleteNode: function(node, is_parent_node_with_value) {
+  _clearNode: function(node, is_parent_node_with_value) {
     if (node != this._root) {
       if (is_parent_node_with_value) {
         node.last_check_date = 0;
@@ -255,7 +255,7 @@ Trie.prototype = {
     let is_node_with_value = this._isNodeWithValue(node);
     let is_todo_node = this.isTodoNode(node);
     if (is_node_with_value && !is_todo_node && ctx.current_date - node.last_check_date > this._node_delete_timeout) {
-      this._deleteNode(node, is_parent_node_with_value);
+      this._clearNode(node, is_parent_node_with_value);
       is_node_with_value = is_todo_node = is_parent_node_with_value;
     }
     if (is_node_with_value) {
