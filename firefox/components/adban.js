@@ -254,7 +254,7 @@ Trie.prototype = {
       return new_node;
     }
 
-    const key_prefix = node[0][0];
+    let key_prefix = node[0][0];
     node[0][0] = key_prefix.substring(0, common_prefix_length);
     const prev_node = node[1][0];
     if (node_depth == key_length) {
@@ -459,10 +459,9 @@ Trie.prototype = {
     const node = tmp[0];
     const node_depth = tmp[3];
     const common_prefix_length = tmp[4];
-    if (node_depth == start_key.length) {
+    if (node_depth == start_key.length && common_prefix_length == 0) {
       this._deleteObsoleteChildren(node, node_depth, end_keys);
     }
-
     const added_node = this._add(node, node_depth, common_prefix_length, start_key, value, current_date);
     this._updateTodoChildren(added_node, todo);
   },
