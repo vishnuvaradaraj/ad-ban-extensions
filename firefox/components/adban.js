@@ -243,8 +243,10 @@ Trie.prototype = {
         let node1 = this._createNode();
         node1[0][0] = key_prefix.substring(1);
         node1[1][0] = node[1][0];
-        node[0] = [key_prefix[0], key[node_depth]];
-        node[1] = [node1, aux_node];
+        node[0][0] = key_prefix[0];
+        node[0][1] = key[node_depth];
+        node[1][0] = node1;
+        node[1][1] = aux_node;
       }
       else {
         node[0].push(key[node_depth]);
@@ -284,15 +286,18 @@ Trie.prototype = {
     }
 
     let aux_node = this._createNode();
-    aux_node[0] = [key_prefix[common_prefix_length], key[node_depth]];
-    aux_node[1] = [node1, node2];
+    aux_node[0][0] = key_prefix[common_prefix_length];
+    aux_node[0][1] = key[node_depth];
+    aux_node[1][0] = node1;
+    aux_node[1][1] = node2;
     node[1][0] = aux_node;
     return new_node;
   },
 
   _deleteObsoleteChildren: function(node, node_depth, end_keys) {
     let children_keys = node[0];
-    if (this._hasOneLongChild(children_keys)) {
+    const has_one_long_child = this._hasOneLongChild(children_keys);
+    if (has_one_long_child) {
       children_keys = [children_keys[0][0]];
     }
 
@@ -305,12 +310,15 @@ Trie.prototype = {
         if (child_index != -1) {
           node[0].splice(child_index, 1);
           node[1].splice(child_index, 1);
+          if (has_one_long_child) {
+            break;
+          }
         }
       }
     }
   },
 
-  _updateTodoChildren: function(node, todo) {
+  _updateTodoChildren: function(node, key, todo) {
     let children_keys = node[0];
     if (this._hasOneLongChild(children_keys)) {
       children_keys = [children_keys[0][0]];
@@ -326,28 +334,29 @@ Trie.prototype = {
     }
     const children_to_delete_length = children_to_delete.length;
     for (let i = 0; i < children_to_delete_length; i++) {
-      let child_index = children_to_delete[i];
+      let child_index = children_to_delete[i] - i;
       node[0].splice(child_index, 1);
       node[1].splice(child_index, 1);
     }
 
     const todo_length = todo.length;
+    children_keys = node[0];
+    let has_one_long_child = this._hasOneLongChild(children_keys);
     for (let i = 0; i < todo_length; i++) {
       let c = todo[i];
-      let todo_node;
-      let child_index = children_keys.indexOf(c);
-      if (child_index != -1) {
-        todo_node = node[1][child_index];
-        if (this._isNodeWithValue(todo_node)) {
-          continue;
+      let common_prefix_length = 0;
+      let key_length = key.length;
+      if (children_keys.indexOf(c) != -1) {
+        key_length++;
+      }
+      else if (has_one_long_child) {
+        if (children_keys[0][0] == c) {
+          key_length++;
+          common_prefix_length = 1;
         }
+        has_one_long_child = false;
       }
-      else {
-        todo_node = this._createNode();
-        node[0].push(c);
-        node[1].push(todo_node);
-      }
-      todo_node[2] = 0;
+      this._add(node, key_length, common_prefix_length, key + todo[i], null, 0);
     }
   },
 
@@ -462,7 +471,7 @@ Trie.prototype = {
       this._deleteObsoleteChildren(node, node_depth, end_keys);
     }
     const added_node = this._add(node, node_depth, common_prefix_length, start_key, value, current_date);
-    this._updateTodoChildren(added_node, todo);
+    this._updateTodoChildren(added_node, start_key, todo);
   },
 
   getValue: function(node) {
