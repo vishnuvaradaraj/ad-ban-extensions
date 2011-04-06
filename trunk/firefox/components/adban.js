@@ -134,9 +134,10 @@ const compressStrings = function(s_list) {
 };
 
 const Trie = function(root_value) {
-  const root = this._createNode();
-  root.push(0, root_value);
-  this._root = root;
+  const root_node = this._createNode();
+  root_node[2] = 0;
+  root_node[3] = root_value;
+  this._root = root_node;
   this._stale_node_timeout = 0;
   this._node_delete_timeout = 0;
 };
@@ -210,7 +211,7 @@ Trie.prototype = {
       if (current_date != 0) {
         node[3] = value;
       }
-      else {
+      else if (node != this._root) {
         node.length = 3;
       }
       return node;
@@ -361,7 +362,7 @@ Trie.prototype = {
     }
     if (is_node_with_value || is_todo_node) {
       const common_prefix_length = getCommonPrefixLength(ctx.prev_key, key);
-      const value = is_todo_node ? null : node[3];
+      const value = is_node_with_value ? node[3] : null;
       ctx.nodes.push([
           common_prefix_length,
           key.substring(common_prefix_length),
