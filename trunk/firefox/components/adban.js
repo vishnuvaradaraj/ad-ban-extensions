@@ -179,14 +179,13 @@ Trie.prototype = {
 
   _clearNode: function(node, is_parent_node_with_value) {
     // it is expected that this._isNodeWithValue() returns true.
-    if (node != this._root) {
-      if (is_parent_node_with_value) {
-        node[2] = 0;
-        node.length = 3;
-      }
-      else {
-        node.length = 2;
-      }
+    // and the current node isn't root node.
+    if (is_parent_node_with_value) {
+      node[2] = 0;
+      node.length = 3;
+    }
+    else {
+      node.length = 2;
     }
 
     const children_keys = node[0];
@@ -355,10 +354,10 @@ Trie.prototype = {
   _exportSubtreeNodes: function(ctx, key, node, is_parent_node_with_value) {
     let is_node_with_value = this._isNodeWithValue(node);
     let is_todo_node = this.isTodoNode(node);
-    if (is_node_with_value && (ctx.current_date - node[2] > this._node_delete_timeout)) {
+    if (is_node_with_value && node != this._root && (ctx.current_date - node[2] > this._node_delete_timeout)) {
       this._clearNode(node, is_parent_node_with_value);
-      is_node_with_value = this._isNodeWithValue(node);
-      is_todo_node = this.isTodoNode(node);
+      is_node_with_value = false;
+      is_todo_node = is_parent_node_with_value;
     }
     if (is_node_with_value || is_todo_node) {
       const common_prefix_length = getCommonPrefixLength(ctx.prev_key, key);
