@@ -344,8 +344,8 @@ Trie.prototype = {
       }
       else {
         todo_node = this._createNode();
-        node[0][0] = c;
-        node[1][0] = todo_node;
+        node[0].push(c);
+        node[1].push(todo_node);
       }
       todo_node[2] = 0;
     }
