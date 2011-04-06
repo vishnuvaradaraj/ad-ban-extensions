@@ -357,8 +357,8 @@ Trie.prototype = {
     let is_todo_node = this.isTodoNode(node);
     if (is_node_with_value && (ctx.current_date - node[2] > this._node_delete_timeout)) {
       this._clearNode(node, is_parent_node_with_value);
-      is_todo_node = is_parent_node_with_value;
-      is_node_with_value = false;
+      is_node_with_value = this._isNodeWithValue(node);
+      is_todo_node = this.isTodoNode(node);
     }
     if (is_node_with_value || is_todo_node) {
       const common_prefix_length = getCommonPrefixLength(ctx.prev_key, key);
