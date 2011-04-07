@@ -340,23 +340,29 @@ Trie.prototype = {
     }
 
     const todo_length = todo.length;
+    const key_length = key.length;
     children_keys = node[0];
+    const children_nodes = node[1];
     let has_one_long_child = this._hasOneLongChild(children_keys);
     for (let i = 0; i < todo_length; i++) {
       let c = todo[i];
-      let common_prefix_length = 0;
-      let key_length = key.length;
-      if (children_keys.indexOf(c) != -1) {
-        key_length++;
+      let child_index = children_keys.indexOf(c);
+      if (child_index != -1) {
+        let child_node = children_nodes[child_index];
+        if (!this._isNodeWithValue(child_node)) {
+          child_node[2] = 0;
+        }
+        continue;
       }
-      else if (has_one_long_child) {
+
+      let common_prefix_length = 0;
+      if (has_one_long_child) {
         if (children_keys[0][0] == c) {
-          key_length++;
           common_prefix_length = 1;
         }
         has_one_long_child = false;
       }
-      this._add(node, key_length, common_prefix_length, key + todo[i], null, 0);
+      this._add(node, key_length + common_prefix_length, common_prefix_length, key + todo[i], null, 0);
     }
   },
 
