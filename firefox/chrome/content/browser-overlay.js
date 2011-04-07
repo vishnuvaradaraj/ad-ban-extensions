@@ -60,11 +60,6 @@
     logging.info('adban buttons must be added to navigation bar');
   };
 
-  let showNotification = function(message, id) {
-    const notification_box = gBrowser.getNotificationBox();
-    notification_box.appendNotification(message, 'adban-' + id, '', notification_box.PRIORITY_INFO_MEDIUM, null);
-  };
-
   let processDocumentEventHandler = function(e) {
     if (e.type == 'DOMContentLoaded') {
       adban.processDocument(e.originalTarget);
@@ -173,7 +168,6 @@
         logging.info('first run of AdBan');
         adban.firstRun();
         setupToolbarButtons();
-        showNotification(_('report-ads-notification'), 'report-ads-notification');
         pref_branch.setBoolPref('first-run', true);
 
         // open help page only after a delay, otherwise it won't
