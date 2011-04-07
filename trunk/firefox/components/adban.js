@@ -134,10 +134,10 @@ const compressStrings = function(s_list) {
 };
 
 const Trie = function(root_value) {
-  const root_node = this._createNode();
-  root_node[2] = 0;
-  root_node[3] = root_value;
-  this._root = root_node;
+  const root = this._createNode();
+  root.value = root_value;
+  root.last_check_date = 0;
+  this._root = root;
   this._stale_node_timeout = 0;
   this._node_delete_timeout = 0;
 };
@@ -161,253 +161,119 @@ Trie.importFromNodes = function(root_value, stale_node_timeout, node_delete_time
 
 Trie.prototype = {
   _createNode: function() {
-    return [
-      [],  // children keys
-      [],  // children nodes
-      // last_check_date
-      // value
-    ];
-  },
-
-  _hasOneLongChild: function(children_keys) {
-    return (children_keys.length == 1 && children_keys[0].length > 1);
+    return {
+      children: {},
+    };
   },
 
   _isNodeWithValue: function(node) {
-    return (node.length == 4);
+    return ('value' in node);
   },
 
   _clearNode: function(node, is_parent_node_with_value) {
-    // it is expected that this._isNodeWithValue() returns true.
-    // and the current node isn't root node.
+    delete node.value;
     if (is_parent_node_with_value) {
-      node[2] = 0;
-      node.length = 3;
+      node.last_check_date = 0;
     }
     else {
-      node.length = 2;
+      delete node.last_check_date;
     }
 
-    const children_keys = node[0];
-    if (this._hasOneLongChild(children_keys)) {
-      return;
-    }
-
-    const children_nodes = node[1];
-    const children_nodes_length = children_nodes.length;
-    for (let i = 0; i < children_nodes_length; i++) {
-      let child_node = children_nodes[i];
-      if (this.isTodoNode(child_node)) {
-        child_node.length = 2;
+    const children = node.children;
+    for (let c in children) {
+      node = children[c];
+      if (this.isTodoNode(node)) {
+        delete node.last_check_date;
       }
     }
   },
 
-  _add: function(node, node_depth, common_prefix_length, key, value, current_date) {
+  _add: function(node, node_depth, key, value, current_date) {
     const key_length = key.length;
-    if (common_prefix_length == 0 && node_depth == key_length) {
-      node[2] = current_date;
-      if (current_date != 0) {
-        node[3] = value;
-      }
-      else if (node != this._root) {
-        node.length = 3;
-      }
-      return node;
+    while (node_depth < key_length) {
+      let c = key[node_depth];
+      let new_node = this._createNode();
+      node.children[c] = new_node;
+      node = new_node;
+      node_depth++;
     }
-
-    const new_node = this._createNode();
-    new_node[2] = current_date;
-    if (current_date != 0) {
-      new_node[3] = value;
+    node.last_check_date = current_date;
+    if (!this.isTodoNode(node)) {
+      node.value = value;
     }
-    if (common_prefix_length == 0) {
-      if (node[0].length == 0) {
-        node[0][0] = key.substring(node_depth);
-        node[1][0] = new_node;
-        return new_node;
-      }
-
-      let aux_node;
-      if (key_length > node_depth + 1) {
-        aux_node = this._createNode();
-        aux_node[0][0] = key.substring(node_depth + 1);
-        aux_node[1][0] = new_node;
-      }
-      else {
-        aux_node = new_node;
-      }
-
-      if (this._hasOneLongChild(node[0])) {
-        let key_prefix = node[0][0];
-        let node1 = this._createNode();
-        node1[0][0] = key_prefix.substring(1);
-        node1[1][0] = node[1][0];
-        node[0][0] = key_prefix[0];
-        node[0][1] = key[node_depth];
-        node[1][0] = node1;
-        node[1][1] = aux_node;
-      }
-      else {
-        node[0].push(key[node_depth]);
-        node[1].push(aux_node);
-      }
-      return new_node;
-    }
-
-    let key_prefix = node[0][0];
-    node[0][0] = key_prefix.substring(0, common_prefix_length);
-    const prev_node = node[1][0];
-    if (node_depth == key_length) {
-      new_node[0][0] = key_prefix.substring(common_prefix_length);
-      new_node[1][0] = prev_node;
-      node[1][0] = new_node;
-      return new_node;
-    }
-
-    let node1;
-    if (key_prefix.length > common_prefix_length + 1) {
-      node1 = this._createNode();
-      node1[0][0] = key_prefix.substring(common_prefix_length + 1);
-      node1[1][0] = prev_node;
-    }
-    else {
-      node1 = prev_node;
-    }
-
-    let node2;
-    if (key_length > node_depth + 1) {
-      node2 = this._createNode();
-      node2[0][0] = key.substring(node_depth + 1);
-      node2[1][0] = new_node;
-    }
-    else {
-      node2 = new_node;
-    }
-
-    let aux_node = this._createNode();
-    aux_node[0][0] = key_prefix[common_prefix_length];
-    aux_node[0][1] = key[node_depth];
-    aux_node[1][0] = node1;
-    aux_node[1][1] = node2;
-    node[1][0] = aux_node;
-    return new_node;
+    return node;
   },
 
-  _deleteObsoleteChildren: function(node, node_depth, common_prefix_length, end_keys) {
-    let is_anything_deleted = false;
-    let children_keys = node[0];
-    const has_one_long_child = this._hasOneLongChild(children_keys);
-    if (has_one_long_child) {
-      children_keys = [children_keys[0][common_prefix_length]];
-    }
-
+  _deleteObsoleteChildren: function(children, node_depth, end_keys) {
     const end_keys_length = end_keys.length;
     for (let i = 0; i < end_keys_length; i++) {
       let end_key = end_keys[i];
       if (node_depth < end_key.length) {
         let c = end_key[node_depth];
-        let child_index = children_keys.indexOf(c);
-        if (child_index != -1) {
-          node[0].splice(child_index, 1);
-          node[1].splice(child_index, 1);
-          is_anything_deleted = true;
-          if (has_one_long_child) {
-            break;
-          }
-        }
+        delete children[c];
       }
     }
-    return is_anything_deleted;
   },
 
-  _updateTodoChildren: function(node, key, todo) {
-    let children_keys = node[0];
-    if (this._hasOneLongChild(children_keys)) {
-      children_keys = [children_keys[0][0]];
-    }
-
+  _updateTodoChildren: function(children, todo) {
     const children_to_delete = [];
-    const children_keys_length = children_keys.length;
-    for (let i = 0; i < children_keys_length; i++) {
-      let c = children_keys[i];
+    for (let c in children) {
       if (todo.indexOf(c) == -1) {
-        children_to_delete.push(i);
+        children_to_delete.push(c);
       }
     }
     const children_to_delete_length = children_to_delete.length;
     for (let i = 0; i < children_to_delete_length; i++) {
-      let child_index = children_to_delete[i] - i;
-      node[0].splice(child_index, 1);
-      node[1].splice(child_index, 1);
+      let c = children_to_delete[i];
+      delete children[c];
     }
 
     const todo_length = todo.length;
-    const key_length = key.length;
-    children_keys = node[0];
-    const children_nodes = node[1];
-    let has_one_long_child = this._hasOneLongChild(children_keys);
     for (let i = 0; i < todo_length; i++) {
       let c = todo[i];
-      let child_index = children_keys.indexOf(c);
-      if (child_index != -1) {
-        let child_node = children_nodes[child_index];
-        if (!this._isNodeWithValue(child_node)) {
-          child_node[2] = 0;
-        }
+      let node = children[c];
+      if (!node) {
+        node = this._createNode();
+        children[c] = node;
+      }
+      else if (this._isNodeWithValue(node)) {
         continue;
       }
-
-      let common_prefix_length = 0;
-      if (has_one_long_child) {
-        if (children_keys[0][0] == c) {
-          common_prefix_length = 1;
-        }
-        has_one_long_child = false;
-      }
-      this._add(node, key_length + common_prefix_length, common_prefix_length, key + todo[i], null, 0);
+      node.last_check_date = 0;
     }
   },
 
   _exportSubtreeNodes: function(ctx, key, node, is_parent_node_with_value) {
     let is_node_with_value = this._isNodeWithValue(node);
     let is_todo_node = this.isTodoNode(node);
-    if (is_node_with_value && node != this._root && (ctx.current_date - node[2] > this._node_delete_timeout)) {
+    if (is_node_with_value && node != this._root && (ctx.current_date - node.last_check_date > this._node_delete_timeout)) {
       this._clearNode(node, is_parent_node_with_value);
       is_node_with_value = false;
       is_todo_node = is_parent_node_with_value;
     }
     if (is_node_with_value || is_todo_node) {
       const common_prefix_length = getCommonPrefixLength(ctx.prev_key, key);
-      const value = is_node_with_value ? node[3] : null;
+      const value = is_node_with_value ? node.value : null;
       ctx.nodes.push([
           common_prefix_length,
           key.substring(common_prefix_length),
           ctx.node_constructor(value),
-          node[2],
+          node.last_check_date,
       ]);
       ctx.prev_key = key;
     }
-
-    const children_keys = node[0];
-    const children_nodes = node[1];
-    if (this._hasOneLongChild(children_keys)) {
-      this._exportSubtreeNodes(ctx, key + children_keys[0], children_nodes[0], false);
-      return;
-    }
-
-    const children_keys_length = children_keys.length;
-    for (let i = 0; i < children_keys_length; i++) {
-      this._exportSubtreeNodes(ctx, key + children_keys[i], children_nodes[i], is_node_with_value);
+    const children = node.children;
+    for (let c in children) {
+      this._exportSubtreeNodes(ctx, key + c, children[c], is_node_with_value);
     }
   },
 
   isTodoNode: function(node) {
-    return (node.length == 3);
+    return (node.last_check_date == 0);
   },
 
   isStaleNode: function(node, current_date) {
-    return (current_date - node[2] > this._stale_node_timeout);
+    return (current_date - node.last_check_date > this._stale_node_timeout);
   },
 
   get: function(key) {
@@ -416,50 +282,26 @@ Trie.prototype = {
     let node_with_value = node;
     let non_empty_node = node;
     let node_depth = 0;
-    let common_prefix_length = 0;
     while (node_depth < key_length) {
       let c = key[node_depth];
-      let child_index = 0;
-      let children_keys = node[0];
-      if (this._hasOneLongChild(children_keys)) {
-        let key_prefix = children_keys[0];
-        let key_prefix_length = key_prefix.length;
-        while (common_prefix_length < key_prefix_length) {
-          if (key_prefix[common_prefix_length] != key[node_depth]) {
-            break;
-          }
-          common_prefix_length++;
-          node_depth++;
-          if (node_depth == key_length) {
-            break;
-          }
-        }
-        if (common_prefix_length < key_prefix_length) {
-          break;
-        }
-        common_prefix_length = 0;
+      let tmp_node = node.children[c];
+      if (!tmp_node) {
+        break;
       }
-      else {
-        child_index = children_keys.indexOf(c);
-        if (child_index == -1) {
-          break;
-        }
-        node_depth++;
+      if (this._isNodeWithValue(tmp_node)) {
+        non_empty_node = node_with_value = tmp_node;
       }
-      node = node[1][child_index];
-      if (this._isNodeWithValue(node)) {
-        non_empty_node = node_with_value = node;
+      else if (this.isTodoNode(tmp_node)) {
+        non_empty_node = tmp_node;
       }
-      else if (this.isTodoNode(node)) {
-        non_empty_node = node;
-      }
+      node_depth++;
+      node = tmp_node;
     }
     return [
       node,
       node_with_value,
       non_empty_node,
       node_depth,
-      common_prefix_length,
     ];
   },
 
@@ -467,28 +309,23 @@ Trie.prototype = {
     const tmp = this.get(key);
     const node = tmp[0];
     const node_depth = tmp[3];
-    const common_prefix_length = tmp[4];
-    return this._add(node, node_depth, common_prefix_length, key, value, current_date);
+    return this._add(node, node_depth, key, value, current_date);
   },
 
   update: function(start_key, end_keys, value, current_date, todo) {
     const tmp = this.get(start_key);
     const node = tmp[0];
-    let node_depth = tmp[3];
-    let common_prefix_length = tmp[4];
+    const node_depth = tmp[3];
     if (node_depth == start_key.length) {
-      let is_anything_deleted = this._deleteObsoleteChildren(node, node_depth, common_prefix_length, end_keys);
-      if (is_anything_deleted) {
-        node_depth -= common_prefix_length;
-        common_prefix_length = 0;
-      }
+      this._deleteObsoleteChildren(node.children, node_depth, end_keys);
     }
-    const added_node = this._add(node, node_depth, common_prefix_length, start_key, value, current_date);
-    this._updateTodoChildren(added_node, start_key, todo);
+
+    const added_node = this._add(node, node_depth, start_key, value, current_date);
+    this._updateTodoChildren(added_node.children, todo);
   },
 
   getValue: function(node) {
-    return node[3];
+    return node.value;
   },
 
   exportToNodes: function(node_constructor, current_date) {
