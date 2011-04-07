@@ -294,11 +294,12 @@ Trie.prototype = {
     return new_node;
   },
 
-  _deleteObsoleteChildren: function(node, node_depth, end_keys) {
+  _deleteObsoleteChildren: function(node, node_depth, common_prefix_length, end_keys) {
+    let is_anything_deleted = false;
     let children_keys = node[0];
     const has_one_long_child = this._hasOneLongChild(children_keys);
     if (has_one_long_child) {
-      children_keys = [children_keys[0][0]];
+      children_keys = [children_keys[0][common_prefix_length]];
     }
 
     const end_keys_length = end_keys.length;
@@ -310,12 +311,14 @@ Trie.prototype = {
         if (child_index != -1) {
           node[0].splice(child_index, 1);
           node[1].splice(child_index, 1);
+          is_anything_deleted = true;
           if (has_one_long_child) {
             break;
           }
         }
       }
     }
+    return is_anything_deleted;
   },
 
   _updateTodoChildren: function(node, key, todo) {
@@ -471,10 +474,14 @@ Trie.prototype = {
   update: function(start_key, end_keys, value, current_date, todo) {
     const tmp = this.get(start_key);
     const node = tmp[0];
-    const node_depth = tmp[3];
-    const common_prefix_length = tmp[4];
-    if (node_depth == start_key.length && common_prefix_length == 0) {
-      this._deleteObsoleteChildren(node, node_depth, end_keys);
+    let node_depth = tmp[3];
+    let common_prefix_length = tmp[4];
+    if (node_depth == start_key.length) {
+      let is_anything_deleted = this._deleteObsoleteChildren(node, node_depth, common_prefix_length, end_keys);
+      if (is_anything_deleted) {
+        node_depth -= common_prefix_length;
+        common_prefix_length = 0;
+      }
     }
     const added_node = this._add(node, node_depth, common_prefix_length, start_key, value, current_date);
     this._updateTodoChildren(added_node, start_key, todo);
