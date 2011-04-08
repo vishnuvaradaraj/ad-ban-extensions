@@ -44,13 +44,13 @@
       logging.warning('there is no navigation bar in the current window');
       return;
     }
-    if ($('adban-complaint-button')) {
-      logging.warning('the adban-complaint-button is already installed (though it is unclear how it is possible)');
+    if ($('adban-toolbarbutton')) {
+      logging.warning('the adban-toolbarbutton is already installed');
       return;
     }
 
     logging.info('adding adban buttons to navigation bar');
-    nav_bar.insertItem('adban-complaint-button', null, null, false);
+    nav_bar.insertItem('adban-toolbarbutton', null, null, false);
 
     // this 'magic' is necessary for FF, which can't properly handle
     // toolbar.insertItem().
@@ -79,22 +79,20 @@
   let onStateChange = function() {
     const cmd_stop = $('adban-cmd-stop');
     const cmd_start = $('adban-cmd-start');
-    const toggle_button = $('adban-toggle-button');
+    const toolbarbutton = $('adban-toolbarbutton');
     if (adban.isActive()) {
       cmd_start.setAttribute('disabled', 'true');
       cmd_stop.removeAttribute('disabled');
-      if (toggle_button) {
-        toggle_button.setAttribute('label', _('toggle-button-label-enabled'));
-        toggle_button.setAttribute('tooltiptext', _('toggle-button-tooltiptext-enabled'));
+      if (toolbarbutton) {
+        toolbarbutton.removeAttribute('adban-disabled');
       }
       enableDocumentsProcessing();
     }
     else {
       cmd_stop.setAttribute('disabled', 'true');
       cmd_start.removeAttribute('disabled');
-      if (toggle_button) {
-        toggle_button.setAttribute('label', _('toggle-button-label-disabled'));
-        toggle_button.setAttribute('tooltiptext', _('toggle-button-tooltiptext-disabled'));
+      if (toolbarbutton) {
+        toolbarbutton.setAttribute('adban-disabled', 'true');
       }
       disableDocumentsProcessing();
     }
@@ -130,15 +128,6 @@
     conditionalAlert('adban-started', _('adban-started'));
   };
 
-  let cmdToggle = function() {
-    logging.info('toggling AdBan\'s state. state_listener_id=[%s]', state_listener_id);
-    if (adban.isActive()) {
-      cmdStop();
-    } else {
-      cmdStart();
-    }
-  };
-
   let cmdHelp = function() {
     adban.openTab('help', adban.HELP_URL);
   };
@@ -153,7 +142,6 @@
     $('adban-cmd-complaint').addEventListener('command', cmdComplaint, false);
     $('adban-cmd-stop').addEventListener('command', cmdStop, false);
     $('adban-cmd-start').addEventListener('command', cmdStart, false);
-    $('adban-cmd-toggle').addEventListener('command', cmdToggle, false);
     $('adban-cmd-help').addEventListener('command', cmdHelp, false);
 
     const state_change_results = adban.subscribeToStateChange(onStateChange);
@@ -174,6 +162,12 @@
         // be opened under FF3.6 due to unknown reason.
         setTimeout(cmdHelp, 2000);
       }
+      else if (!pref_branch.prefHasUserValue('toolbarbutton-installed')) {
+        logging.info('installing adban-toolbarbutton for the user of the previous AdBan version');
+        setupToolbarButtons();
+        pref_branch.setBoolPref('toolbarbutton-installed', true);
+      }
+
       onStateChange(is_initially_active);
     };
     adban.executeDeferred(first_run_callback);
@@ -195,7 +189,6 @@
     $('adban-cmd-complaint').removeEventListener('command', cmdComplaint, false);
     $('adban-cmd-stop').removeEventListener('command', cmdStop, false);
     $('adban-cmd-start').removeEventListener('command', cmdStart, false);
-    $('adban-cmd-toggle').removeEventListener('command', cmdToggle, false);
     $('adban-cmd-help').removeEventListener('command', cmdHelp, false);
 
     logging.info('browser-overlay has been shut down. state_listener_id=[%s]', state_listener_id);

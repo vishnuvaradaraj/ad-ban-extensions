@@ -24,19 +24,17 @@
     <command id="adban-cmd-complaint" observes="adban-cmd-stop" oncommand="void(0)"/>
     <command id="adban-cmd-start" disabled="true" oncommand="void(0)"/>
     <command id="adban-cmd-stop" oncommand="void(0)"/>
-    <command id="adban-cmd-toggle"/>
     <command id="adban-cmd-help"/>
   </commandset>
 
   <menupopup id="menu_ToolsPopup">
-    <menu id="adban-menuitem" label="AdBan" insertafter="javascriptConsole" accesskey="b">
+    <menu id="adban-menuitem" label="AdBan" insertafter="javascriptConsole" accesskey="b" class="menu-iconic">
       <menupopup id="adban-menupopup">
         <menuitem
           label="&adban.menuitem.complaint;"
           command="adban-cmd-complaint"
           tooltiptext="&adban.menuitem.complaint.tooltiptext;"
           accesskey="&adban.menuitem.complaint.accesskey;"
-          key="adban-key-complaint"
         />
         <menuseparator/>
         <menuitem
@@ -65,19 +63,40 @@
 
   <toolbarpalette id="BrowserToolbarPalette">
     <toolbarbutton
-      id="adban-complaint-button"
-      label="&adban.complaint-button.label;"
+      id="adban-toolbarbutton"
+      label="&adban.toolbarbutton.label;"
       class="toolbarbutton-1"
-      tooltiptext="&adban.complaint-button.tooltiptext;"
-      command="adban-cmd-complaint"
-    />
-    <toolbarbutton
-      id="adban-toggle-button"
-      label="&adban.toggle-button.label;"
-      class="toolbarbutton-1"
-      tooltiptext="&adban.toggle-button.tooltiptext;"
-      command="adban-cmd-toggle"
-    />
+      tooltiptext="&adban.toolbarbutton.tooltiptext;"
+      type="menu"
+    >
+      <menupopup id="adban-toolbarbutton-menupopup">
+        <menuitem
+          label="&adban.menuitem.complaint;"
+          command="adban-cmd-complaint"
+          tooltiptext="&adban.menuitem.complaint.tooltiptext;"
+          accesskey="&adban.menuitem.complaint.accesskey;"
+        />
+        <menuseparator/>
+        <menuitem
+          label="&adban.menuitem.start;"
+          command="adban-cmd-start"
+          tooltiptext="&adban.menuitem.start.tooltiptext;"
+          accesskey="&adban.menuitem.start.accesskey;"
+        />
+        <menuitem
+          label="&adban.menuitem.stop;"
+          command="adban-cmd-stop"
+          tooltiptext="&adban.menuitem.stop.tooltiptext;"
+          accesskey="&adban.menuitem.stop.accesskey;"
+        />
+        <menuseparator/>
+        <menuitem
+          label="&adban.menuitem.help;"
+          command="adban-cmd-help"
+          accesskey="&adban.menuitem.help.accesskey;"
+        />
+      </menupopup>
+    </toolbarbutton>
   </toolbarpalette>
 
 </overlay>
