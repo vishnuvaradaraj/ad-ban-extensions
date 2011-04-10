@@ -157,6 +157,7 @@
         adban.firstRun();
         setupToolbarButtons();
         pref_branch.setBoolPref('first-run', true);
+        pref_branch.setBoolPref('toolbarbutton-installed', true);
 
         // open help page only after a delay, otherwise it won't
         // be opened under FF3.6 due to unknown reason.
