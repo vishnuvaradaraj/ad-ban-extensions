@@ -1178,9 +1178,13 @@ AdBan.prototype = {
         continue;
       }
       let canonical_url = this._getCanonicalUrl(uri);
-      let url_value = this._getUrlValue(canonical_url);
       this._getUrlExceptionValue(canonical_url);
-      if (!this._verifyUrlException(url_value.is_whitelist, canonical_url, url_exception_value, canonical_site_url)) {
+      let is_whitelist = this._verifyUrlException(canonical_url, url_exception_value, canonical_site_url);
+      if (is_whitelist == null) {
+        let url_value = this._getUrlValue(canonical_url);
+        is_whitelist = url_value.is_whitelist;
+      }
+      if (!is_whitelist) {
         logging.info('hiding the link=[%s]', canonical_url);
         link.style.display = 'none';
       }
@@ -1530,7 +1534,7 @@ AdBan.prototype = {
     return (s.search(reg_exp) != -1);
   },
 
-  _verifyUrlException: function(is_whitelist, canonical_url, url_exception_value, request_origin_url) {
+  _verifyUrlException: function(canonical_url, url_exception_value, request_origin_url) {
     if (this._matchesRegexp(url_exception_value.whitelisted_canonical_urls, canonical_url)) {
       logging.info('the canonical_url=[%s] is whitelisted via url exceptions for request_origin_url=[%s]', canonical_url, request_origin_url);
       return true;
@@ -1539,7 +1543,7 @@ AdBan.prototype = {
       logging.info('the canonical_url=[%s] is blacklisted via url exceptions for request_origin_url=[%s]', canonical_url, request_origin_url);
       return false;
     }
-    return is_whitelist;
+    return null;
   },
 
   _verifyLocation: function(content_location, request_origin) {
@@ -1547,14 +1551,17 @@ AdBan.prototype = {
       return true;
     }
     const content_location_url = this._getCanonicalUrl(content_location);
-    const url_value = this._getUrlValue(content_location_url);
-    let is_whitelist = url_value.is_whitelist;
 
-    let request_origin_url;
+    let is_whitelist = null;
+    let request_origin_url = null;
     if (request_origin && this._shouldProcessUri(request_origin)) {
       request_origin_url = this._getCanonicalUrl(request_origin);
       const url_exception_value = this._getUrlExceptionValue(request_origin_url);
-      is_whitelist = this._verifyUrlException(is_whitelist, content_location_url, url_exception_value, request_origin_url);
+      is_whitelist = this._verifyUrlException(content_location_url, url_exception_value, request_origin_url);
+    }
+    if (is_whitelist == null) {
+      const url_value = this._getUrlValue(content_location_url);
+      is_whitelist = url_value.is_whitelist;
     }
 
     logging.info('is_whitelist=[%s], original=[%s], conten_location_url=[%s], request_origin_url=[%s]', is_whitelist, content_location.spec, content_location_url, request_origin_url);
