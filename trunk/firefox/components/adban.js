@@ -364,8 +364,8 @@ const createEmptyUrlExceptionCache = function() {
   return new Trie(defaultUrlExceptionValue);
 };
 
-const BLACKLISTED_CANONICAL_URLS_BIT_MASK = (1 << 0);
-const WHITELISTED_CANONICAL_URLS_BIT_MASK = (1 << 1);
+const BLACKLIST_REGEXP_BIT_MASK = (1 << 0);
+const WHITELIST_REGEXP_BIT_MASK = (1 << 1);
 const CSS_SELECTORS_BIT_MASK = (1 << 2);
 
 const urlNodeConstructor = function(v) {
@@ -379,19 +379,19 @@ const urlExceptionNodeConstructor = function(v) {
   if (!v) {
     v = defaultUrlExceptionValue;
   }
-  const blacklisted_canonical_urls = v.blacklisted_canonical_urls;
-  const whitelisted_canonical_urls = v.whitelisted_canonical_urls;
+  const blacklist_regexp = v.blacklist_regexp;
+  const whitelist_regexp = v.whitelist_regexp;
   const css_selectors = v.css_selectors;
 
   let d_bitmap = 0;
   const d = [];
-  if (blacklisted_canonical_urls) {
-    d_bitmap |= BLACKLISTED_CANONICAL_URLS_BIT_MASK;
-    d.push(blacklisted_canonical_urls.source);
+  if (blacklist_regexp) {
+    d_bitmap |= BLACKLIST_REGEXP_BIT_MASK;
+    d.push(blacklist_regexp.source);
   }
-  if (whitelisted_canonical_urls) {
-    d_bitmap |= WHITELISTED_CANONICAL_URLS_BIT_MASK;
-    d.push(whitelisted_canonical_urls.source);
+  if (whitelist_regexp) {
+    d_bitmap |= WHITELIST_REGEXP_BIT_MASK;
+    d.push(whitelist_regexp.source);
   }
   if (css_selectors) {
     d_bitmap |= CSS_SELECTORS_BIT_MASK;
@@ -411,12 +411,12 @@ const urlExceptionValueConstructor = function(d) {
   const v = {};
   const d_bitmap = d.pop();
   let i = 0;
-  if (d_bitmap & BLACKLISTED_CANONICAL_URLS_BIT_MASK) {
-    v.blacklisted_canonical_urls = new RegExp(d[i]);
+  if (d_bitmap & BLACKLIST_REGEXP_BIT_MASK) {
+    v.blacklist_regexp = new RegExp(d[i]);
     i++;
   }
-  if (d_bitmap & WHITELISTED_CANONICAL_URLS_BIT_MASK) {
-    v.whitelisted_canonical_urls = new RegExp(d[i]);
+  if (d_bitmap & WHITELIST_REGEXP_BIT_MASK) {
+    v.whitelist_regexp = new RegExp(d[i]);
     i++;
   }
   if (d_bitmap & CSS_SELECTORS_BIT_MASK) {
@@ -1535,11 +1535,11 @@ AdBan.prototype = {
   },
 
   _verifyUrlException: function(canonical_url, url_exception_value, request_origin_url) {
-    if (this._matchesRegexp(url_exception_value.whitelisted_canonical_urls, canonical_url)) {
+    if (this._matchesRegexp(url_exception_value.whitelist_regexp, canonical_url)) {
       logging.info('the canonical_url=[%s] is whitelisted via url exceptions for request_origin_url=[%s]', canonical_url, request_origin_url);
       return true;
     }
-    if (this._matchesRegexp(url_exception_value.blacklisted_canonical_urls, canonical_url)) {
+    if (this._matchesRegexp(url_exception_value.blacklist_regexp, canonical_url)) {
       logging.info('the canonical_url=[%s] is blacklisted via url exceptions for request_origin_url=[%s]', canonical_url, request_origin_url);
       return false;
     }
