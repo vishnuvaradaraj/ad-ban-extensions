@@ -149,11 +149,9 @@ Trie.importFromNodes = function(root_value, stale_node_timeout, node_delete_time
   const nodes_length = nodes.length;
   let key = '';
   for (let i = 0; i < nodes_length; i++) {
-    let node = nodes[i];
-    let common_prefix_length = node[0];
-    key = key.substring(0, common_prefix_length) + node[1];
-    let value = value_constructor(node[2]);
-    let last_check_date = node[3];
+    let [common_prefix_length, key_suffix, value_serialized, last_check_date] = nodes[i];
+    key = key.substring(0, common_prefix_length) + key_suffix;
+    let value = value_constructor(value_serialized);
     trie.add(key, value, last_check_date);
   }
   return trie;
@@ -253,11 +251,13 @@ Trie.prototype = {
     }
     if (is_node_with_value || is_todo_node) {
       const common_prefix_length = getCommonPrefixLength(ctx.prev_key, key);
+      const key_suffix = key.substring(common_prefix_length);
       const value = is_node_with_value ? node.value : null;
+      const value_serialized = ctx.node_constructor(value);
       ctx.nodes.push([
           common_prefix_length,
-          key.substring(common_prefix_length),
-          ctx.node_constructor(value),
+          key_suffix,
+          value_serialized,
           node.last_check_date,
       ]);
       ctx.prev_key = key;
