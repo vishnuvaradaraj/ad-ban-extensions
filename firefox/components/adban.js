@@ -1572,13 +1572,13 @@ AdBan.prototype = {
     return url_value.is_whitelist;
   },
 
-  _verifyUrlException: function(canonical_url, url_exception_value, request_origin_url) {
+  _verifyUrlException: function(canonical_url, url_exception_value, canonical_site_url) {
     if (this._matchesRegexp(url_exception_value.whitelist_regexp, canonical_url)) {
-      logging.info('the canonical_url=[%s] is whitelisted via url exception regexp for request_origin_url=[%s]', canonical_url, request_origin_url);
+      logging.info('the canonical_url=[%s] is whitelisted via url exception regexp for canonical_site_url=[%s]', canonical_url, canonical_site_url);
       return true;
     }
     if (this._matchesRegexp(url_exception_value.blacklist_regexp, canonical_url)) {
-      logging.info('the canonical_url=[%s] is blacklisted via url exception regexp for request_origin_url=[%s]', canonical_url, request_origin_url);
+      logging.info('the canonical_url=[%s] is blacklisted via url exception regexp for canonical_site_url=[%s]', canonical_url, canonical_site_url);
       return false;
     }
     return null;
@@ -1588,20 +1588,20 @@ AdBan.prototype = {
     if (!this._shouldProcessUri(content_location)) {
       return true;
     }
-    const content_location_url = this._getCanonicalUrl(content_location);
+    const canonical_url = this._getCanonicalUrl(content_location);
 
     let is_whitelist = null;
-    let request_origin_url = null;
+    let canonical_site_url = null;
     if (request_origin && this._shouldProcessUri(request_origin)) {
-      request_origin_url = this._getCanonicalUrl(request_origin);
-      const url_exception_value = this._getUrlExceptionValue(request_origin_url);
-      is_whitelist = this._verifyUrlException(content_location_url, url_exception_value, request_origin_url);
+      canonical_site_url = this._getCanonicalUrl(request_origin);
+      const url_exception_value = this._getUrlExceptionValue(canonical_site_url);
+      is_whitelist = this._verifyUrlException(canonical_url, url_exception_value, canonical_site_url);
     }
     if (is_whitelist == null) {
-      is_whitelist = this._verifyUrl(content_location_url);
+      is_whitelist = this._verifyUrl(canonical_url);
     }
 
-    logging.info('is_whitelist=[%s], original=[%s], conten_location_url=[%s], request_origin_url=[%s]', is_whitelist, content_location.spec, content_location_url, request_origin_url);
+    logging.info('is_whitelist=[%s], original=[%s], canonical_url=[%s], canonical_site_url=[%s]', is_whitelist, content_location.spec, canonical_url, canonical_site_url);
     return is_whitelist;
   },
 };
