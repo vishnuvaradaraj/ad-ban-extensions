@@ -496,6 +496,11 @@ AdBan.prototype = {
     https: true,
     ftp: true,
   },
+  _COLLAPSABLE_NODES: [
+    'img',
+    'iframe',
+    'embed',
+  ],
   _AUTH_COOKIE_HOST: SERVER_DOMAIN,
   _ERROR_CODES: {
     NO_ERRORS: 0,
@@ -517,7 +522,6 @@ AdBan.prototype = {
   _io_service: Cc['@mozilla.org/network/io-service;1'].getService(Ci.nsIIOService),
   _observer_service: Cc['@mozilla.org/observer-service;1'].getService(Ci.nsIObserverService),
   _pref_service: Cc['@mozilla.org/preferences-service;1'].getService(Ci.nsIPrefService),
-  _cache_service: Cc['@mozilla.org/network/cache-service;1'].getService(Ci.nsICacheService),
   _cookie_manager: Cc['@mozilla.org/cookiemanager;1'].getService(Ci.nsICookieManager2),
   _main_thread: Cc['@mozilla.org/thread-manager;1'].getService().mainThread,
   _verify_urls_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
@@ -549,7 +553,6 @@ AdBan.prototype = {
 
     // the following values cannot be modified by the server.
     read_settings_delay: 1000 * 5,
-    max_disk_cache_entries_to_read: 10000,
 
     _bc_import: function(property_name, value) {
       if (value) {
@@ -602,6 +605,7 @@ AdBan.prototype = {
     url_exception_cache: createEmptyUrlExceptionCache(),
     unverified_urls: {},
     unverified_url_exceptions: {},
+    todo_nodes: [],
     is_url_verifier_active: false,
     is_active: false,
     is_in_private_mode: false,
@@ -619,7 +623,7 @@ AdBan.prototype = {
     // already verified by shouldLoad() content-policy handler.
     // So verify only the new_channel.
     const request_origin = this._getRequestOriginFromChannel(new_channel);
-    if (!this._verifyLocation(new_channel.URI, request_origin)) {
+    if (!this._verifyLocation(new_channel.URI, request_origin)[0]) {
       throw this._REJECT_EXCEPTION;
     }
   },
@@ -633,7 +637,14 @@ AdBan.prototype = {
 
   // content-policy category event handler
   shouldLoad: function(content_type, content_location, request_origin, node, mime_type, extra) {
-    if (this._verifyLocation(content_location, request_origin)) {
+    const [is_whitelist, is_todo, canonical_url, canonical_site_url] = this._verifyLocation(content_location, request_origin);
+    if (is_whitelist) {
+      if (is_todo && node) {
+        const node_name = node.nodeName.toLowerCase();
+        if (this._COLLAPSABLE_NODES.indexOf(node_name) != -1) {
+          this._vars.todo_nodes.push([canonical_url, canonical_site_url, node]);
+        }
+      }
       return this._ACCEPT;
     }
 
@@ -773,7 +784,7 @@ AdBan.prototype = {
   },
 
   firstRun: function() {
-    this._prefetchAdFiltersForDiskCache();
+    logging.info('AdBan.firstRun()');
   },
 
   sendUrlComplaint: function(site_url, comment, success_callback, failure_callback) {
@@ -823,7 +834,7 @@ AdBan.prototype = {
     }
     const canonical_site_url = this._getCanonicalUrl(site_uri);
     this._injectCssToDocument(doc, canonical_site_url);
-    this._prefetchAdFiltersForDocumentLinks(doc, canonical_site_url);
+    this._hideBlacklistedLinks(doc, canonical_site_url);
   },
 
   executeDeferred: function(callback) {
@@ -1165,37 +1176,11 @@ AdBan.prototype = {
     }
   },
 
-  _prefetchAdFiltersForDiskCache: function() {
-    logging.info('prefetching ad filters for resources from the disk cache');
-    let disk_cache_entries_read = 0;
-    const max_disk_cache_entries_to_read = this._settings.max_disk_cache_entries_to_read;
-    const that = this;
-    const cache_visitor = {
-      visitDevice: function(device_id, device_info) {
-        logging.info('visitDevice([%s])', device_id);
-        return (device_id == 'disk');
-      },
-      visitEntry: function(device_id, entry_info) {
-        if (device_id != 'disk') {
-          return false;
-        }
-        const uri = that._createUri(entry_info.key);
-        if (that._shouldProcessUri(uri)) {
-          const canonical_url = that._getCanonicalUrl(uri);
-          that._getUrlValue(canonical_url);
-          that._getUrlExceptionValue(canonical_url);
-        }
-        ++disk_cache_entries_read;
-        return (disk_cache_entries_read < max_disk_cache_entries_to_read);
-      },
-    };
-    this._cache_service.visitEntries(cache_visitor);
-  },
-
-  _prefetchAdFiltersForDocumentLinks: function(doc, canonical_site_url) {
+  _hideBlacklistedLinks: function(doc, canonical_site_url) {
     const links = doc.links;
     const links_length = links.length;
-    const url_exception_value = this._getUrlExceptionValue(canonical_site_url);
+    const [url_exception_value, is_todo1] = this._getUrlExceptionValue(canonical_site_url);
+    const todo_nodes = this._vars.todo_nodes;
     for (let i = 0; i < links_length; i++) {
       let link = links[i];
       let uri = this._createUri(link.href);
@@ -1204,14 +1189,17 @@ AdBan.prototype = {
         continue;
       }
       let canonical_url = this._getCanonicalUrl(uri);
-      this._getUrlExceptionValue(canonical_url);
       let is_whitelist = this._verifyUrlException(canonical_url, url_exception_value, canonical_site_url);
+      let is_todo2 = false;
       if (is_whitelist == null) {
-        is_whitelist = this._verifyUrl(canonical_url);
+        [is_whitelist, is_todo2] = this._verifyUrl(canonical_url);
       }
       if (!is_whitelist) {
         logging.info('hiding the link=[%s]', canonical_url);
         link.style.display = 'none';
+      }
+      else if (is_todo1 || is_todo2) {
+        todo_nodes.push([canonical_url, canonical_site_url, link]);
       }
     }
   },
@@ -1261,6 +1249,36 @@ AdBan.prototype = {
         delete unverified_urls[url];
       }
     }
+  },
+
+  _cleanupTodoNodes: function() {
+    const vars = this._vars;
+    const todo_nodes = vars.todo_nodes;
+    const todo_nodes_length = todo_nodes.length;
+    const remaining_todo_nodes = [];
+    for (let i = 0; i < todo_nodes_length; i++) {
+      let [canonical_url, canonical_site_url, node] = todo_nodes[i];
+      let is_whitelist = null;
+      let is_todo1 = false;
+      let is_todo2 = false;
+      if (canonical_site_url) {
+        let url_exception_value;
+        [url_exception_value, is_todo1] = this._getUrlExceptionValue(canonical_site_url);
+        is_whitelist = this._verifyUrlException(canonical_url, url_exception_value, canonical_site_url);
+      }
+      if (is_whitelist == null) {
+        [is_whitelist, is_todo2] = this._verifyUrl(canonical_url);
+      }
+      if (!is_whitelist) {
+        logging.info('hiding todo node=[%s] for canonical_url=[%s], canonical_site_url=[%s]', node.nodeName, canonical_url, canonical_site_url);
+        node.style.display = 'none';
+      }
+      else if (is_todo1 || is_todo2) {
+        logging.info('cannot delete the todo node=[%s] for canonical_url=[%s], canonical_site_url=[%s]', node.nodeName, canonical_url, canonical_site_url);
+        remaining_todo_nodes.push([canonical_url, canonical_site_url, node]);
+      }
+    }
+    vars.todo_nodes = remaining_todo_nodes;
   },
 
   _injectAuthTokenToCookie: function(auth_token) {
@@ -1438,6 +1456,7 @@ AdBan.prototype = {
           urlExceptionValueConstructor);
       that._cleanupUnverifiedUrls(vars.unverified_urls, vars.url_cache);
       that._cleanupUnverifiedUrls(vars.unverified_url_exceptions, vars.url_exception_cache);
+      that._cleanupTodoNodes();
     };
     this._startJsonRequest(this._verify_urls_xhr, this._VERIFY_URLS_ENDPOINT, request_data, response_callback, verification_complete_callback);
   },
@@ -1478,6 +1497,7 @@ AdBan.prototype = {
     const node_with_value = tmp[1];
     const non_empty_node = tmp[2];
     const node_depth = tmp[3];
+    const is_todo = cache.isTodoNode(non_empty_node);
     if (cache.isStaleNode(non_empty_node, current_date)) {
       // An optimization: if the matching cache node isn't TODO node,
       // then it is safe to truncate the url to the cache node's depth,
@@ -1492,14 +1512,14 @@ AdBan.prototype = {
       // the TODO node.
       // This optimization should significantly reduce request sizes sent
       // to the server.
-      if (!cache.isTodoNode(non_empty_node)) {
+      if (!is_todo) {
         max_url_length = node_depth;
       }
       url = url.substring(0, max_url_length);
       unverified_urls[url] = true;
       this._launchUrlVerifier();
     }
-    return cache.getValue(node_with_value);
+    return [cache.getValue(node_with_value), is_todo];
   },
 
   _getUrlValue: function(url) {
@@ -1555,16 +1575,16 @@ AdBan.prototype = {
   },
 
   _verifyUrl: function(canonical_url) {
-    const url_value = this._getUrlValue(canonical_url);
+    const [url_value, is_todo] = this._getUrlValue(canonical_url);
     if (this._matchesRegexp(url_value.whitelist_regexp, canonical_url)) {
       logging.info('the canonical_url=[%s] is whitelisted via own regexp', canonical_url);
-      return true;
+      return [true, is_todo];
     }
     if (this._matchesRegexp(url_value.blacklist_regexp, canonical_url)) {
       logging.info('the canonical_url=[%s] is blacklisted via own regexp', canonical_url);
-      return false;
+      return [false, is_todo];
     }
-    return url_value.is_whitelist;
+    return [url_value.is_whitelist, is_todo];
   },
 
   _verifyUrlException: function(canonical_url, url_exception_value, canonical_site_url) {
@@ -1581,23 +1601,27 @@ AdBan.prototype = {
 
   _verifyLocation: function(content_location, request_origin) {
     if (!this._shouldProcessUri(content_location)) {
-      return true;
+      return [true, false, null, null];
     }
     const canonical_url = this._getCanonicalUrl(content_location);
 
     let is_whitelist = null;
+    let is_todo1 = false;
+    let is_todo2 = false;
     let canonical_site_url = null;
     if (request_origin && this._shouldProcessUri(request_origin)) {
       canonical_site_url = this._getCanonicalUrl(request_origin);
-      const url_exception_value = this._getUrlExceptionValue(canonical_site_url);
+      const url_exception_value;
+      [url_exception_value, is_todo1] = this._getUrlExceptionValue(canonical_site_url);
       is_whitelist = this._verifyUrlException(canonical_url, url_exception_value, canonical_site_url);
     }
     if (is_whitelist == null) {
-      is_whitelist = this._verifyUrl(canonical_url);
+      [is_whitelist, is_todo2] = this._verifyUrl(canonical_url);
     }
 
-    logging.info('is_whitelist=[%s], original=[%s], canonical_url=[%s], canonical_site_url=[%s]', is_whitelist, content_location.spec, canonical_url, canonical_site_url);
-    return is_whitelist;
+    const is_todo = is_todo1 || is_todo2;
+    logging.info('is_whitelist=[%s], is_todo=[%s], original=[%s], canonical_url=[%s], canonical_site_url=[%s]', is_whitelist, is_todo, content_location.spec, canonical_url, canonical_site_url);
+    return [is_whitelist, is_todo, canonical_url, canonical_site_url];
   },
 };
 
