@@ -1207,8 +1207,7 @@ AdBan.prototype = {
       this._getUrlExceptionValue(canonical_url);
       let is_whitelist = this._verifyUrlException(canonical_url, url_exception_value, canonical_site_url);
       if (is_whitelist == null) {
-        let url_value = this._getUrlValue(canonical_url);
-        is_whitelist = this._verifyUrl(canonical_url, url_value);
+        is_whitelist = this._verifyUrl(canonical_url);
       }
       if (!is_whitelist) {
         logging.info('hiding the link=[%s]', canonical_url);
@@ -1560,7 +1559,8 @@ AdBan.prototype = {
     return (s.search(reg_exp) != -1);
   },
 
-  _verifyUrl: function(canonical_url, url_value) {
+  _verifyUrl: function(canonical_url) {
+    const url_value = this._getUrlValue(canonical_url);
     if (this._matchesRegexp(url_value.whitelist_regexp, canonical_url)) {
       logging.info('the canonical_url=[%s] is whitelisted via own regexp', canonical_url);
       return true;
@@ -1598,8 +1598,7 @@ AdBan.prototype = {
       is_whitelist = this._verifyUrlException(content_location_url, url_exception_value, request_origin_url);
     }
     if (is_whitelist == null) {
-      const url_value = this._getUrlValue(content_location_url);
-      is_whitelist = this._verifyUrl(content_location_url, url_value);
+      is_whitelist = this._verifyUrl(content_location_url);
     }
 
     logging.info('is_whitelist=[%s], original=[%s], conten_location_url=[%s], request_origin_url=[%s]', is_whitelist, content_location.spec, content_location_url, request_origin_url);
