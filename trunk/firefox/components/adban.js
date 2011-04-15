@@ -1220,12 +1220,7 @@ AdBan.prototype = {
     const response_data_length = response_data.length;
 
     for (let i = 0; i < response_data_length; i++) {
-      let data = response_data[i];
-      let url_length = data[0];
-      let todo = data[1];
-      let url_idx = data[2];
-      let properties = data[3];
-
+      let [url_length, todo, url_idx, properties] = response_data[i];
       let end_urls = [];
       let url_idx_length = url_idx.length;
       for (let j = 0; j < url_idx_length; j++) {
