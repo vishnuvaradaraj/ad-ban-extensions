@@ -1661,7 +1661,7 @@ AdBan.prototype = {
     let canonical_site_url = null;
     if (request_origin && this._shouldProcessUri(request_origin)) {
       canonical_site_url = this._getCanonicalUrl(request_origin);
-      const url_exception_value;
+      let url_exception_value;
       [url_exception_value, is_todo1] = this._getUrlExceptionValue(canonical_site_url);
       is_whitelist = this._verifyUrlException(canonical_url, url_exception_value, canonical_site_url);
     }
