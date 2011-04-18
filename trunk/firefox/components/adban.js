@@ -645,8 +645,8 @@ AdBan.prototype = {
       }
     }
     catch(e if e != this._REJECT_EXCEPTION) {
-      logging.error(e);
-      logging.error(e.stack);
+      logging.error('error in the onChannelRedirect(): [%s]', e);
+      logging.error('stack trace: [%s]', e.stack);
       throw e;
     }
   },
@@ -886,8 +886,8 @@ AdBan.prototype = {
         return callback.apply(that, arguments);
       }
       catch(e) {
-        logging.error(e);
-        logging.error(e.stack);
+        logging.error('error [%s]', e);
+        logging.error('stack trace: [%s]', e.stack);
         throw e;
       }
     };
@@ -1106,7 +1106,7 @@ AdBan.prototype = {
         }
         catch(e) {
           logging.error('error when reading and parsing json from the file=[%s]: [%s]', file.path, e);
-          logging.error(e.stack);
+          logging.error('stack trace: [%s]', e.stack);
           throw e;
         }
       },
@@ -1403,7 +1403,7 @@ AdBan.prototype = {
         }
         catch(e) {
           logging.error('error when processing json response=[%s] for the request_url=[%s], request_text=[%s]: [%s]', xhr.responseText, request_url, request_text, e);
-          logging.error(e.stack);
+          logging.error('stack trace: [%s]', e.stack);
           error_message = 'protocol error';
         }
         finally {
