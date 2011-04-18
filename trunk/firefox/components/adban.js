@@ -899,7 +899,7 @@ AdBan.prototype = {
       let func = funcs[i];
       this[func] = this._createErrorHandler(this[func]);
     }
-    logging.info('error handlers for [%s] have been set up successfully');
+    logging.info('error handlers for [%s] have been set up successfully', funcs);
   },
 
   _openTabInternal: function(tab_name, url) {
