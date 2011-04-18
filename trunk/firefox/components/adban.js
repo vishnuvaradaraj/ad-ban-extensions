@@ -463,6 +463,21 @@ const AdBan = function() {
   this.HELP_URL = server_host + '/ff/help';
   this.USER_STATUS_URL = server_host + '/ff/user_status';
 
+  const funcs = [
+    'shouldLoad',
+    'observe',
+    'start',
+    'stop',
+    'firstRun',
+    'sendUrlComplaint',
+    'subscribeToStateChange',
+    'unsubscribeFromStateChange',
+    'processDocument',
+    'executeDeferred',
+    'openTab',
+  ];
+  this._setupErrorHandlers(funcs);
+
   // allow direct access to the XPCOM object from javascript.
   // see https://developer.mozilla.org/en/wrappedJSObject .
   this.wrappedJSObject = this;
@@ -619,12 +634,20 @@ AdBan.prototype = {
   onChannelRedirect: function(old_channel, new_channel, flags) {
     logging.info('redirect from [%s] to [%s]', old_channel.URI.spec, new_channel.URI.spec);
 
-    // there is no need in verifying the old_channel, because it must be
-    // already verified by shouldLoad() content-policy handler.
-    // So verify only the new_channel.
-    const request_origin = this._getRequestOriginFromChannel(new_channel);
-    if (!this._verifyLocation(new_channel.URI, request_origin)[0]) {
-      throw this._REJECT_EXCEPTION;
+    try {
+      // there is no need in verifying the old_channel, because it must be
+      // already verified by shouldLoad() content-policy handler.
+      // So verify only the new_channel.
+      const request_origin = this._getRequestOriginFromChannel(new_channel);
+      const is_whitelist = this._verifyLocation(new_channel.URI, request_origin)[0];
+      if (!is_whitelist) {
+        throw this._REJECT_EXCEPTION;
+      }
+    }
+    catch(e if e != this._REJECT_EXCEPTION) {
+      logging.error(e);
+      logging.error(e.stack);
+      throw e;
     }
   },
 
@@ -840,7 +863,7 @@ AdBan.prototype = {
   executeDeferred: function(callback) {
     const main_thread = this._main_thread;
     const thread_event = {
-      run: callback,
+      run: this._createErrorHandler(callback),
     };
     main_thread.dispatch(thread_event, main_thread.DISPATCH_NORMAL);
   },
@@ -856,6 +879,31 @@ AdBan.prototype = {
   },
 
   // private methods
+  _createErrorHandler: function(callback) {
+    const that = this;
+    const error_handler = function() {
+      try {
+        return callback.apply(that, arguments);
+      }
+      catch(e) {
+        logging.error(e);
+        logging.error(e.stack);
+        throw e;
+      }
+    };
+    return error_handler;
+  },
+
+  _setupErrorHandlers: function(funcs) {
+    logging.info('setting up error handlers for [%s]', funcs);
+    const funcs_length = funcs.length;
+    for (let i = 0; i < funcs_length; i++) {
+      let func = funcs[i];
+      this[func] = this._createErrorHandler(func);
+    }
+    logging.info('error handlers for [%s] have been set up successfully');
+  },
+
   _openTabInternal: function(tab_name, url) {
     logging.info('opening a tab [%s], url=[%s]', tab_name, url);
 
@@ -918,14 +966,14 @@ AdBan.prototype = {
 
   _startRepeatingTimer: function(timer, callback, interval) {
     const timer_callback = {
-      notify: callback,
+      notify: this._createErrorHandler(callback),
     };
     timer.initWithCallback(timer_callback, interval, timer.TYPE_REPEATING_SLACK);
   },
 
   _executeDelayed: function(timer, callback, delay) {
     const timer_callback = {
-      notify: callback,
+      notify: this._createErrorHandler(callback),
     };
     timer.initWithCallback(timer_callback, delay, timer.TYPE_ONE_SHOT);
   },
@@ -1058,6 +1106,8 @@ AdBan.prototype = {
         }
         catch(e) {
           logging.error('error when reading and parsing json from the file=[%s]: [%s]', file.path, e);
+          logging.error(e.stack);
+          throw e;
         }
       },
     };
@@ -1353,9 +1403,11 @@ AdBan.prototype = {
         }
         catch(e) {
           logging.error('error when processing json response=[%s] for the request_url=[%s], request_text=[%s]: [%s]', xhr.responseText, request_url, request_text, e);
+          logging.error(e.stack);
           error_message = 'protocol error';
         }
         finally {
+          finish_callback = that._createErrorHandler(finish_callback);
           finish_callback(error_message);
         }
       }
