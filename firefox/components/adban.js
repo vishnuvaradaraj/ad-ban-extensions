@@ -1210,7 +1210,7 @@ AdBan.prototype = {
   },
 
   _injectCssToDocument: function(doc, canonical_site_url) {
-    const url_exception_value = this._getUrlExceptionValue(canonical_site_url);
+    const [url_exception_value, ] = this._getUrlExceptionValue(canonical_site_url);
     const css_selectors = url_exception_value.css_selectors;
 
     if (css_selectors) {
