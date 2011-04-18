@@ -10,6 +10,7 @@ Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
 const ADDON_VERSION = '1.6.0';
 const SERVER_DOMAIN = 'ad-ban.appspot.com';
+const EXTENSION_ID = 'adban@ad-ban.appspot.com';
 const SERVER_PROTOCOL = 'https';
 const app_info = Cc['@mozilla.org/xre/app-info;1'].getService(Ci.nsIXULAppInfo);
 
@@ -459,7 +460,7 @@ const AdBan = function() {
   this._READ_SETTINGS_ENDPOINT = server_host + '/s/' + ADDON_VERSION;
   this._VERIFY_URLS_ENDPOINT = server_host + '/g/' + ADDON_VERSION;
 
-  this.pref_branch = this._pref_service.getBranch('extensions.' + this.EXTENSION_ID + '.');
+  this.pref_branch = this._pref_service.getBranch('extensions.' + EXTENSION_ID + '.');
   this.HELP_URL = server_host + '/ff/help';
   this.USER_STATUS_URL = server_host + '/ff/user_status';
 
@@ -547,9 +548,6 @@ AdBan.prototype = {
 
   // this logging must be accessible outside the AdBan component.
   logging: logging,
-
-  // id of the AdBan extension (see install.rdf)
-  EXTENSION_ID: 'adban@ad-ban.appspot.com',
 
   // component's settings. New values for these settings are periodically read
   // from the server.
