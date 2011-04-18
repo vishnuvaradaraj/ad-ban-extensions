@@ -899,7 +899,7 @@ AdBan.prototype = {
     const funcs_length = funcs.length;
     for (let i = 0; i < funcs_length; i++) {
       let func = funcs[i];
-      this[func] = this._createErrorHandler(func);
+      this[func] = this._createErrorHandler(this[func]);
     }
     logging.info('error handlers for [%s] have been set up successfully');
   },
