@@ -516,6 +516,7 @@ AdBan.prototype = {
     'img',
     'iframe',
     'embed',
+    'a',
   ],
   _AUTH_COOKIE_HOST: SERVER_DOMAIN,
   _ERROR_CODES: {
@@ -659,12 +660,10 @@ AdBan.prototype = {
   // content-policy category event handler
   shouldLoad: function(content_type, content_location, request_origin, node, mime_type, extra) {
     const [is_whitelist, is_todo, canonical_url, canonical_site_url] = this._verifyLocation(content_location, request_origin);
+    const is_collapsable_node = (node && (this._COLLAPSABLE_NODES.indexOf(node.nodeName.toLowerCase()) != -1));
     if (is_whitelist) {
-      if (is_todo && node) {
-        const node_name = node.nodeName.toLowerCase();
-        if (this._COLLAPSABLE_NODES.indexOf(node_name) != -1) {
-          this._vars.todo_nodes.push([canonical_url, canonical_site_url, node]);
-        }
+      if (is_todo && is_collapsable_node) {
+        this._vars.todo_nodes.push([canonical_url, canonical_site_url, node]);
       }
       return this._ACCEPT;
     }
@@ -680,6 +679,9 @@ AdBan.prototype = {
           logging.error('cannot close the popup [%s]: [%s]', content_location.spec, e);
         }
       }
+    }
+    else if (is_collapsable_node) {
+      this._hideNode(node);
     }
 
     return this._REJECT;
@@ -1224,6 +1226,10 @@ AdBan.prototype = {
     }
   },
 
+  _hideNode: function(node) {
+    node.style.display = 'none';
+  },
+
   _hideBlacklistedLinks: function(doc, canonical_site_url) {
     const links = doc.links;
     const links_length = links.length;
@@ -1244,7 +1250,7 @@ AdBan.prototype = {
       }
       if (!is_whitelist) {
         logging.info('hiding the link=[%s]', canonical_url);
-        link.style.display = 'none';
+        this._hideNode(link);
       }
       else if (is_todo1 || is_todo2) {
         todo_nodes.push([canonical_url, canonical_site_url, link]);
@@ -1319,7 +1325,7 @@ AdBan.prototype = {
       }
       if (!is_whitelist) {
         logging.info('hiding todo node=[%s] for canonical_url=[%s], canonical_site_url=[%s]', node.nodeName, canonical_url, canonical_site_url);
-        node.style.display = 'none';
+        this._hideNode(node);
       }
       else if (is_todo1 || is_todo2) {
         logging.info('cannot delete the todo node=[%s] for canonical_url=[%s], canonical_site_url=[%s]', node.nodeName, canonical_url, canonical_site_url);
