@@ -621,6 +621,7 @@ AdBan.prototype = {
     unverified_urls: {},
     unverified_url_exceptions: {},
     todo_nodes: [],
+    todo_docs: [],
     is_url_verifier_active: false,
     is_active: false,
     is_in_private_mode: false,
@@ -1212,9 +1213,14 @@ AdBan.prototype = {
   },
 
   _injectCssToDocument: function(doc, canonical_site_url) {
-    const [url_exception_value, ] = this._getUrlExceptionValue(canonical_site_url);
-    const css_selectors = url_exception_value.css_selectors;
+    const [url_exception_value, is_todo] = this._getUrlExceptionValue(canonical_site_url);
+    if (is_todo) {
+      logging.info('css_selectors aren\'t available yet for the canonical_site_url=[%s]', canonical_site_url);
+      this._vars.todo_docs.push([canonical_site_url, doc]);
+      return;
+    }
 
+    const css_selectors = url_exception_value.css_selectors;
     if (css_selectors) {
       const style = doc.createElement('style');
       style.type = 'text/css';
@@ -1325,11 +1331,34 @@ AdBan.prototype = {
       }
       if (!is_whitelist) {
         logging.info('hiding todo node=[%s] for canonical_url=[%s], canonical_site_url=[%s]', node.nodeName, canonical_url, canonical_site_url);
-        this._hideNode(node);
+        try {
+          this._hideNode(node);
+        }
+        catch(e) {
+          logging.error('error when hiding the node=[%s] for canonical_url=[%s], canonical_site_url=[%s]: [%s]', node.nodeName, canonical_url, canonical_site_url, e);
+          logging.error(e.stack);
+        }
       }
       else if (is_todo1 || is_todo2) {
-        logging.info('cannot delete the todo node=[%s] for canonical_url=[%s], canonical_site_url=[%s]', node.nodeName, canonical_url, canonical_site_url);
+        logging.info('the todo node=[%s] for canonical_url=[%s], canonical_site_url=[%s] cannot be deleted now', node.nodeName, canonical_url, canonical_site_url);
         vars.todo_nodes.push([canonical_url, canonical_site_url, node]);
+      }
+    }
+  },
+
+  _cleanupTodoDocs: function() {
+    const vars = this._vars;
+    const todo_docs = vars.todo_docs;
+    const todo_docs_length = todo_docs.length;
+    todo_docs = [];
+    for (let i = 0; i < todo_docs_length; i++) {
+      let [canonical_site_url, doc] = todo_docs[i];
+      try {
+        this._injectCssToDocument(doc, canonical_site_url);
+      }
+      catch(e) {
+        logging.error('error when hiding the doc for canonical_site_url=[%s]: [%s]', canonical_site_url, e);
+        logging.error(e.stack);
       }
     }
   },
@@ -1512,6 +1541,7 @@ AdBan.prototype = {
       that._cleanupUnverifiedUrls(vars.unverified_urls, vars.url_cache);
       that._cleanupUnverifiedUrls(vars.unverified_url_exceptions, vars.url_exception_cache);
       that._cleanupTodoNodes();
+      that._cleanupTodoDocs();
     };
     this._startJsonRequest(this._verify_urls_xhr, this._VERIFY_URLS_ENDPOINT, request_data, response_callback, verification_complete_callback);
   },
