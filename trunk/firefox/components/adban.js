@@ -462,6 +462,7 @@ const AdBan = function() {
 
   this.pref_branch = this._pref_service.getBranch('extensions.' + EXTENSION_ID + '.');
   this.HELP_URL = server_host + '/ff/help';
+  this.DONATE_URL = server_host + '/ff/donate';
   this.USER_STATUS_URL = server_host + '/ff/user_status';
 
   const funcs = [

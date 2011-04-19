@@ -9,6 +9,8 @@
 <!ENTITY adban.menuitem.complaint.accesskey "r">
 <!ENTITY adban.menuitem.help "Help">
 <!ENTITY adban.menuitem.help.accesskey "h">
+<!ENTITY adban.menuitem.donate "Donate">
+<!ENTITY adban.menuitem.donate.accesskey "d">
 
 <!ENTITY adban.toolbarbutton.label "AdBan">
 <!ENTITY adban.toolbarbutton.tooltiptext "AdBan options">

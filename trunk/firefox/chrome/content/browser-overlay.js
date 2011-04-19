@@ -132,6 +132,10 @@
     adban.openTab('help', adban.HELP_URL);
   };
 
+  let cmdDonate = function() {
+    adban.openTab('donate', adban.DONATE_URL);
+  };
+
   let state_listener_id;
   let is_initially_active;
 
@@ -143,6 +147,7 @@
     $('adban-cmd-stop').addEventListener('command', cmdStop, false);
     $('adban-cmd-start').addEventListener('command', cmdStart, false);
     $('adban-cmd-help').addEventListener('command', cmdHelp, false);
+    $('adban-cmd-donate').addEventListener('command', cmdDonate, false);
 
     const state_change_results = adban.subscribeToStateChange(onStateChange);
     state_listener_id = state_change_results[0];
@@ -191,6 +196,7 @@
     $('adban-cmd-stop').removeEventListener('command', cmdStop, false);
     $('adban-cmd-start').removeEventListener('command', cmdStart, false);
     $('adban-cmd-help').removeEventListener('command', cmdHelp, false);
+    $('adban-cmd-donate').removeEventListener('command', cmdDonate, false);
 
     logging.info('browser-overlay has been shut down. state_listener_id=[%s]', state_listener_id);
   };
