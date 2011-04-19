@@ -11,7 +11,7 @@ Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 const ADDON_VERSION = '1.6.0';
 const SERVER_DOMAIN = 'ad-ban.appspot.com';
 const EXTENSION_ID = 'adban@ad-ban.appspot.com';
-const SERVER_PROTOCOL = 'https';
+const SERVER_PROTOCOL = 'http';
 const app_info = Cc['@mozilla.org/xre/app-info;1'].getService(Ci.nsIXULAppInfo);
 
 const getCurrentDate = function() {
