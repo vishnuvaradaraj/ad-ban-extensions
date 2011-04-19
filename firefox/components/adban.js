@@ -1308,7 +1308,7 @@ AdBan.prototype = {
     const vars = this._vars;
     const todo_nodes = vars.todo_nodes;
     const todo_nodes_length = todo_nodes.length;
-    const remaining_todo_nodes = [];
+    vars.todo_nodes = [];
     for (let i = 0; i < todo_nodes_length; i++) {
       let [canonical_url, canonical_site_url, node] = todo_nodes[i];
       let is_whitelist = null;
@@ -1328,10 +1328,9 @@ AdBan.prototype = {
       }
       else if (is_todo1 || is_todo2) {
         logging.info('cannot delete the todo node=[%s] for canonical_url=[%s], canonical_site_url=[%s]', node.nodeName, canonical_url, canonical_site_url);
-        remaining_todo_nodes.push([canonical_url, canonical_site_url, node]);
+        vars.todo_nodes.push([canonical_url, canonical_site_url, node]);
       }
     }
-    vars.todo_nodes = remaining_todo_nodes;
   },
 
   _injectAuthTokenToCookie: function(auth_token) {
