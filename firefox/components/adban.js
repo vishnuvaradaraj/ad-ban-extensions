@@ -660,7 +660,7 @@ AdBan.prototype = {
   // content-policy category event handler
   shouldLoad: function(content_type, content_location, request_origin, node, mime_type, extra) {
     const [is_whitelist, is_todo, canonical_url, canonical_site_url] = this._verifyLocation(content_location, request_origin);
-    const is_collapsable_node = (node && (this._COLLAPSABLE_NODES.indexOf(node.nodeName.toLowerCase()) != -1));
+    const is_collapsable_node = (node && node.nodeName && (this._COLLAPSABLE_NODES.indexOf(node.nodeName.toLowerCase()) != -1));
     if (is_whitelist) {
       if (is_todo && is_collapsable_node) {
         this._vars.todo_nodes.push([canonical_url, canonical_site_url, node]);
