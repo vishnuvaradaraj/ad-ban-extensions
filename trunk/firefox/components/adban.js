@@ -851,11 +851,10 @@ AdBan.prototype = {
     const site_url = doc.location.href;
     logging.info('processing the document for the url=[%s]', site_url);
     const site_uri = this._createUri(site_url);
-    if (!this._shouldProcessUri(site_uri)) {
-      logging.info('there is no need in processing the url=[%s]', site_url);
-      return;
+    let canonical_site_url = '';
+    if (this._shouldProcessUri(site_uri)) {
+      canonical_site_url = this._getCanonicalUrl(site_uri);
     }
-    const canonical_site_url = this._getCanonicalUrl(site_uri);
     this._injectCssToDocument(doc, canonical_site_url);
     this._hideBlacklistedLinks(doc, canonical_site_url);
   },
