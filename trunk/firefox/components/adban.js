@@ -622,6 +622,7 @@ AdBan.prototype = {
     unverified_url_exceptions: {},
     todo_nodes: [],
     todo_docs: [],
+    todo_popups: [],
     is_url_verifier_active: false,
     is_active: false,
     is_in_private_mode: false,
@@ -662,30 +663,34 @@ AdBan.prototype = {
   // content-policy category event handler
   shouldLoad: function(content_type, content_location, request_origin, node, mime_type, extra) {
     const [is_whitelist, is_todo, canonical_url, canonical_site_url] = this._verifyLocation(content_location, request_origin);
-    const is_collapsable_node = (node && node.nodeName && (this._COLLAPSABLE_NODES.indexOf(node.nodeName.toLowerCase()) != -1));
+    let is_popup = false;
+    if (node && content_type == Ci.nsIContentPolicy.TYPE_DOCUMENT) {
+      const w = node.contentWindow;
+      if (w && w.opener && w.top != w.opener.top) {
+        is_popup = true;
+      }
+    }
+    const is_collapsable_node = (!is_popup && node && node.nodeName && (this._COLLAPSABLE_NODES.indexOf(node.nodeName.toLowerCase()) != -1));
+
     if (is_whitelist) {
-      if (is_todo && is_collapsable_node) {
-        this._vars.todo_nodes.push([canonical_url, canonical_site_url, node]);
+      if (is_todo) {
+        const vars = this._vars;
+        if (is_popup) {
+          vars.todo_popups.push([canonical_url, node]);
+        }
+        else if (is_collapsable_node) {
+          vars.todo_nodes.push([canonical_url, canonical_site_url, node]);
+        }
       }
       return this._ACCEPT;
     }
 
-    if (content_type == Ci.nsIContentPolicy.TYPE_DOCUMENT) {
-      const w = node.contentWindow;
-      if (w && w.opener && w.top != w.opener.top) {
-        try {
-          logging.info('closing the popup [%s] opened by the [%s]', content_location.spec, w.opener.location.href);
-          w.close();
-        }
-        catch(e) {
-          logging.error('cannot close the popup [%s]: [%s]', content_location.spec, e);
-        }
-      }
+    if (is_popup) {
+      this._closePopup(node, canonical_url);
     }
     else if (is_collapsable_node) {
       this._hideNode(node);
     }
-
     return this._REJECT;
   },
   shouldProcess: function(content_type, content_location, request_origin, node, mime_type, extra) {
@@ -1232,6 +1237,18 @@ AdBan.prototype = {
     }
   },
 
+  _closePopup: function(node, canonical_url) {
+    try {
+      const w = node.contentWindow;
+      const opener_url = w.opener.location.href;
+      logging.info('closing the popup for canonical_url=[%s], opener_url=[%s]', canonical_url, opener_url);
+      w.close();
+    }
+    catch(e) {
+      logging.error('cannot close the popup for canonical_url=[%s]: [%s]', canonical_url, e);
+    }
+  },
+
   _hideNode: function(node) {
     node.style.display = 'none';
   },
@@ -1340,7 +1357,7 @@ AdBan.prototype = {
         }
       }
       else if (is_todo1 || is_todo2) {
-        logging.info('the todo node=[%s] for canonical_url=[%s], canonical_site_url=[%s] cannot be deleted now', node.nodeName, canonical_url, canonical_site_url);
+        logging.info('the todo node=[%s] for canonical_url=[%s], canonical_site_url=[%s] cannot be processed now', node.nodeName, canonical_url, canonical_site_url);
         vars.todo_nodes.push([canonical_url, canonical_site_url, node]);
       }
     }
@@ -1350,7 +1367,7 @@ AdBan.prototype = {
     const vars = this._vars;
     const todo_docs = vars.todo_docs;
     const todo_docs_length = todo_docs.length;
-    todo_docs = [];
+    vars.todo_docs = [];
     for (let i = 0; i < todo_docs_length; i++) {
       let [canonical_site_url, doc] = todo_docs[i];
       try {
@@ -1359,6 +1376,24 @@ AdBan.prototype = {
       catch(e) {
         logging.error('error when hiding the doc for canonical_site_url=[%s]: [%s]', canonical_site_url, e);
         logging.error(e.stack);
+      }
+    }
+  },
+
+  _cleanupTodoPopups: function() {
+    const vars = this._vars;
+    const todo_popups = vars.todo_popups;
+    const todo_popups_length = todo_popups.length;
+    vars.todo_popups = [];
+    for (let i = 0; i < todo_popups_length; i++) {
+      let [canonical_url, node] = todo_popups[i];
+      let [is_whitelist, is_todo] = this._verifyUrl(canonical_url);
+      if (!is_whitelist) {
+        this._closePopup(node, canonical_url);
+      }
+      else if (is_todo) {
+        logging.info('the popup for canonical_url=[%s] cannot be processed now', canonical_url);
+        vars.todo_popups.push([canonical_url, node]);
       }
     }
   },
@@ -1542,6 +1577,7 @@ AdBan.prototype = {
       that._cleanupUnverifiedUrls(vars.unverified_url_exceptions, vars.url_exception_cache);
       that._cleanupTodoNodes();
       that._cleanupTodoDocs();
+      that._cleanupTodoPopups();
     };
     this._startJsonRequest(this._verify_urls_xhr, this._VERIFY_URLS_ENDPOINT, request_data, response_callback, verification_complete_callback);
   },
