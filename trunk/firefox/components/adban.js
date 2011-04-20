@@ -1238,15 +1238,10 @@ AdBan.prototype = {
   },
 
   _closePopup: function(node, canonical_url) {
-    try {
-      const w = node.contentWindow;
-      const opener_url = w.opener.location.href;
-      logging.info('closing the popup for canonical_url=[%s], opener_url=[%s]', canonical_url, opener_url);
-      w.close();
-    }
-    catch(e) {
-      logging.error('cannot close the popup for canonical_url=[%s]: [%s]', canonical_url, e);
-    }
+    const w = node.contentWindow;
+    const opener_url = w.opener.location.href;
+    logging.info('closing the popup for canonical_url=[%s], opener_url=[%s]', canonical_url, opener_url);
+    w.close();
   },
 
   _hideNode: function(node) {
@@ -1389,7 +1384,13 @@ AdBan.prototype = {
       let [canonical_url, node] = todo_popups[i];
       let [is_whitelist, is_todo] = this._verifyUrl(canonical_url);
       if (!is_whitelist) {
-        this._closePopup(node, canonical_url);
+        try {
+          this._closePopup(node, canonical_url);
+        }
+        catch(e) {
+          logging.error('cannot close the popup for canonical_url=[%s]: [%s]', canonical_url, e);
+          logging.error(e.stack);
+        }
       }
       else if (is_todo) {
         logging.info('the popup for canonical_url=[%s] cannot be processed now', canonical_url);
