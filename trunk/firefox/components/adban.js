@@ -1343,8 +1343,8 @@ AdBan.prototype = {
         [is_whitelist, is_todo2] = this._verifyUrl(canonical_url);
       }
       if (!is_whitelist) {
-        logging.info('hiding todo node=[%s] for canonical_url=[%s], canonical_site_url=[%s]', node.nodeName, canonical_url, canonical_site_url);
         try {
+          logging.info('hiding todo node=[%s] for canonical_url=[%s], canonical_site_url=[%s]', node.nodeName, canonical_url, canonical_site_url);
           this._hideNode(node);
         }
         catch(e) {
@@ -1370,7 +1370,7 @@ AdBan.prototype = {
         this._injectCssToDocument(doc, canonical_site_url);
       }
       catch(e) {
-        logging.error('error when hiding the doc for canonical_site_url=[%s]: [%s]', canonical_site_url, e);
+        logging.error('error when hiding the todo doc for canonical_site_url=[%s]: [%s]', canonical_site_url, e);
         logging.error(e.stack);
       }
     }
@@ -1389,12 +1389,12 @@ AdBan.prototype = {
           this._closePopup(node, canonical_url);
         }
         catch(e) {
-          logging.error('cannot close the popup for canonical_url=[%s]: [%s]', canonical_url, e);
+          logging.error('cannot close the todo popup for canonical_url=[%s]: [%s]', canonical_url, e);
           logging.error(e.stack);
         }
       }
       else if (is_todo) {
-        logging.info('the popup for canonical_url=[%s] cannot be processed now', canonical_url);
+        logging.info('the todo popup for canonical_url=[%s] cannot be processed now', canonical_url);
         vars.todo_popups.push([canonical_url, node]);
       }
     }
