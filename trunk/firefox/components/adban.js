@@ -634,22 +634,23 @@ AdBan.prototype = {
 
   // net-channel-event-sinks category event handler
   onChannelRedirect: function(old_channel, new_channel, flags) {
-    logging.info('redirect from [%s] to [%s]', old_channel.URI.spec, new_channel.URI.spec);
-
+    let is_whitelist;
     try {
+      logging.info('redirect from [%s] to [%s]', old_channel.URI.spec, new_channel.URI.spec);
+
       // there is no need in verifying the old_channel, because it must be
       // already verified by shouldLoad() content-policy handler.
       // So verify only the new_channel.
       const request_origin = this._getRequestOriginFromChannel(new_channel);
-      const is_whitelist = this._verifyLocation(new_channel.URI, request_origin)[0];
-      if (!is_whitelist) {
-        throw this._REJECT_EXCEPTION;
-      }
+      is_whitelist = this._verifyLocation(new_channel.URI, request_origin)[0];
     }
-    catch(e if e != this._REJECT_EXCEPTION) {
+    catch(e) {
       logging.error('error in the onChannelRedirect(): [%s]', e);
       logging.error('stack trace: [%s]', e.stack);
       throw e;
+    }
+    if (!is_whitelist) {
+      throw this._REJECT_EXCEPTION;
     }
   },
 
