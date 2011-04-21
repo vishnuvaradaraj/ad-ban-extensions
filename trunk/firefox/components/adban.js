@@ -1405,7 +1405,7 @@ AdBan.prototype = {
     logging.info('injecting auth_token=[%s] into cookie for the host=[%s]', auth_token, host);
     const expiration_time = 0x7fffffff;
     // see https://developer.mozilla.org/en/XPCOM_Interface_Reference/nsICookieManager2#add() .
-    this._cookie_manager.add(host, '/', 'a', auth_token, true, false, false, expiration_time);
+    this._cookie_manager.add(host, '/', 'a', auth_token, false, false, false, expiration_time);
   },
 
   _processJsonResponse: function(request_text, response_text, response_callback) {
