@@ -8,7 +8,7 @@ const Cr = Components.results;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
-const ADDON_VERSION = '1.6.1';
+const ADDON_VERSION = '1.6.2';
 const SERVER_DOMAIN = 'ad-ban.appspot.com';
 const EXTENSION_ID = 'adban@ad-ban.appspot.com';
 const SERVER_PROTOCOL = 'http';
@@ -674,7 +674,9 @@ AdBan.prototype = {
         is_popup = true;
       }
     }
-    const is_collapsable_node = (!is_popup && node && node.nodeName && (this._COLLAPSABLE_NODES.indexOf(node.nodeName.toLowerCase()) != -1));
+    const is_collapsable_node = (!is_popup && node && node.nodeName &&
+        (this._COLLAPSABLE_NODES.indexOf(node.nodeName.toLowerCase()) != -1) &&
+        content_type != Ci.nsIContentPolicy.TYPE_OBJECT_SUBREQUEST);
 
     if (is_whitelist) {
       if (is_todo) {
