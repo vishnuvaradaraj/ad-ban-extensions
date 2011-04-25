@@ -1599,9 +1599,6 @@ AdBan.prototype = {
           urlExceptionValueConstructor);
       that._cleanupUnverifiedUrls(vars.unverified_urls, vars.url_cache);
       that._cleanupUnverifiedUrls(vars.unverified_url_exceptions, vars.url_exception_cache);
-      that._cleanupTodoNodes();
-      that._cleanupTodoDocs();
-      that._cleanupTodoPopups();
     };
     this._startJsonRequest(this._verify_urls_xhr, this._VERIFY_URLS_ENDPOINT, request_data, response_callback, verification_complete_callback);
   },
@@ -1633,6 +1630,15 @@ AdBan.prototype = {
         vars.unverified_urls = {};
         vars.unverified_url_exceptions = {};
       }
+
+      // Clean up todo items here, since this callback is always called
+      // in the response to the call to the _verifyUrls().
+      // So it is guaranteed that todo items won't leak in the face
+      // of arbitrary errors.
+      that._cleanupTodoNodes();
+      that._cleanupTodoDocs();
+      that._cleanupTodoPopups();
+
       vars.is_url_verifier_active = false;
       that._launchUrlVerifier();
     };
