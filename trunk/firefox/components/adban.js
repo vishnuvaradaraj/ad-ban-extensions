@@ -827,9 +827,9 @@ AdBan.prototype = {
     const response_callback = function() {
       success_callback();
     };
-    const finish_callback = function(message) {
-      if (message) {
-        failure_callback(message);
+    const finish_callback = function(error_message) {
+      if (error_message) {
+        failure_callback(error_message);
       }
     };
     this._startJsonRequest(this._url_complaint_xhr, this._SEND_URL_COMPLAINT_ENDPOINT, request_data, response_callback, finish_callback);
@@ -1603,8 +1603,14 @@ AdBan.prototype = {
     logging.info('url verifier started');
     vars.is_url_verifier_active = true;
     const that = this;
-    const verification_complete_callback = function() {
+    const verification_complete_callback = function(error_message) {
       logging.info('url verifier stopped');
+      if (error_message) {
+        logging.warning('error while verifying urls: [%s]', error_message);
+        logging.info('flushing unverified_urls and unverified_url_exceptions in order to prevent memory leaks');
+        vars.unverified_urls = {};
+        vars.unverified_url_exceptions = {};
+      }
       vars.is_url_verifier_active = false;
       that._launchUrlVerifier();
     };
