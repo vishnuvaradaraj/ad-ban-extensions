@@ -565,6 +565,7 @@ AdBan.prototype = {
     min_backoff_timeout: 1000,
     max_backoff_timeout: 1000 * 3600 * 24,
     max_urls_per_request: 200,
+    max_todo_generation_count: 2,
 
     // the following values cannot be modified by the server.
     read_settings_delay: 1000 * 5,
@@ -588,6 +589,7 @@ AdBan.prototype = {
       this._bc_import('min_backoff_timeout', data[8]);
       this._bc_import('max_backoff_timeout', data[9]);
       this._bc_import('max_urls_per_request', data[10]);
+      this._bc_import('max_todo_generation_count', data[11]);
     },
 
     export: function() {
@@ -603,6 +605,7 @@ AdBan.prototype = {
         this.min_backoff_timeout,
         this.max_backoff_timeout,
         this.max_urls_per_request,
+        this.max_todo_generation_count,
       ];
     },
   },
@@ -677,10 +680,10 @@ AdBan.prototype = {
       if (is_todo) {
         const vars = this._vars;
         if (is_popup) {
-          vars.todo_popups.push([canonical_url, node]);
+          vars.todo_popups.push([canonical_url, node, 0]);
         }
         else if (is_collapsable_node) {
-          vars.todo_nodes.push([canonical_url, canonical_site_url, node]);
+          vars.todo_nodes.push([canonical_url, canonical_site_url, node, 0]);
         }
       }
       return this._ACCEPT;
@@ -863,7 +866,7 @@ AdBan.prototype = {
     if (this._shouldProcessUri(site_uri)) {
       canonical_site_url = this._getCanonicalUrl(site_uri);
     }
-    this._injectCssToDocument(doc, canonical_site_url);
+    this._injectCssToDocument(doc, canonical_site_url, 0);
     this._hideBlacklistedLinks(doc, canonical_site_url);
   },
 
@@ -1218,11 +1221,16 @@ AdBan.prototype = {
     return (uri.scheme in this._FILTERED_SCHEMES);
   },
 
-  _injectCssToDocument: function(doc, canonical_site_url) {
+  _injectCssToDocument: function(doc, canonical_site_url, generation_count) {
     const [url_exception_value, is_todo] = this._getUrlExceptionValue(canonical_site_url);
     if (is_todo) {
       logging.info('css_selectors aren\'t available yet for the canonical_site_url=[%s]', canonical_site_url);
-      this._vars.todo_docs.push([canonical_site_url, doc]);
+      if (generation_count < this._settings.max_todo_generation_count) {
+        this._vars.todo_docs.push([canonical_site_url, doc, generation_count]);
+      }
+      else {
+        logging.warning('couldn\'t obtain css_selectors for the canonical_site_url=[%s] in [%s] tries', canonical_site_url, generation_count);
+      }
       return;
     }
 
@@ -1272,7 +1280,7 @@ AdBan.prototype = {
         this._hideNode(link);
       }
       else if (is_todo1 || is_todo2) {
-        todo_nodes.push([canonical_url, canonical_site_url, link]);
+        todo_nodes.push([canonical_url, canonical_site_url, link, 0]);
       }
     }
   },
@@ -1328,9 +1336,10 @@ AdBan.prototype = {
     const vars = this._vars;
     const todo_nodes = vars.todo_nodes;
     const todo_nodes_length = todo_nodes.length;
+    const max_todo_generation_count = this._settings.max_todo_generation_count;
     vars.todo_nodes = [];
     for (let i = 0; i < todo_nodes_length; i++) {
-      let [canonical_url, canonical_site_url, node] = todo_nodes[i];
+      let [canonical_url, canonical_site_url, node, generation_count] = todo_nodes[i];
       let is_whitelist = null;
       let is_todo1 = false;
       let is_todo2 = false;
@@ -1354,7 +1363,13 @@ AdBan.prototype = {
       }
       else if (is_todo1 || is_todo2) {
         logging.info('the todo node=[%s] for canonical_url=[%s], canonical_site_url=[%s] cannot be processed now', node.nodeName, canonical_url, canonical_site_url);
-        vars.todo_nodes.push([canonical_url, canonical_site_url, node]);
+        generation_count++;
+        if (generation_count < max_todo_generation_count) {
+          vars.todo_nodes.push([canonical_url, canonical_site_url, node, generation_count]);
+        }
+        else {
+          logging.warning('couldn\'t process the todo node=[%s] for canonical_url=[%s], canonical_site_url=[%s] in [%s] tries', node.nodeName, canonical_url, canonical_site_url, generation_count);
+        }
       }
     }
   },
@@ -1365,9 +1380,9 @@ AdBan.prototype = {
     const todo_docs_length = todo_docs.length;
     vars.todo_docs = [];
     for (let i = 0; i < todo_docs_length; i++) {
-      let [canonical_site_url, doc] = todo_docs[i];
+      let [canonical_site_url, doc, generation_count] = todo_docs[i];
       try {
-        this._injectCssToDocument(doc, canonical_site_url);
+        this._injectCssToDocument(doc, canonical_site_url, generation_count + 1);
       }
       catch(e) {
         logging.error('error when hiding the todo doc for canonical_site_url=[%s]: [%s]', canonical_site_url, e);
@@ -1380,9 +1395,10 @@ AdBan.prototype = {
     const vars = this._vars;
     const todo_popups = vars.todo_popups;
     const todo_popups_length = todo_popups.length;
+    const max_todo_generation_count = this._settings.max_todo_generation_count;
     vars.todo_popups = [];
     for (let i = 0; i < todo_popups_length; i++) {
-      let [canonical_url, node] = todo_popups[i];
+      let [canonical_url, node, generation_count] = todo_popups[i];
       let [is_whitelist, is_todo] = this._verifyUrl(canonical_url);
       if (!is_whitelist) {
         try {
@@ -1395,7 +1411,13 @@ AdBan.prototype = {
       }
       else if (is_todo) {
         logging.info('the todo popup for canonical_url=[%s] cannot be processed now', canonical_url);
-        vars.todo_popups.push([canonical_url, node]);
+        generation_count++;
+        if (generation_count < max_todo_generation_count) {
+          vars.todo_popups.push([canonical_url, node, generation_count]);
+        }
+        else {
+          logging.warning('couldn\'t process the todo popup for canonical_url=[%s] in [%s] tries', canonical_url, generation_count);
+        }
       }
     }
   },
