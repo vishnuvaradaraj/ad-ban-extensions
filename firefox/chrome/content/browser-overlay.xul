@@ -26,6 +26,7 @@
     <command id="adban-cmd-stop" oncommand="void(0)"/>
     <command id="adban-cmd-help"/>
     <command id="adban-cmd-donate"/>
+    <command id="adban-cmd-recommend"/>
   </commandset>
 
   <menupopup id="menu_ToolsPopup">
@@ -62,6 +63,11 @@
           label="&adban.menuitem.donate;"
           command="adban-cmd-donate"
           accesskey="&adban.menuitem.donate.accesskey;"
+        />
+        <menuitem
+          label="&adban.menuitem.recommend;"
+          command="adban-cmd-recommend"
+          accesskey="&adban.menuitem.recommend.accesskey;"
         />
       </menupopup>
     </menu>
@@ -105,6 +111,11 @@
           label="&adban.menuitem.donate;"
           command="adban-cmd-donate"
           accesskey="&adban.menuitem.donate.accesskey;"
+        />
+        <menuitem
+          label="&adban.menuitem.recommend;"
+          command="adban-cmd-recommend"
+          accesskey="&adban.menuitem.recommend.accesskey;"
         />
       </menupopup>
     </toolbarbutton>

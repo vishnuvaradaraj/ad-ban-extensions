@@ -11,6 +11,8 @@
 <!ENTITY adban.menuitem.help.accesskey "h">
 <!ENTITY adban.menuitem.donate "Donate">
 <!ENTITY adban.menuitem.donate.accesskey "d">
+<!ENTITY adban.menuitem.recommend "Recommend">
+<!ENTITY adban.menuitem.recommend.accesskey "e">
 
 <!ENTITY adban.toolbarbutton.label "AdBan">
 <!ENTITY adban.toolbarbutton.tooltiptext "AdBan options">
