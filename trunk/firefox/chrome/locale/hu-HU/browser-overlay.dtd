@@ -11,6 +11,8 @@
 <!ENTITY adban.menuitem.help.accesskey "S">
 <!ENTITY adban.menuitem.donate "Adományoz">
 <!ENTITY adban.menuitem.donate.accesskey "A">
+<!ENTITY adban.menuitem.recommend "Ajánlani">
+<!ENTITY adban.menuitem.recommend.accesskey "n">
 
 <!ENTITY adban.toolbarbutton.label "AdBan">
 <!ENTITY adban.toolbarbutton.tooltiptext "AdBan lehetőségek">
