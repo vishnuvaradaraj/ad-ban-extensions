@@ -44,14 +44,12 @@
           command="adban-cmd-start"
           tooltiptext="&adban.menuitem.start.tooltiptext;"
           accesskey="&adban.menuitem.start.accesskey;"
-          key="adban-key-start"
         />
         <menuitem
           label="&adban.menuitem.stop;"
           command="adban-cmd-stop"
           tooltiptext="&adban.menuitem.stop.tooltiptext;"
           accesskey="&adban.menuitem.stop.accesskey;"
-          key="adban-key-stop"
         />
         <menuseparator/>
         <menuitem
@@ -94,12 +92,14 @@
           command="adban-cmd-start"
           tooltiptext="&adban.menuitem.start.tooltiptext;"
           accesskey="&adban.menuitem.start.accesskey;"
+          key="adban-key-start"
         />
         <menuitem
           label="&adban.menuitem.stop;"
           command="adban-cmd-stop"
           tooltiptext="&adban.menuitem.stop.tooltiptext;"
           accesskey="&adban.menuitem.stop.accesskey;"
+          key="adban-key-stop"
         />
         <menuseparator/>
         <menuitem
