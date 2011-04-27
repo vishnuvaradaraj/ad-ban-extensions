@@ -541,6 +541,7 @@ AdBan.prototype = {
     http: true,
     https: true,
     ftp: true,
+    file: true,
   },
   _COLLAPSABLE_NODES: [
     'img',
@@ -920,10 +921,10 @@ AdBan.prototype = {
     const site_url = doc.location.href;
     logging.info('processing the document for the url=[%s]', site_url);
     const site_uri = this._createUri(site_url);
-    let canonical_site_url = '';
-    if (this._shouldProcessUri(site_uri)) {
-      canonical_site_url = this._getCanonicalUrl(site_uri);
+    if (!this._shouldProcessUri(site_uri)) {
+      return;
     }
+    const canonical_site_url = this._getCanonicalUrl(site_uri);
     if (!this._verifyPerSiteWhitelist(canonical_site_url)) {
       this._injectCssToDocument(doc, canonical_site_url, 0);
       this._hideBlacklistedLinks(doc, canonical_site_url);
