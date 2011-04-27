@@ -899,7 +899,7 @@ AdBan.prototype = {
     logging.info('verifying whether the site with site_url=[%s] is whitelisted', site_url);
     const canonical_site_host = this._getCanonicalSiteHost(site_url);
     if (!canonical_site_host) {
-      return;
+      return null;
     }
     const is_whitelist = this._verifyPerSiteWhitelist(canonical_site_host);
     logging.info('is_whitelist=[%s] for the canonical_site_host=[%s]', is_whitelist, canonical_site_host);

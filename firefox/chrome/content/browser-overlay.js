@@ -114,11 +114,12 @@
     const cmd_add_per_site_whitelist = $('adban-cmd-add-per-site-whitelist');
     const cmd_remove_per_site_whitelist = $('adban-cmd-remove-per-site-whitelist');
     const current_site_url = getCurrentSiteUrl();
-    if (!current_site_url) {
+    const has_per_site_whitelist = adban.hasPerSiteWhitelist(current_site_url);
+    if (has_per_site_whitelist == null) {
       cmd_add_per_site_whitelist.setAttribute('disabled', 'true');
       cmd_remove_per_site_whitelist.setAttribute('disabled', 'true');
     }
-    else if (adban.hasPerSiteWhitelist(current_site_url)) {
+    else if (has_per_site_whitelist) {
       cmd_add_per_site_whitelist.setAttribute('disabled', 'true');
       cmd_remove_per_site_whitelist.removeAttribute('disabled');
     }
