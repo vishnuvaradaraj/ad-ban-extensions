@@ -21,6 +21,18 @@
     return adban_strings.getString(id);
   };
 
+  let getCurrentSiteUrl = function() {
+    let current_site_url = $('urlbar').value;
+    if (current_site_url) {
+      // normalize the url for the consumption by adban component.
+      if (current_site_url.indexOf('://') == -1) {
+        current_site_url = 'http://' + current_site_url;
+      }
+      current_site_url += '/';
+    }
+    return current_site_url;
+  };
+
   let conditionalAlert = function(alert_name, msg) {
     alert_name = 'alert-states.' + alert_name;
     if (pref_branch.prefHasUserValue(alert_name) &&
@@ -98,6 +110,24 @@
     }
   };
 
+  let onMenuPopup = function() {
+    const cmd_add_per_site_whitelist = $('adban-cmd-add-per-site-whitelist');
+    const cmd_remove_per_site_whitelist = $('adban-cmd-remove-per-site-whitelist');
+    const current_site_url = getCurrentSiteUrl();
+    if (!current_site_url) {
+      cmd_add_per_site_whitelist.setAttribute('disabled', 'true');
+      cmd_remove_per_site_whitelist.setAttribute('disabled', 'true');
+    }
+    else if (adban.hasPerSiteWhitelist(current_site_url)) {
+      cmd_add_per_site_whitelist.setAttribute('disabled', 'true');
+      cmd_remove_per_site_whitelist.removeAttribute('disabled');
+    }
+    else {
+      cmd_remove_per_site_whitelist.setAttribute('disabled', 'true');
+      cmd_add_per_site_whitelist.removeAttribute('disabled');
+    }
+  };
+
   let cmdComplaint = function() {
     const complaint_callback = function(site_url, comment) {
       const success_callback = function() {
@@ -128,6 +158,20 @@
     conditionalAlert('adban-started', _('adban-started'));
   };
 
+  let cmdAddPerSiteWhitelist = function() {
+    const current_site_url = getCurrentSiteUrl();
+    if (current_site_url) {
+      adban.addPerSiteWhitelist(current_site_url);
+    }
+  };
+
+  let cmdRemovePerSiteWhitelist = function() {
+    const current_site_url = getCurrentSiteUrl();
+    if (current_site_url) {
+      adban.removePerSiteWhitelist(current_site_url);
+    }
+  };
+
   let cmdHelp = function() {
     adban.openTab('help', adban.HELP_URL);
   };
@@ -147,9 +191,14 @@
     logging.info('initializing browser-overlay');
     window.removeEventListener('load', init, false);
 
+    $('adban-menupopup').addEventListener('popupshowing', onMenuPopup, false);
+    $('adban-toolbarbutton-menupopup').addEventListener('popupshowing', onMenuPopup, false);
+
     $('adban-cmd-complaint').addEventListener('command', cmdComplaint, false);
     $('adban-cmd-stop').addEventListener('command', cmdStop, false);
     $('adban-cmd-start').addEventListener('command', cmdStart, false);
+    $('adban-cmd-add-per-site-whitelist').addEventListener('command', cmdAddPerSiteWhitelist, false);
+    $('adban-cmd-remove-per-site-whitelist').addEventListener('command', cmdRemovePerSiteWhitelist, false);
     $('adban-cmd-help').addEventListener('command', cmdHelp, false);
     $('adban-cmd-donate').addEventListener('command', cmdDonate, false);
     $('adban-cmd-recommend').addEventListener('command', cmdRecommend, false);
@@ -200,9 +249,14 @@
     $('adban-cmd-complaint').removeEventListener('command', cmdComplaint, false);
     $('adban-cmd-stop').removeEventListener('command', cmdStop, false);
     $('adban-cmd-start').removeEventListener('command', cmdStart, false);
+    $('adban-cmd-add-per-site-whitelist').removeEventListener('command', cmdAddPerSiteWhitelist, false);
+    $('adban-cmd-remove-per-site-whitelist').removeEventListener('command', cmdRemovePerSiteWhitelist, false);
     $('adban-cmd-help').removeEventListener('command', cmdHelp, false);
     $('adban-cmd-donate').removeEventListener('command', cmdDonate, false);
     $('adban-cmd-recommend').removeEventListener('command', cmdRecommend, false);
+
+    $('adban-menupopup').removeEventListener('popupshowing', onMenuPopup, false);
+    $('adban-toolbarbutton-menupopup').removeEventListener('popupshowing', onMenuPopup, false);
 
     logging.info('browser-overlay has been shut down. state_listener_id=[%s]', state_listener_id);
   };
