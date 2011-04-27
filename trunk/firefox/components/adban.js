@@ -313,6 +313,15 @@ Trie.prototype = {
     return this._add(node, node_depth, key, value, current_date);
   },
 
+  remove: function(key) {
+    const tmp = this.get(key);
+    const node = tmp[0];
+    const node_depth = tmp[3];
+    if (node_depth == key.length) {
+      this._clearNode(node, false);
+    }
+  },
+
   update: function(start_key, end_keys, value, current_date, todo) {
     const tmp = this.get(start_key);
     const node = tmp[0];
@@ -357,12 +366,18 @@ const defaultUrlValue = {
 const defaultUrlExceptionValue = {
 };
 
+const defaultPerSiteWhitelistValue = false;
+
 const createEmptyUrlCache = function() {
   return new Trie(defaultUrlValue);
 };
 
 const createEmptyUrlExceptionCache = function() {
   return new Trie(defaultUrlExceptionValue);
+};
+
+const createEmptyPerSiteWhitelist = function() {
+  return new Trie(defaultPerSiteWhitelistValue);
 };
 
 const BLACKLIST_REGEXP_BIT_MASK = (1 << 0);
@@ -415,6 +430,10 @@ const urlExceptionNodeConstructor = function(v) {
   return d;
 };
 
+const perSiteWhitelistNodeConstructor = function(v) {
+  return v + 0;
+};
+
 const urlValueConstructor = function(d) {
   const v = {};
   if (typeof(d) == 'number') {
@@ -453,6 +472,10 @@ const urlExceptionValueConstructor = function(d) {
   return v;
 };
 
+const perSiteWhitelistValueConstructor = function(d) {
+  return !!d;
+};
+
 const AdBan = function() {
   logging.info('entering AdBan constructor');
   const server_host = SERVER_PROTOCOL + '://' + SERVER_DOMAIN;
@@ -473,6 +496,9 @@ const AdBan = function() {
     'stop',
     'firstRun',
     'sendUrlComplaint',
+    'addPerSiteWhitelist',
+    'removePerSiteWhitelist',
+    'hasPerSiteWhitelist',
     'subscribeToStateChange',
     'unsubscribeFromStateChange',
     'processDocument',
@@ -508,6 +534,7 @@ AdBan.prototype = {
   _DATA_DIRECTORY_NAME: 'adban',
   _SETTINGS_FILENAME: 'settings.json',
   _CACHE_FILENAME: 'cache.json',
+  _PER_SITE_WHITELIST_FILENAME: 'per-site-whitelist.json',
   _LOGS_FILENAME: 'log.txt',
   _FILTERED_SCHEMES: {
     http: true,
@@ -622,6 +649,7 @@ AdBan.prototype = {
     auth_token: '',
     url_cache: createEmptyUrlCache(),
     url_exception_cache: createEmptyUrlExceptionCache(),
+    per_site_whitelist: createEmptyPerSiteWhitelist(),
     unverified_urls: {},
     unverified_url_exceptions: {},
     todo_nodes: [],
@@ -736,6 +764,7 @@ AdBan.prototype = {
       this._converter.charset = 'UTF-8';
       this._loadSettingsAsync();
       this._loadCacheAsync();
+      this._loadPerSiteWhitelistAsync();
       this.start();
     }
     else if (topic == 'private-browsing') {
@@ -841,6 +870,31 @@ AdBan.prototype = {
     this._startJsonRequest(this._url_complaint_xhr, this._SEND_URL_COMPLAINT_ENDPOINT, request_data, response_callback, finish_callback);
   },
 
+  addPerSiteWhitelist: function(site_url) {
+    logging.info('adding per site whitelist for the site_url=[%s]', site_url);
+    const vars = this._vars;
+    const canonical_site_host = this._getCanonicalSiteHost(site_url);
+    logging.info('adding canonical_site_host=[%s] to the per_site_whitelist', canonical_site_host);
+    vars.per_site_whitelist.add(canonical_site_host, true, vars.current_date);
+    this._savePerSiteWhitelistSync();
+  },
+
+  removePerSiteWhitelist: function(site_url) {
+    logging.info('removing per site whitelist for the site_url=[%s]', site_url);
+    const canonical_site_host = this._getCanonicalSiteHost(site_url);
+    logging.info('removing canonical_site_host=[%s] from the per_site_whitelist', canonical_site_host);
+    this._vars.per_site_whitelist.remove(canonical_site_host);
+    this._savePerSiteWhitelistSync();
+  },
+
+  hasPerSiteWhitelist: function(site_url) {
+    logging.info('verifying whether the site with site_url=[%s] is whitelisted', site_url);
+    const canonical_site_host = this._getCanonicalSiteHost(site_url);
+    const is_whitelist = this._verifyPerSiteWhitelist(canonical_site_host);
+    logging.info('is_whitelist=[%s] for the canonical_site_host=[%s]', is_whitelist, canonical_site_host);
+    return is_whitelist;
+  },
+
   subscribeToStateChange: function(state_change_callback) {
     logging.info('subscribing to AdBan component state change');
     const listener_id = this._last_state_listener_id++;
@@ -869,8 +923,10 @@ AdBan.prototype = {
     if (this._shouldProcessUri(site_uri)) {
       canonical_site_url = this._getCanonicalUrl(site_uri);
     }
-    this._injectCssToDocument(doc, canonical_site_url, 0);
-    this._hideBlacklistedLinks(doc, canonical_site_url);
+    if (!this._verifyPerSiteWhitelist(canonical_site_url)) {
+      this._injectCssToDocument(doc, canonical_site_url, 0);
+      this._hideBlacklistedLinks(doc, canonical_site_url);
+    }
   },
 
   executeDeferred: function(callback) {
@@ -915,6 +971,12 @@ AdBan.prototype = {
       this[func] = this._createErrorHandler(this[func]);
     }
     logging.info('error handlers for [%s] have been set up successfully', funcs);
+  },
+
+  _getCanonicalSiteHost: function(site_url) {
+    const site_uri = this._createUri(site_url);
+    const canonical_site_url = this._getCanonicalUrl(site_uri);
+    return canonical_site_url.split('/')[0] + '/';
   },
 
   _openTabInternal: function(tab_name, url) {
@@ -1089,6 +1151,12 @@ AdBan.prototype = {
     return file;
   },
 
+  _getFileForPerSiteWhitelist: function() {
+    const file = this._getDataDirectory();
+    file.append(this._PER_SITE_WHITELIST_FILENAME);
+    return file;
+  },
+
   _getFileForLogs: function() {
     const file = this._getDataDirectory();
     file.append(this._LOGS_FILENAME);
@@ -1098,7 +1166,7 @@ AdBan.prototype = {
   _readJsonFromFileAsync: function(file, read_complete_callback) {
     logging.info('start reading from the file=[%s]', file.path);
     if (!file.exists()) {
-      logging.warning('the file [%s] doesn\'t exist, skipping loading from file', file.path);
+      logging.info('the file [%s] doesn\'t exist, skipping loading from file', file.path);
       return;
     }
     const ios = this._io_service;
@@ -1217,6 +1285,30 @@ AdBan.prototype = {
     const file = this._getFileForCaches();
     this._writeJsonToFileSync(file, data);
     logging.info('AdBan cache has been saved to file');
+  },
+
+  _loadPerSiteWhitelistAsync: function() {
+    logging.info('loading per-site whitelist from file');
+    const vars = this._vars;
+    const file = this._getFileForPerSiteWhitelist();
+    const read_complete_callback = function(data) {
+      vars.per_site_whitelist = Trie.importFromNodes(
+          defaultPerSiteWhitelistValue,
+          0,
+          0,
+          data,
+          perSiteWhitelistValueConstructor);
+      logging.info('per-site whitelist has been loaded from file');
+    };
+    this._readJsonFromFileAsync(file, read_complete_callback);
+  },
+
+  _savePerSiteWhitelistSync: function() {
+    logging.info('saving per-site whitelist to file');
+    const data = this._vars.per_site_whitelist.exportToNodes(perSiteWhitelistNodeConstructor, 0);
+    const file = this._getFileForPerSiteWhitelist();
+    this._writeJsonToFileSync(file, data);
+    logging.info('per-site whitelist has been saved to file');
   },
 
   _shouldProcessUri: function(uri) {
@@ -1759,6 +1851,12 @@ AdBan.prototype = {
     return null;
   },
 
+  _verifyPerSiteWhitelist: function(canonical_site_url) {
+    const per_site_whitelist = this._vars.per_site_whitelist;
+    const node_with_value = per_site_whitelist.get(canonical_site_url)[1];
+    return per_site_whitelist.getValue(node_with_value);
+  },
+
   _verifyLocation: function(content_location, request_origin) {
     if (!this._shouldProcessUri(content_location)) {
       return [true, false, null, null];
@@ -1771,12 +1869,23 @@ AdBan.prototype = {
     let canonical_site_url = null;
     if (request_origin && this._shouldProcessUri(request_origin)) {
       canonical_site_url = this._getCanonicalUrl(request_origin);
-      let url_exception_value;
-      [url_exception_value, is_todo1] = this._getUrlExceptionValue(canonical_site_url);
-      is_whitelist = this._verifyUrlException(canonical_url, url_exception_value, canonical_site_url);
+      if (this._verifyPerSiteWhitelist(canonical_site_url)) {
+        is_whitelist = true;
+      }
+      else {
+        let url_exception_value;
+        [url_exception_value, is_todo1] = this._getUrlExceptionValue(canonical_site_url);
+        is_whitelist = this._verifyUrlException(canonical_url, url_exception_value, canonical_site_url);
+      }
     }
     if (is_whitelist == null) {
-      [is_whitelist, is_todo2] = this._verifyUrl(canonical_url);
+      if (!canonical_site_url && this._verifyPerSiteWhitelist(canonical_url)) {
+        is_whitelist = true;
+        is_todo1 = false;
+      }
+      else {
+        [is_whitelist, is_todo2] = this._verifyUrl(canonical_url);
+      }
     }
 
     const is_todo = is_todo1 || is_todo2;

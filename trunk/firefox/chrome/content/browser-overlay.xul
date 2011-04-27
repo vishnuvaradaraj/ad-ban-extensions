@@ -24,6 +24,8 @@
     <command id="adban-cmd-complaint" observes="adban-cmd-stop" oncommand="void(0)"/>
     <command id="adban-cmd-start" disabled="true" oncommand="void(0)"/>
     <command id="adban-cmd-stop" oncommand="void(0)"/>
+    <command id="adban-cmd-add-per-site-whitelist"/>
+    <command id="adban-cmd-remove-per-site-whitelist"/>
     <command id="adban-cmd-help"/>
     <command id="adban-cmd-donate"/>
     <command id="adban-cmd-recommend"/>
@@ -50,6 +52,17 @@
           command="adban-cmd-stop"
           tooltiptext="&adban.menuitem.stop.tooltiptext;"
           accesskey="&adban.menuitem.stop.accesskey;"
+        />
+        <menuseparator/>
+        <menuitem
+          label="&adban.menuitem.add-per-site-whitelist;"
+          command="adban-cmd-add-per-site-whitelist"
+          accesskey="&adban.menuitem.add-per-site-whitelist.accesskey;"
+        />
+        <menuitem
+          label="&adban.menuitem.remove-per-site-whitelist;"
+          command="adban-cmd-remove-per-site-whitelist"
+          accesskey="&adban.menuitem.remove-per-site-whitelist.accesskey;"
         />
         <menuseparator/>
         <menuitem
@@ -100,6 +113,17 @@
           tooltiptext="&adban.menuitem.stop.tooltiptext;"
           accesskey="&adban.menuitem.stop.accesskey;"
           key="adban-key-stop"
+        />
+        <menuseparator/>
+        <menuitem
+          label="&adban.menuitem.add-per-site-whitelist;"
+          command="adban-cmd-add-per-site-whitelist"
+          accesskey="&adban.menuitem.add-per-site-whitelist.accesskey;"
+        />
+        <menuitem
+          label="&adban.menuitem.remove-per-site-whitelist;"
+          command="adban-cmd-remove-per-site-whitelist"
+          accesskey="&adban.menuitem.remove-per-site-whitelist.accesskey;"
         />
         <menuseparator/>
         <menuitem
