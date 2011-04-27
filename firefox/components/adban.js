@@ -1289,6 +1289,7 @@ AdBan.prototype = {
 
   _updateCache: function(response_data, urls, cache, value_constructor) {
     const response_data_length = response_data.length;
+    const current_date = this._vars.current_date;
 
     for (let i = 0; i < response_data_length; i++) {
       let [url_length, todo, url_idx, properties] = response_data[i];
@@ -1299,7 +1300,7 @@ AdBan.prototype = {
       }
       let url = urls[url_idx[0]].substring(0, url_length);
       let value = value_constructor(properties);
-      cache.update(url, end_urls, value, this._vars.current_date, todo);
+      cache.update(url, end_urls, value, current_date, todo);
     }
   },
 
