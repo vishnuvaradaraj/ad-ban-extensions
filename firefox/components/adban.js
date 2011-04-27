@@ -1175,7 +1175,6 @@ AdBan.prototype = {
 
   _loadCacheAsync: function() {
     logging.info('loading AdBan cache from file');
-    const that = this;
     const vars = this._vars;
     const settings = this._settings;
     const stale_node_timeout = settings.stale_node_timeout;
