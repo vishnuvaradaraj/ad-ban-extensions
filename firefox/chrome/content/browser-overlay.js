@@ -192,9 +192,6 @@
     logging.info('initializing browser-overlay');
     window.removeEventListener('load', init, false);
 
-    $('adban-menupopup').addEventListener('popupshowing', onMenuPopup, false);
-    $('adban-toolbarbutton-menupopup').addEventListener('popupshowing', onMenuPopup, false);
-
     $('adban-cmd-complaint').addEventListener('command', cmdComplaint, false);
     $('adban-cmd-stop').addEventListener('command', cmdStop, false);
     $('adban-cmd-start').addEventListener('command', cmdStart, false);
@@ -230,6 +227,11 @@
         pref_branch.setBoolPref('toolbarbutton-installed', true);
       }
 
+      $('adban-menupopup').addEventListener('popupshowing', onMenuPopup, false);
+      if ($('adban-toolbarbutton')) {
+        $('adban-toolbarbutton-menupopup').addEventListener('popupshowing', onMenuPopup, false);
+      }
+
       onStateChange(is_initially_active);
     };
     adban.executeDeferred(first_run_callback);
@@ -248,6 +250,11 @@
 
     adban.unsubscribeFromStateChange(state_listener_id);
 
+    $('adban-menupopup').removeEventListener('popupshowing', onMenuPopup, false);
+    if ($('adban-toolbarbutton')) {
+      $('adban-toolbarbutton-menupopup').removeEventListener('popupshowing', onMenuPopup, false);
+    }
+
     $('adban-cmd-complaint').removeEventListener('command', cmdComplaint, false);
     $('adban-cmd-stop').removeEventListener('command', cmdStop, false);
     $('adban-cmd-start').removeEventListener('command', cmdStart, false);
@@ -257,9 +264,6 @@
     $('adban-cmd-donate').removeEventListener('command', cmdDonate, false);
     $('adban-cmd-recommend').removeEventListener('command', cmdRecommend, false);
     $('adban-cmd-report-bug').removeEventListener('command', cmdReportBug, false);
-
-    $('adban-menupopup').removeEventListener('popupshowing', onMenuPopup, false);
-    $('adban-toolbarbutton-menupopup').removeEventListener('popupshowing', onMenuPopup, false);
 
     logging.info('browser-overlay has been shut down. state_listener_id=[%s]', state_listener_id);
   };
