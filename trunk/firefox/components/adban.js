@@ -876,6 +876,9 @@ AdBan.prototype = {
     logging.info('adding per site whitelist for the site_url=[%s]', site_url);
     const vars = this._vars;
     const canonical_site_host = this._getCanonicalSiteHost(site_url);
+    if (!canonical_site_host) {
+      return;
+    }
     logging.info('adding canonical_site_host=[%s] to the per_site_whitelist', canonical_site_host);
     vars.per_site_whitelist.add(canonical_site_host, true, vars.current_date);
     this._savePerSiteWhitelistSync();
@@ -884,6 +887,9 @@ AdBan.prototype = {
   removePerSiteWhitelist: function(site_url) {
     logging.info('removing per site whitelist for the site_url=[%s]', site_url);
     const canonical_site_host = this._getCanonicalSiteHost(site_url);
+    if (!canonical_site_host) {
+      return;
+    }
     logging.info('removing canonical_site_host=[%s] from the per_site_whitelist', canonical_site_host);
     this._vars.per_site_whitelist.remove(canonical_site_host);
     this._savePerSiteWhitelistSync();
@@ -892,6 +898,9 @@ AdBan.prototype = {
   hasPerSiteWhitelist: function(site_url) {
     logging.info('verifying whether the site with site_url=[%s] is whitelisted', site_url);
     const canonical_site_host = this._getCanonicalSiteHost(site_url);
+    if (!canonical_site_host) {
+      return;
+    }
     const is_whitelist = this._verifyPerSiteWhitelist(canonical_site_host);
     logging.info('is_whitelist=[%s] for the canonical_site_host=[%s]', is_whitelist, canonical_site_host);
     return is_whitelist;
@@ -976,9 +985,15 @@ AdBan.prototype = {
   },
 
   _getCanonicalSiteHost: function(site_url) {
-    const site_uri = this._createUri(site_url);
-    const canonical_site_url = this._getCanonicalUrl(site_uri);
-    return canonical_site_url.split('/')[0] + '/';
+    try {
+      const site_uri = this._createUri(site_url);
+      const canonical_site_url = this._getCanonicalUrl(site_uri);
+      return canonical_site_url.split('/')[0] + '/';
+    }
+    catch(e) {
+      logging.info('cannot obtain canonical_site_host from the site_url=[%s]', site_url);
+      return null;
+    }
   },
 
   _openTabInternal: function(tab_name, url) {

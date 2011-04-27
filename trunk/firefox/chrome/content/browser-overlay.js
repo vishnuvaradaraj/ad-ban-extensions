@@ -160,16 +160,12 @@
 
   let cmdAddPerSiteWhitelist = function() {
     const current_site_url = getCurrentSiteUrl();
-    if (current_site_url) {
-      adban.addPerSiteWhitelist(current_site_url);
-    }
+    adban.addPerSiteWhitelist(current_site_url);
   };
 
   let cmdRemovePerSiteWhitelist = function() {
     const current_site_url = getCurrentSiteUrl();
-    if (current_site_url) {
-      adban.removePerSiteWhitelist(current_site_url);
-    }
+    adban.removePerSiteWhitelist(current_site_url);
   };
 
   let cmdHelp = function() {
