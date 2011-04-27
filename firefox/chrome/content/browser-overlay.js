@@ -184,6 +184,10 @@
     adban.openTab('recommend', adban.RECOMMEND_URL);
   };
 
+  let cmdReportBug = function() {
+    adban.openTab('report-bug', adban.REPORT_BUG_URL);
+  };
+
   let state_listener_id;
   let is_initially_active;
 
@@ -202,6 +206,7 @@
     $('adban-cmd-help').addEventListener('command', cmdHelp, false);
     $('adban-cmd-donate').addEventListener('command', cmdDonate, false);
     $('adban-cmd-recommend').addEventListener('command', cmdRecommend, false);
+    $('adban-cmd-report-bug').addEventListener('command', cmdReportBug, false);
 
     const state_change_results = adban.subscribeToStateChange(onStateChange);
     state_listener_id = state_change_results[0];
@@ -254,6 +259,7 @@
     $('adban-cmd-help').removeEventListener('command', cmdHelp, false);
     $('adban-cmd-donate').removeEventListener('command', cmdDonate, false);
     $('adban-cmd-recommend').removeEventListener('command', cmdRecommend, false);
+    $('adban-cmd-report-bug').removeEventListener('command', cmdReportBug, false);
 
     $('adban-menupopup').removeEventListener('popupshowing', onMenuPopup, false);
     $('adban-toolbarbutton-menupopup').removeEventListener('popupshowing', onMenuPopup, false);
