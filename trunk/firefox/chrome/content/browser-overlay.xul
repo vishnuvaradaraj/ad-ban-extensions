@@ -29,6 +29,7 @@
     <command id="adban-cmd-help"/>
     <command id="adban-cmd-donate"/>
     <command id="adban-cmd-recommend"/>
+    <command id="adban-cmd-report-bug"/>
   </commandset>
 
   <menupopup id="menu_ToolsPopup">
@@ -79,6 +80,11 @@
           label="&adban.menuitem.recommend;"
           command="adban-cmd-recommend"
           accesskey="&adban.menuitem.recommend.accesskey;"
+        />
+        <menuitem
+          label="&adban.menuitem.report-bug;"
+          command="adban-cmd-report-bug"
+          accesskey="&adban.menuitem.report-bug.accesskey;"
         />
       </menupopup>
     </menu>
@@ -140,6 +146,11 @@
           label="&adban.menuitem.recommend;"
           command="adban-cmd-recommend"
           accesskey="&adban.menuitem.recommend.accesskey;"
+        />
+        <menuitem
+          label="&adban.menuitem.report-bug;"
+          command="adban-cmd-report-bug"
+          accesskey="&adban.menuitem.report-bug.accesskey;"
         />
       </menupopup>
     </toolbarbutton>

@@ -17,6 +17,8 @@
 <!ENTITY adban.menuitem.donate.accesskey "A">
 <!ENTITY adban.menuitem.recommend "Ajánlani">
 <!ENTITY adban.menuitem.recommend.accesskey "n">
+<!ENTITY adban.menuitem.report-bug "Hibabejelentés">
+<!ENTITY adban.menuitem.report-bug.accesskey "H">
 
 <!ENTITY adban.toolbarbutton.label "AdBan">
 <!ENTITY adban.toolbarbutton.tooltiptext "AdBan lehetőségek">

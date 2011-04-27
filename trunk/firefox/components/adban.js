@@ -487,6 +487,7 @@ const AdBan = function() {
   this.HELP_URL = server_host + '/ff/help';
   this.DONATE_URL = server_host + '/ff/donate';
   this.RECOMMEND_URL = server_host + '/ff/recommend';
+  this.REPORT_BUG_URL = 'http://code.google.com/p/ad-ban-extensions/issues/entry';
   this.USER_STATUS_URL = server_host + '/ff/user_status';
 
   const funcs = [
