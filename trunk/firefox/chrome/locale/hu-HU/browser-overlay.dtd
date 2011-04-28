@@ -4,10 +4,8 @@
 <!ENTITY adban.menuitem.stop "Letiltás">
 <!ENTITY adban.menuitem.stop.tooltiptext "AdBan letiltása">
 <!ENTITY adban.menuitem.stop.accesskey "L">
-<!ENTITY adban.menuitem.add-per-site-whitelist "Ne távolítsa el hirdetéseket az aktuális oldalon">
-<!ENTITY adban.menuitem.add-per-site-whitelist.accesskey "t">
-<!ENTITY adban.menuitem.remove-per-site-whitelist "Vegye ki hirdetéseket a jelenlegi helyszínen">
-<!ENTITY adban.menuitem.remove-per-site-whitelist.accesskey "V">
+<!ENTITY adban.menuitem.add-per-site-whitelist.accesskey "c">
+<!ENTITY adban.menuitem.remove-per-site-whitelist.accesskey "k">
 <!ENTITY adban.menuitem.complaint "Reklámok jelentése">
 <!ENTITY adban.menuitem.complaint.tooltiptext "Reklámok vagy problémák jelentése az aktuális oldalon">
 <!ENTITY adban.menuitem.complaint.accesskey "j">

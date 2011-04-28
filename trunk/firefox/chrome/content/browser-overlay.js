@@ -5,6 +5,7 @@
   let Ci = Components.interfaces;
 
   let TEST_SCHEME_REGEXP = new RegExp('^[a-z]+:', 'i');
+  let SCHEME_AND_HOST_REGEXP = new RegExp('[^:]+:/{2}?[^/]*');
 
   let prompts = Cc['@mozilla.org/embedcomp/prompt-service;1'].getService(Ci.nsIPromptService);
   let adban = Cc['@ad-ban.appspot.com/adban;1'].getService().wrappedJSObject;
@@ -29,7 +30,8 @@
     if (current_site_url && !TEST_SCHEME_REGEXP.test(current_site_url)) {
       current_site_url = 'http://' + current_site_url;
     }
-    return current_site_url;
+    const match = SCHEME_AND_HOST_REGEXP.exec(current_site_url);
+    return match ? match[0] : '';
   };
 
   let conditionalAlert = function(alert_name, msg) {
@@ -113,6 +115,8 @@
     const cmd_add_per_site_whitelist = $('adban-cmd-add-per-site-whitelist');
     const cmd_remove_per_site_whitelist = $('adban-cmd-remove-per-site-whitelist');
     const current_site_url = getCurrentSiteUrl();
+    cmd_add_per_site_whitelist.setAttribute('label', _('add-per-site-whitelist', [current_site_url]));
+    cmd_remove_per_site_whitelist.setAttribute('label', _('remove-per-site-whitelist', [current_site_url]));
     const has_per_site_whitelist = adban.hasPerSiteWhitelist(current_site_url);
     if (has_per_site_whitelist == null) {
       cmd_add_per_site_whitelist.setAttribute('disabled', 'true');
@@ -161,11 +165,13 @@
   let cmdAddPerSiteWhitelist = function() {
     const current_site_url = getCurrentSiteUrl();
     adban.addPerSiteWhitelist(current_site_url);
+    conditionalAlert('per-site-whitelist-added', _('per-site-whitelist-added', [current_site_url]));
   };
 
   let cmdRemovePerSiteWhitelist = function() {
     const current_site_url = getCurrentSiteUrl();
     adban.removePerSiteWhitelist(current_site_url);
+    conditionalAlert('per-site-whitelist-removed', _('per-site-whitelist-removed', [current_site_url]));
   };
 
   let cmdHelp = function() {

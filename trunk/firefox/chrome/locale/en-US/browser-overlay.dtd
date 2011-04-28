@@ -4,9 +4,7 @@
 <!ENTITY adban.menuitem.stop "Off">
 <!ENTITY adban.menuitem.stop.tooltiptext "Disable AdBan">
 <!ENTITY adban.menuitem.stop.accesskey "f">
-<!ENTITY adban.menuitem.add-per-site-whitelist "Don't block ads on the current site">
 <!ENTITY adban.menuitem.add-per-site-whitelist.accesskey "c">
-<!ENTITY adban.menuitem.remove-per-site-whitelist "Block ads on the current site">
 <!ENTITY adban.menuitem.remove-per-site-whitelist.accesskey "k">
 <!ENTITY adban.menuitem.complaint "Report ads">
 <!ENTITY adban.menuitem.complaint.tooltiptext "Report ads or problems on the current page">
