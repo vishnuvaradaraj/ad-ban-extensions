@@ -56,12 +56,10 @@
         />
         <menuseparator/>
         <menuitem
-          label="&adban.menuitem.add-per-site-whitelist;"
           command="adban-cmd-add-per-site-whitelist"
           accesskey="&adban.menuitem.add-per-site-whitelist.accesskey;"
         />
         <menuitem
-          label="&adban.menuitem.remove-per-site-whitelist;"
           command="adban-cmd-remove-per-site-whitelist"
           accesskey="&adban.menuitem.remove-per-site-whitelist.accesskey;"
         />
@@ -122,12 +120,10 @@
         />
         <menuseparator/>
         <menuitem
-          label="&adban.menuitem.add-per-site-whitelist;"
           command="adban-cmd-add-per-site-whitelist"
           accesskey="&adban.menuitem.add-per-site-whitelist.accesskey;"
         />
         <menuitem
-          label="&adban.menuitem.remove-per-site-whitelist;"
           command="adban-cmd-remove-per-site-whitelist"
           accesskey="&adban.menuitem.remove-per-site-whitelist.accesskey;"
         />
