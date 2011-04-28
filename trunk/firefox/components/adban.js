@@ -931,6 +931,7 @@ AdBan.prototype = {
     logging.info('processing the document for the url=[%s]', site_url);
     const site_uri = this._createUri(site_url);
     if (!this._shouldProcessUri(site_uri)) {
+      logging.info('there is no need in processing the document for the url=[%s]', site_url);
       return;
     }
     const canonical_site_url = this._getCanonicalUrl(site_uri);
@@ -987,6 +988,10 @@ AdBan.prototype = {
   _getCanonicalSiteHost: function(site_url) {
     try {
       const site_uri = this._createUri(site_url);
+      if (!this._shouldProcessUri(site_uri)) {
+        logging.info('there is no need in processing the site_url=[%s]', site_url);
+        return null;
+      }
       const canonical_site_url = this._getCanonicalUrl(site_uri);
       return canonical_site_url.split('/')[0] + '/';
     }

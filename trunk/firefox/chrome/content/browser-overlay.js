@@ -4,6 +4,8 @@
   let Cc = Components.classes;
   let Ci = Components.interfaces;
 
+  let TEST_SCHEME_REGEXP = new RegExp('^[a-z]+:', 'i');
+
   let prompts = Cc['@mozilla.org/embedcomp/prompt-service;1'].getService(Ci.nsIPromptService);
   let adban = Cc['@ad-ban.appspot.com/adban;1'].getService().wrappedJSObject;
   let logging = adban.logging;
@@ -23,12 +25,9 @@
 
   let getCurrentSiteUrl = function() {
     let current_site_url = $('urlbar').value;
-    if (current_site_url) {
-      // normalize the url for the consumption by adban component.
-      if (current_site_url.indexOf('://') == -1) {
-        current_site_url = 'http://' + current_site_url;
-      }
-      current_site_url += '/';
+    // add dummy scheme if it is missing
+    if (current_site_url && !TEST_SCHEME_REGEXP.test(current_site_url)) {
+      current_site_url = 'http://' + current_site_url;
     }
     return current_site_url;
   };
