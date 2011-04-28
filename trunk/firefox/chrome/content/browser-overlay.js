@@ -1,22 +1,22 @@
-// use this scoping hack in order to hide objects defined inside the branch
-// with the 'let' statement from the global scope.
+// use this scoping hack in order to hide objects defined inside the anonymous function
+// from the global scope.
 (function() {
-  let Cc = Components.classes;
-  let Ci = Components.interfaces;
+  const Cc = Components.classes;
+  const Ci = Components.interfaces;
 
-  let TEST_SCHEME_REGEXP = new RegExp('^[a-z]+:', 'i');
-  let SCHEME_AND_HOST_REGEXP = new RegExp('[^:]+:/{2}?[^/]*');
+  const TEST_SCHEME_REGEXP = new RegExp('^[a-z]+:', 'i');
+  const SCHEME_AND_HOST_REGEXP = new RegExp('[^:]+:/{2}?[^/]*');
 
-  let prompts = Cc['@mozilla.org/embedcomp/prompt-service;1'].getService(Ci.nsIPromptService);
-  let adban = Cc['@ad-ban.appspot.com/adban;1'].getService().wrappedJSObject;
-  let logging = adban.logging;
-  let pref_branch = adban.pref_branch;
+  const prompts = Cc['@mozilla.org/embedcomp/prompt-service;1'].getService(Ci.nsIPromptService);
+  const adban = Cc['@ad-ban.appspot.com/adban;1'].getService().wrappedJSObject;
+  const logging = adban.logging;
+  const pref_branch = adban.pref_branch;
 
-  let $ = function(id) {
+  const $ = function(id) {
     return document.getElementById(id);
   };
 
-  let _ = function(id, params) {
+  const _ = function(id, params) {
     const adban_strings = $('adban-strings');
     if (params) {
       return adban_strings.getFormattedString(id, params);
@@ -24,7 +24,7 @@
     return adban_strings.getString(id);
   };
 
-  let getCurrentSiteUrl = function() {
+  const getCurrentSiteUrl = function() {
     let current_site_url = $('urlbar').value;
     // add dummy scheme if it is missing
     if (current_site_url && !TEST_SCHEME_REGEXP.test(current_site_url)) {
@@ -34,7 +34,7 @@
     return match ? match[0] : '';
   };
 
-  let conditionalAlert = function(alert_name, msg) {
+  const conditionalAlert = function(alert_name, msg) {
     alert_name = 'alert-states.' + alert_name;
     if (pref_branch.prefHasUserValue(alert_name) &&
         pref_branch.getBoolPref(alert_name)) {
@@ -51,7 +51,7 @@
     }
   };
 
-  let setupToolbarButtons = function() {
+  const setupToolbarButtons = function() {
     const nav_bar = $('nav-bar');
     if (!nav_bar) {
       logging.warning('there is no navigation bar in the current window');
@@ -73,23 +73,23 @@
     logging.info('adban buttons must be added to navigation bar');
   };
 
-  let processDocumentEventHandler = function(e) {
+  const processDocumentEventHandler = function(e) {
     if (e.type == 'DOMContentLoaded') {
       adban.processDocument(e.originalTarget);
     }
   };
 
-  let enableDocumentsProcessing = function() {
+  const enableDocumentsProcessing = function() {
     logging.info('subscribing to DOMContentLoaded event on gBrowser. state_listener_id=[%s]', state_listener_id);
     gBrowser.addEventListener('DOMContentLoaded', processDocumentEventHandler, true);
   };
 
-  let disableDocumentsProcessing = function() {
+  const disableDocumentsProcessing = function() {
     logging.info('unsubscribing from DOMContentLoaded event on gBrowser. state_listener_id=[%s]', state_listener_id);
     gBrowser.removeEventListener('DOMContentLoaded', processDocumentEventHandler, true);
   };
 
-  let onStateChange = function() {
+  const onStateChange = function() {
     const cmd_stop = $('adban-cmd-stop');
     const cmd_start = $('adban-cmd-start');
     const toolbarbutton = $('adban-toolbarbutton');
@@ -111,7 +111,7 @@
     }
   };
 
-  let onMenuPopup = function() {
+  const onMenuPopup = function() {
     const cmd_add_per_site_whitelist = $('adban-cmd-add-per-site-whitelist');
     const cmd_remove_per_site_whitelist = $('adban-cmd-remove-per-site-whitelist');
     const current_site_url = getCurrentSiteUrl();
@@ -132,7 +132,7 @@
     }
   };
 
-  let cmdComplaint = function() {
+  const cmdComplaint = function() {
     const complaint_callback = function(site_url, comment) {
       const success_callback = function() {
         conditionalAlert('complaint-sent', _('complaint-sent', [site_url]));
@@ -152,33 +152,33 @@
     complaint_window.focus();
   };
 
-  let cmdStop = function() {
+  const cmdStop = function() {
     adban.stop();
     conditionalAlert('adban-stopped', _('adban-stopped'));
   };
 
-  let cmdStart = function() {
+  const cmdStart = function() {
     adban.start();
     conditionalAlert('adban-started', _('adban-started'));
   };
 
-  let cmdAddPerSiteWhitelist = function() {
+  const cmdAddPerSiteWhitelist = function() {
     const current_site_url = getCurrentSiteUrl();
     adban.addPerSiteWhitelist(current_site_url);
     conditionalAlert('per-site-whitelist-added', _('per-site-whitelist-added', [current_site_url]));
   };
 
-  let cmdRemovePerSiteWhitelist = function() {
+  const cmdRemovePerSiteWhitelist = function() {
     const current_site_url = getCurrentSiteUrl();
     adban.removePerSiteWhitelist(current_site_url);
     conditionalAlert('per-site-whitelist-removed', _('per-site-whitelist-removed', [current_site_url]));
   };
 
-  let cmdHelp = function() {
+  const cmdHelp = function() {
     adban.openTab('help', adban.HELP_URL);
   };
 
-  let cmdDonate = function() {
+  const cmdDonate = function() {
     adban.openTab('donate', adban.DONATE_URL);
   };
 
@@ -186,14 +186,14 @@
     adban.openTab('recommend', adban.RECOMMEND_URL);
   };
 
-  let cmdReportBug = function() {
+  const cmdReportBug = function() {
     adban.openTab('report-bug', adban.REPORT_BUG_URL);
   };
 
   let state_listener_id;
   let is_initially_active;
 
-  let init = function() {
+  const init = function() {
     logging.info('initializing browser-overlay');
     window.removeEventListener('load', init, false);
 
@@ -245,7 +245,7 @@
     logging.info('browser-overlay has been initialized. state_listener_id=[%s]', state_listener_id);
   };
 
-  let shutdown = function() {
+  const shutdown = function() {
     logging.info('shutting down browser-overlay. state_listener_id=[%s]', state_listener_id);
     window.removeEventListener('unload', shutdown, false);
 
