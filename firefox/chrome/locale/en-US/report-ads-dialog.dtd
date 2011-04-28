@@ -3,10 +3,10 @@
 <!ENTITY adban.complaint-dialog.accept-button.label "Send the Report">
 <!ENTITY adban.complaint-dialog.site-url.label "
   The following page contains ads or looks broken due to AdBan.
-  You can modify the page url if it is incorrect (though this is unlikely).
+  You can modify the page url if it is incorrect (though this is unlikely)
 ">
 <!ENTITY adban.complaint-dialog.comment.label "
   This field is optional. You can enter a brief description of the problem you noticed
-  on the given page (For example: 'I see ads on this page').
+  on the given page (For example: 'I see ads on this page')
 ">
 

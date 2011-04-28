@@ -3,10 +3,10 @@
 <!ENTITY adban.complaint-dialog.accept-button.label "Jelentés elküldése">
 <!ENTITY adban.complaint-dialog.site-url.label "
   A megadott oldal reklámot tartalmaz vagy helytelenül jelenik meg az AdBan miatt.
-  Megváltoztathatja a webhely URL-címét, amennyiben az nem megfelelő.
+  Megváltoztathatja a webhely URL-címét, amennyiben az nem megfelelő
 ">
 <!ENTITY adban.complaint-dialog.comment.label "
   Röviden írja le a problémát a megadott oldallal kapcsolatban
-  (Például: “I see ads on this page” - „Reklám látszik az oldalon”).
+  (Például: “I see ads on this page” - „Reklám látszik az oldalon”)
 ">
 
