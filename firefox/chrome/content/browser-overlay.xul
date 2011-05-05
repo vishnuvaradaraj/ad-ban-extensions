@@ -43,6 +43,15 @@
         />
         <menuseparator/>
         <menuitem
+          command="adban-cmd-add-per-site-whitelist"
+          accesskey="&adban.menuitem.add-per-site-whitelist.accesskey;"
+        />
+        <menuitem
+          command="adban-cmd-remove-per-site-whitelist"
+          accesskey="&adban.menuitem.remove-per-site-whitelist.accesskey;"
+        />
+        <menuseparator/>
+        <menuitem
           label="&adban.menuitem.start;"
           command="adban-cmd-start"
           tooltiptext="&adban.menuitem.start.tooltiptext;"
@@ -53,15 +62,6 @@
           command="adban-cmd-stop"
           tooltiptext="&adban.menuitem.stop.tooltiptext;"
           accesskey="&adban.menuitem.stop.accesskey;"
-        />
-        <menuseparator/>
-        <menuitem
-          command="adban-cmd-add-per-site-whitelist"
-          accesskey="&adban.menuitem.add-per-site-whitelist.accesskey;"
-        />
-        <menuitem
-          command="adban-cmd-remove-per-site-whitelist"
-          accesskey="&adban.menuitem.remove-per-site-whitelist.accesskey;"
         />
         <menuseparator/>
         <menuitem
@@ -105,6 +105,15 @@
         />
         <menuseparator/>
         <menuitem
+          command="adban-cmd-add-per-site-whitelist"
+          accesskey="&adban.menuitem.add-per-site-whitelist.accesskey;"
+        />
+        <menuitem
+          command="adban-cmd-remove-per-site-whitelist"
+          accesskey="&adban.menuitem.remove-per-site-whitelist.accesskey;"
+        />
+        <menuseparator/>
+        <menuitem
           label="&adban.menuitem.start;"
           command="adban-cmd-start"
           tooltiptext="&adban.menuitem.start.tooltiptext;"
@@ -117,15 +126,6 @@
           tooltiptext="&adban.menuitem.stop.tooltiptext;"
           accesskey="&adban.menuitem.stop.accesskey;"
           key="adban-key-stop"
-        />
-        <menuseparator/>
-        <menuitem
-          command="adban-cmd-add-per-site-whitelist"
-          accesskey="&adban.menuitem.add-per-site-whitelist.accesskey;"
-        />
-        <menuitem
-          command="adban-cmd-remove-per-site-whitelist"
-          accesskey="&adban.menuitem.remove-per-site-whitelist.accesskey;"
         />
         <menuseparator/>
         <menuitem
