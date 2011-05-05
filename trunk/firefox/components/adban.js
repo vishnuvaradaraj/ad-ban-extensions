@@ -484,7 +484,7 @@ const AdBan = function() {
   this._VERIFY_URLS_ENDPOINT = server_host + '/g/' + ADDON_VERSION;
 
   this.pref_branch = this._pref_service.getBranch('extensions.' + EXTENSION_ID + '.');
-  this.HELP_URL = server_host + '/ff/help';
+  this.HELP_URL = server_host + '/ff/help/' + ADDON_VERSION;
   this.DONATE_URL = server_host + '/ff/donate';
   this.RECOMMEND_URL = server_host + '/ff/recommend';
   this.REPORT_BUG_URL = 'http://code.google.com/p/ad-ban-extensions/issues/entry';
