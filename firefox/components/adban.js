@@ -8,7 +8,7 @@ const Cr = Components.results;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
-const ADDON_VERSION = '1.7.0beta2';
+const ADDON_VERSION = '1.7.0';
 const SERVER_DOMAIN = 'ad-ban.appspot.com';
 const EXTENSION_ID = 'adban@ad-ban.appspot.com';
 const SERVER_PROTOCOL = 'http';
