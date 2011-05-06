@@ -927,7 +927,12 @@ AdBan.prototype = {
       logging.info('the ducument\'s node=[%s] isn\'t html document', node_name);
       return;
     }
-    const site_url = doc.location.href;
+    const doc_location = doc.location;
+    if (!doc_location) {
+      logging.info('cannot determine the document\'s location for the node=[%s]', node_name);
+      return;
+    }
+    const site_url = doc_location.href;
     logging.info('processing the document for the url=[%s]', site_url);
     const site_uri = this._createUri(site_url);
     if (!this._shouldProcessUri(site_uri)) {
