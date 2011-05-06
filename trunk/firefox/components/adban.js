@@ -1480,7 +1480,7 @@ AdBan.prototype = {
         }
         catch(e) {
           logging.error('error when hiding the node=[%s] for canonical_url=[%s], canonical_site_url=[%s]: [%s]', node.nodeName, canonical_url, canonical_site_url, e);
-          logging.error(e.stack);
+          logging.error('stack trace: [%s]', e.stack);
         }
       }
       else if (is_todo1 || is_todo2) {
@@ -1508,7 +1508,7 @@ AdBan.prototype = {
       }
       catch(e) {
         logging.error('error when hiding the todo doc for canonical_site_url=[%s]: [%s]', canonical_site_url, e);
-        logging.error(e.stack);
+        logging.error('stack trace: [%s]', e.stack);
       }
     }
   },
@@ -1528,7 +1528,7 @@ AdBan.prototype = {
         }
         catch(e) {
           logging.error('cannot close the todo popup for canonical_url=[%s]: [%s]', canonical_url, e);
-          logging.error(e.stack);
+          logging.error('stack trace: [%s]', e.stack);
         }
       }
       else if (is_todo) {
