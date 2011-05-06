@@ -1,0 +1,156 @@
+<?xml version="1.0"?>
+<!DOCTYPE window SYSTEM "chrome://adban/locale/browser-overlay.dtd">
+
+<overlay id="adban-browser-overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <script type="application/x-javascript" src="browser-overlay.js"/>
+
+  <stringbundleset>
+    <stringbundle id="adban-strings" src="chrome://adban/locale/strings.properties"/>
+  </stringbundleset>
+
+  <keyset>
+    <!--
+      This is a hack with two identical key bindings, which are associated
+      with different commands. It works, because adban-cmd-start and adban-cmd-stop
+      are exclusive - i.e. if adban-cmd-start is enabled, then adban-cmd-stop
+      is disabled and vice versa.
+    -->
+    <key id="adban-key-start" modifiers="accel shift" key="V" command="adban-cmd-start"/>
+    <key id="adban-key-stop" modifiers="accel shift" key="V" command="adban-cmd-stop"/>
+  </keyset>
+
+  <commandset>
+    <!-- fake oncommand attribute is used as a workaround for the bug https://bugzilla.mozilla.org/show_bug.cgi?id=371900 -->
+    <command id="adban-cmd-complaint" observes="adban-cmd-stop" oncommand="void(0)"/>
+    <command id="adban-cmd-start" disabled="true" oncommand="void(0)"/>
+    <command id="adban-cmd-stop" oncommand="void(0)"/>
+    <command id="adban-cmd-add-per-site-whitelist"/>
+    <command id="adban-cmd-remove-per-site-whitelist"/>
+    <command id="adban-cmd-help"/>
+    <command id="adban-cmd-donate"/>
+    <command id="adban-cmd-recommend"/>
+    <command id="adban-cmd-report-bug"/>
+  </commandset>
+
+  <menupopup id="menu_ToolsPopup">
+    <menu id="adban-menuitem" label="AdBan" insertafter="javascriptConsole" accesskey="b" class="menu-iconic">
+      <menupopup id="adban-menupopup">
+        <menuitem
+          label="&adban.menuitem.complaint;"
+          command="adban-cmd-complaint"
+          tooltiptext="&adban.menuitem.complaint.tooltiptext;"
+          accesskey="&adban.menuitem.complaint.accesskey;"
+        />
+        <menuseparator/>
+        <menuitem
+          command="adban-cmd-add-per-site-whitelist"
+          accesskey="&adban.menuitem.add-per-site-whitelist.accesskey;"
+        />
+        <menuitem
+          command="adban-cmd-remove-per-site-whitelist"
+          accesskey="&adban.menuitem.remove-per-site-whitelist.accesskey;"
+        />
+        <menuseparator/>
+        <menuitem
+          label="&adban.menuitem.start;"
+          command="adban-cmd-start"
+          tooltiptext="&adban.menuitem.start.tooltiptext;"
+          accesskey="&adban.menuitem.start.accesskey;"
+        />
+        <menuitem
+          label="&adban.menuitem.stop;"
+          command="adban-cmd-stop"
+          tooltiptext="&adban.menuitem.stop.tooltiptext;"
+          accesskey="&adban.menuitem.stop.accesskey;"
+        />
+        <menuseparator/>
+        <menuitem
+          label="&adban.menuitem.help;"
+          command="adban-cmd-help"
+          accesskey="&adban.menuitem.help.accesskey;"
+        />
+        <menuitem
+          label="&adban.menuitem.donate;"
+          command="adban-cmd-donate"
+          accesskey="&adban.menuitem.donate.accesskey;"
+        />
+        <menuitem
+          label="&adban.menuitem.recommend;"
+          command="adban-cmd-recommend"
+          accesskey="&adban.menuitem.recommend.accesskey;"
+        />
+        <menuitem
+          label="&adban.menuitem.report-bug;"
+          command="adban-cmd-report-bug"
+          accesskey="&adban.menuitem.report-bug.accesskey;"
+        />
+      </menupopup>
+    </menu>
+  </menupopup>
+
+  <toolbarpalette id="BrowserToolbarPalette">
+    <toolbarbutton
+      id="adban-toolbarbutton"
+      label="&adban.toolbarbutton.label;"
+      class="toolbarbutton-1"
+      tooltiptext="&adban.toolbarbutton.tooltiptext;"
+      type="menu"
+    >
+      <menupopup id="adban-toolbarbutton-menupopup">
+        <menuitem
+          label="&adban.menuitem.complaint;"
+          command="adban-cmd-complaint"
+          tooltiptext="&adban.menuitem.complaint.tooltiptext;"
+          accesskey="&adban.menuitem.complaint.accesskey;"
+        />
+        <menuseparator/>
+        <menuitem
+          command="adban-cmd-add-per-site-whitelist"
+          accesskey="&adban.menuitem.add-per-site-whitelist.accesskey;"
+        />
+        <menuitem
+          command="adban-cmd-remove-per-site-whitelist"
+          accesskey="&adban.menuitem.remove-per-site-whitelist.accesskey;"
+        />
+        <menuseparator/>
+        <menuitem
+          label="&adban.menuitem.start;"
+          command="adban-cmd-start"
+          tooltiptext="&adban.menuitem.start.tooltiptext;"
+          accesskey="&adban.menuitem.start.accesskey;"
+          key="adban-key-start"
+        />
+        <menuitem
+          label="&adban.menuitem.stop;"
+          command="adban-cmd-stop"
+          tooltiptext="&adban.menuitem.stop.tooltiptext;"
+          accesskey="&adban.menuitem.stop.accesskey;"
+          key="adban-key-stop"
+        />
+        <menuseparator/>
+        <menuitem
+          label="&adban.menuitem.help;"
+          command="adban-cmd-help"
+          accesskey="&adban.menuitem.help.accesskey;"
+        />
+        <menuitem
+          label="&adban.menuitem.donate;"
+          command="adban-cmd-donate"
+          accesskey="&adban.menuitem.donate.accesskey;"
+        />
+        <menuitem
+          label="&adban.menuitem.recommend;"
+          command="adban-cmd-recommend"
+          accesskey="&adban.menuitem.recommend.accesskey;"
+        />
+        <menuitem
+          label="&adban.menuitem.report-bug;"
+          command="adban-cmd-report-bug"
+          accesskey="&adban.menuitem.report-bug.accesskey;"
+        />
+      </menupopup>
+    </toolbarbutton>
+  </toolbarpalette>
+
+</overlay>
+
