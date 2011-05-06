@@ -21,7 +21,7 @@
 
   <commandset>
     <!-- fake oncommand attribute is used as a workaround for the bug https://bugzilla.mozilla.org/show_bug.cgi?id=371900 -->
-    <command id="adban-cmd-complaint" observes="adban-cmd-stop" oncommand="void(0)"/>
+    <command id="adban-cmd-complaint"/>
     <command id="adban-cmd-start" disabled="true" oncommand="void(0)"/>
     <command id="adban-cmd-stop" oncommand="void(0)"/>
     <command id="adban-cmd-add-per-site-whitelist"/>
