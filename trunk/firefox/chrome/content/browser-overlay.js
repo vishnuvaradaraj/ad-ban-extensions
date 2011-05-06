@@ -94,8 +94,8 @@
     const cmd_start = $('adban-cmd-start');
     const toolbarbutton = $('adban-toolbarbutton');
     if (adban.isActive()) {
-      cmd_start.setAttribute('disabled', 'true');
       cmd_stop.removeAttribute('disabled');
+      cmd_start.setAttribute('disabled', 'true');
       if (toolbarbutton) {
         toolbarbutton.removeAttribute('adban-disabled');
       }
@@ -112,6 +112,14 @@
   };
 
   const onMenuPopup = function() {
+    const cmd_complaint = $('adban-cmd-complaint');
+    if (adban.isActive()) {
+      cmd_complaint.removeAttribute('disabled');
+    }
+    else {
+      cmd_complaint.setAttribute('disabled', 'true');
+    }
+
     const cmd_add_per_site_whitelist = $('adban-cmd-add-per-site-whitelist');
     const cmd_remove_per_site_whitelist = $('adban-cmd-remove-per-site-whitelist');
     const current_site_url = getCurrentSiteUrl();
@@ -121,14 +129,16 @@
     if (has_per_site_whitelist == null) {
       cmd_add_per_site_whitelist.setAttribute('disabled', 'true');
       cmd_remove_per_site_whitelist.setAttribute('disabled', 'true');
+      cmd_complaint.setAttribute('disabled', 'true');
     }
     else if (has_per_site_whitelist) {
       cmd_add_per_site_whitelist.setAttribute('disabled', 'true');
       cmd_remove_per_site_whitelist.removeAttribute('disabled');
+      cmd_complaint.setAttribute('disabled', 'true');
     }
     else {
-      cmd_remove_per_site_whitelist.setAttribute('disabled', 'true');
       cmd_add_per_site_whitelist.removeAttribute('disabled');
+      cmd_remove_per_site_whitelist.setAttribute('disabled', 'true');
     }
   };
 
