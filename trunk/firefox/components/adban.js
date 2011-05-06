@@ -974,7 +974,6 @@ AdBan.prototype = {
       catch(e) {
         logging.error('error [%s]', e);
         logging.error('stack trace: [%s]', e.stack);
-        throw e;
       }
     };
     return error_handler;
