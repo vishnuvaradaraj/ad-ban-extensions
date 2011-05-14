@@ -1422,17 +1422,23 @@ AdBan.prototype = {
     const vars = this._vars;
     const unverified_urls = vars.unverified_urls;
     const unverified_url_exceptions = vars.unverified_url_exceptions;
+    let stale_urls_count = 0;
+    let stale_url_exceptions_count = 0;
     for (let url in vars.stale_urls) {
       unverified_urls[url] = true;
+      stale_urls_count++;
     }
     for (let url in vars.stale_url_exceptions) {
       unverified_url_exceptions[url] = true;
+      stale_url_exceptions_count++;
     }
     vars.stale_urls = {};
     vars.stale_url_exceptions = {};
-    this._saveStaleUrlsSync();
-    this._launchUrlVerifier();
-    logging.info('stale urls have been processed');
+    if (stale_urls_count || stale_url_exceptions_count) {
+      this._saveStaleUrlsSync();
+      this._launchUrlVerifier();
+    }
+    logging.info('stale urls have been processed: [%s] urls and [%s] url exceptions', stale_urls_count, stale_url_exceptions_count);
   },
 
   _shouldProcessUri: function(uri) {
