@@ -536,6 +536,7 @@ AdBan.prototype = {
   _SETTINGS_FILENAME: 'settings.json',
   _CACHE_FILENAME: 'cache.json',
   _PER_SITE_WHITELIST_FILENAME: 'per-site-whitelist.json',
+  _STALE_URLS_FILENAME: 'stale-urls.json',
   _LOGS_FILENAME: 'log.txt',
   _FILTERED_SCHEMES: {
     http: true,
@@ -573,10 +574,12 @@ AdBan.prototype = {
   _cookie_manager: Cc['@mozilla.org/cookiemanager;1'].getService(Ci.nsICookieManager2),
   _main_thread: Cc['@mozilla.org/thread-manager;1'].getService().mainThread,
   _verify_urls_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
-  _read_settings_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
+  _delayed_startup_xhr_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _update_current_date_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _update_settings_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _save_cache_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
+  _save_stale_urls_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
+  _process_stale_urls_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
 
   // this logging must be accessible outside the AdBan component.
   logging: logging,
@@ -596,9 +599,11 @@ AdBan.prototype = {
     max_backoff_timeout: 1000 * 3600 * 24,
     max_urls_per_request: 200,
     max_todo_generation_count: 2,
+    save_stale_urls_interval: 1000 * 60 * 30,
+    process_stale_urls_interval: 1000 * 3600 * 6,
 
     // the following values cannot be modified by the server.
-    read_settings_delay: 1000 * 5,
+    startup_xhr_delay: 1000 * 5,
 
     _bc_import: function(property_name, value) {
       if (value) {
@@ -620,6 +625,8 @@ AdBan.prototype = {
       this._bc_import('max_backoff_timeout', data[9]);
       this._bc_import('max_urls_per_request', data[10]);
       this._bc_import('max_todo_generation_count', data[11]);
+      this._bc_import('save_stale_urls_interval', data[12]);
+      this._bc_import('process_stale_urls_interval', data[13]);
     },
 
     export: function() {
@@ -636,6 +643,8 @@ AdBan.prototype = {
         this.max_backoff_timeout,
         this.max_urls_per_request,
         this.max_todo_generation_count,
+        this.save_stale_urls_interval,
+        this.process_stale_urls_interval,
       ];
     },
   },
@@ -652,6 +661,8 @@ AdBan.prototype = {
     url_cache: createEmptyUrlCache(),
     url_exception_cache: createEmptyUrlExceptionCache(),
     per_site_whitelist: createEmptyPerSiteWhitelist(),
+    stale_urls: {},
+    stale_url_exceptions: {},
     unverified_urls: {},
     unverified_url_exceptions: {},
     todo_nodes: [],
@@ -767,7 +778,15 @@ AdBan.prototype = {
       this._loadSettingsAsync();
       this._loadCacheAsync();
       this._loadPerSiteWhitelistAsync();
+      this._loadStaleUrlsAsync();
       this.start();
+
+      const that = this;
+      const delayed_startup_xhr_callback = function() {
+        that._readSettingsFromServer();
+        that._processStaleUrls();
+      };
+      this._executeDelayed(this._delayed_startup_xhr_timer, delayed_startup_xhr_callback, this._settings.startup_xhr_delay);
     }
     else if (topic == 'private-browsing') {
       if (data == 'enter') {
@@ -785,6 +804,10 @@ AdBan.prototype = {
         //   be in inconsistent state because of saveCache operation isn't
         //   complete yet.
         this._saveCacheSync();
+        // there is no need in calling the this._savePerSiteWhitelistSync() here,
+        // since the file containing per-site whitelist is already synchronized
+        // via addPerSiteWhitelist() and removePerSiteWhitelist().
+        this._saveStaleUrlsSync();
         logging.info('entering private browsing mode');
         logging.stop();
         vars.is_in_private_mode = true;
@@ -796,6 +819,8 @@ AdBan.prototype = {
         // the private mode. The loaded cache will overwrite the current cache,
         // wich can contain private data.
         this._loadCacheAsync();
+        this._loadPerSiteWhitelistAsync();
+        this._loadStaleUrlsAsync();
         vars.is_in_private_mode = false;
       }
     }
@@ -807,6 +832,10 @@ AdBan.prototype = {
       // process can exit before the saveCache operation is complete.
       // This can leave locally stored cache in inconsistent state.
       this._saveCacheSync();
+      // there is no need in calling the this._savePerSiteWhitelistSync() here,
+      // since the file containing per-site whitelist is already synchronized
+      // via addPerSiteWhitelist() and removePerSiteWhitelist().
+      this._saveStaleUrlsSync();
 
       observer_service.removeObserver(this, 'private-browsing');
       observer_service.removeObserver(this, 'quit-application');
@@ -1111,6 +1140,23 @@ AdBan.prototype = {
         this._save_cache_timer,
         save_cache_callback,
         settings.save_cache_interval);
+
+    const save_stale_urls_callback = function() {
+      that._saveStaleUrlsSync();
+    };
+    this._startRepeatingTimer(
+        this._save_stale_urls_timer,
+        save_stale_urls_callback,
+        settings.save_stale_urls_interval);
+
+    const process_stale_urls_callback = function() {
+      that._processStaleUrls();
+    };
+    this._startRepeatingTimer(
+        this._process_stale_urls_timer,
+        process_stale_urls_callback,
+        settings.process_stale_urls_interval);
+
     logging.info('AdBan component timers have been started');
   },
 
@@ -1121,6 +1167,8 @@ AdBan.prototype = {
     this._update_current_date_timer.cancel();
     this._update_settings_timer.cancel();
     this._save_cache_timer.cancel();
+    this._save_stale_urls_timer.cancel();
+    this._process_stale_urls_timer.cancel();
     logging.info('AdBan component timers have been stopped');
   },
 
@@ -1180,6 +1228,12 @@ AdBan.prototype = {
   _getFileForPerSiteWhitelist: function() {
     const file = this._getDataDirectory();
     file.append(this._PER_SITE_WHITELIST_FILENAME);
+    return file;
+  },
+
+  _getFileForStaleUrls: function() {
+    const file = this._getDataDirectory();
+    file.append(this._STALE_URLS_FILENAME);
     return file;
   },
 
@@ -1247,22 +1301,15 @@ AdBan.prototype = {
       logging.info('AdBan settings have been loaded from file');
     };
     this._readJsonFromFileAsync(file, read_complete_callback);
-
-    // read settings from the server with little delay, so the browser will
-    // be ready to send XHR requests.
-    const read_settings_callback = function() {
-      that._readSettingsFromServer();
-    };
-    that._executeDelayed(this._read_settings_timer, read_settings_callback, this._settings.read_settings_delay);
   },
 
   _saveSettingsSync: function() {
     logging.info('saving AdBan settings to file');
+    const file = this._getFileForSettings();
     const data = [
       this._vars.auth_token,
       this._settings.export(),
     ];
-    const file = this._getFileForSettings();
     this._writeJsonToFileSync(file, data);
     logging.info('AdBan settings have been saved to file');
   },
@@ -1304,11 +1351,11 @@ AdBan.prototype = {
     const current_date = vars.current_date;
     const url_cache = vars.url_cache;
     const url_exception_cache = vars.url_exception_cache;
+    const file = this._getFileForCaches();
     const data = [
       url_cache.exportToNodes(urlNodeConstructor, current_date),
       url_exception_cache.exportToNodes(urlExceptionNodeConstructor, current_date),
     ];
-    const file = this._getFileForCaches();
     this._writeJsonToFileSync(file, data);
     logging.info('AdBan cache has been saved to file');
   },
@@ -1331,10 +1378,61 @@ AdBan.prototype = {
 
   _savePerSiteWhitelistSync: function() {
     logging.info('saving per-site whitelist to file');
-    const data = this._vars.per_site_whitelist.exportToNodes(perSiteWhitelistNodeConstructor, 0);
+    if (this._vars.is_in_private_mode) {
+      logging.info('per-site whitelist shouldn\'t be saved while in private mode');
+      return;
+    }
     const file = this._getFileForPerSiteWhitelist();
+    const data = this._vars.per_site_whitelist.exportToNodes(perSiteWhitelistNodeConstructor, 0);
     this._writeJsonToFileSync(file, data);
     logging.info('per-site whitelist has been saved to file');
+  },
+
+  _loadStaleUrlsAsync: function() {
+    logging.info('loading stale urls from file');
+    const vars = this._vars;
+    const file = this._getFileForStaleUrls();
+    const that = this;
+    const read_complete_callback = function(data) {
+      vars.stale_urls = that._createDictionaryFromKeys(data[0], true);
+      vars.stale_url_exceptions = that._createDictionaryFromKeys(data[1], true);
+      logging.info('stale urls have been loaded from file');
+    };
+    this._readJsonFromFileAsync(file, read_complete_callback);
+  },
+
+  _saveStaleUrlsSync: function() {
+    logging.info('saving stale urls to file');
+    const vars = this._vars;
+    if (vars.is_in_private_mode) {
+      logging.info('stale urls shouldn\'t be saved while in private mode');
+      return;
+    }
+    const file = this._getFileForStaleUrls();
+    const data = [
+      this._getAllDictionaryKeys(vars.stale_urls),
+      this._getAllDictionaryKeys(vars.stale_url_exceptions),
+    ];
+    this._writeJsonToFileSync(file, data);
+    logging.info('stale urls have been saved to file');
+  },
+
+  _processStaleUrls: function() {
+    logging.info('processing stale urls');
+    const vars = this._vars;
+    const unverified_urls = vars.unverified_urls;
+    const unverified_url_exceptions = vars.unverified_url_exceptions;
+    for (let url in vars.stale_urls) {
+      unverified_urls[url] = true;
+    }
+    for (let url in vars.stale_url_exceptions) {
+      unverified_url_exceptions[url] = true;
+    }
+    vars.stale_urls = {};
+    vars.stale_url_exceptions = {};
+    this._saveStaleUrlsSync();
+    this._launchUrlVerifier();
+    logging.info('stale urls have been processed');
   },
 
   _shouldProcessUri: function(uri) {
@@ -1437,6 +1535,15 @@ AdBan.prototype = {
 
   _getAllDictionaryKeys: function(dict) {
     return this._getDictionaryKeys(dict, Infinity);
+  },
+
+  _createDictionaryFromKeys: function(keys, value) {
+    const dict = {};
+    const keys_length = keys.length;
+    for (let i = 0; i < keys_length; i++) {
+      dict[keys[i]] = value;
+    }
+    return dict;
   },
 
   _cleanupUnverifiedUrls: function(unverified_urls, cache) {
@@ -1682,6 +1789,7 @@ AdBan.prototype = {
       // save settings on the local storage syncrhonously to be sure they
       // are stored in a consistent state.
       that._saveSettingsSync();
+      that._stopTimers();
       that._startTimers();
       url_cache.setStaleNodeTimeout(settings.stale_node_timeout);
       url_cache.setNodeDeleteTimeout(settings.node_delete_timeout);
@@ -1769,45 +1877,41 @@ AdBan.prototype = {
     this._executeDelayed(this._verify_urls_timer, verify_urls_callback, this._settings.url_verifier_delay);
   },
 
-  _getCacheValue: function(cache, unverified_urls, url, max_url_length) {
-    const current_date = this._vars.current_date;
+  _getCacheValue: function(cache, stale_urls, unverified_urls, url, max_url_length) {
     const tmp = cache.get(url);
     const node_with_value = tmp[1];
     const non_empty_node = tmp[2];
     const node_depth = tmp[3];
     const is_todo = cache.isTodoNode(non_empty_node);
-    if (cache.isStaleNode(non_empty_node, current_date)) {
-      // An optimization: if the matching cache node isn't TODO node,
-      // then it is safe to truncate the url to the cache node's depth,
-      // which is usually shorter than the max_url_length. If children nodes
-      // were added to this node on the server, then the server will return
-      // the corresponding TODO nodes on the first request. Then these TODO
-      // nodes will be resolved to leaf nodes on subsequent requests.
-      // If the url matches TODO node, then it cannot be truncated to
-      // the node's length, because this will significantly slow down fetching
-      // of the leaf node. The leaf node will be fetched only after N requests,
-      // where N is the difference between depths of the leaf node and
-      // the TODO node.
-      // This optimization should significantly reduce request sizes sent
-      // to the server.
-      if (!is_todo) {
-        max_url_length = node_depth;
+    if (cache.isStaleNode(non_empty_node, this._vars.current_date)) {
+      if (is_todo) {
+        url = url.substring(0, max_url_length);
+        unverified_urls[url] = true;
+        this._launchUrlVerifier();
       }
-      url = url.substring(0, max_url_length);
-      unverified_urls[url] = true;
-      this._launchUrlVerifier();
+      else {
+        // An optimization: delay verification of stale urls in order to be able verifying
+        // them in a single batch request - see processStaleUrls() for details.
+        // The processStaleUrls() is repeatedly called with the interval defined
+        // in settings.process_stale_urls_interval.
+        // This optimization can significantly reduce the number of url verification calls
+        // to the server after the initial cache of ad filters specific for the current user
+        // has been loaded.
+        url = url.substring(0, node_depth);
+        stale_urls[url] = true;
+      }
     }
     return [cache.getValue(node_with_value), is_todo];
   },
 
   _getUrlValue: function(url) {
     const vars = this._vars;
-    return this._getCacheValue(vars.url_cache, vars.unverified_urls, url, this._settings.max_url_length);
+    return this._getCacheValue(vars.url_cache, vars.stale_urls, vars.unverified_urls, url, this._settings.max_url_length);
   },
 
   _getUrlExceptionValue: function(url) {
     const vars = this._vars;
-    return this._getCacheValue(vars.url_exception_cache, vars.unverified_url_exceptions, url, this._settings.max_url_exception_length);
+    return this._getCacheValue(vars.url_exception_cache, vars.stale_url_exceptions, vars.unverified_url_exceptions, url, this._settings.max_url_exception_length);
   },
 
   _isIp: function(host_parts) {
