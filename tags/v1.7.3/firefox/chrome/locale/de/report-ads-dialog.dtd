@@ -1,0 +1,12 @@
+<!ENTITY adban.complaint-dialog.title "Von der Werbung oder Problemen auf der jetztigen Seite melden">
+<!ENTITY adban.complaint-dialog.cancel-button.label "Löschen">
+<!ENTITY adban.complaint-dialog.accept-button.label "Die Meldung senden">
+<!ENTITY adban.complaint-dialog.site-url.label "
+  Die nächste Seite erhält Werbung oder sieht gebrochen im Gefolge von AdBan. Sie können
+  die Seite url modifizieren, wenn das unkorrekt ist (obwohl das nicht wünschenswert ist)
+">
+<!ENTITY adban.complaint-dialog.comment.label "
+  Dieser Feld ist fakultativ. Sie können kurze Beschreibung vom Problem, das Sie auf der
+  kurrent Seite bemerkt haben, einfügen(z.B. 'Ich sehe Werbung auf dieser Seite')
+">
+
