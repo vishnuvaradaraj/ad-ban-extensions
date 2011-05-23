@@ -8,7 +8,7 @@ const Cr = Components.results;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
-const ADDON_VERSION = '1.7.4beta1';
+const ADDON_VERSION = '1.7.3';
 const SERVER_DOMAIN = 'ad-ban.appspot.com';
 const EXTENSION_ID = 'adban@ad-ban.appspot.com';
 const SERVER_PROTOCOL = 'http';
@@ -491,7 +491,7 @@ const AdBan = function() {
   this.USER_STATUS_URL = server_host + '/ff/user_status';
 
   const funcs = [
-    ['shouldLoad', true],
+    'shouldLoad',
     'observe',
     'start',
     'stop',
@@ -499,7 +499,7 @@ const AdBan = function() {
     'sendUrlComplaint',
     'addPerSiteWhitelist',
     'removePerSiteWhitelist',
-    ['hasPerSiteWhitelist', false],
+    'hasPerSiteWhitelist',
     'subscribeToStateChange',
     'unsubscribeFromStateChange',
     'processDocument',
@@ -994,7 +994,7 @@ AdBan.prototype = {
   },
 
   // private methods
-  _createErrorHandler: function(callback, default_return_value) {
+  _createErrorHandler: function(callback) {
     const that = this;
     const error_handler = function() {
       try {
@@ -1003,7 +1003,6 @@ AdBan.prototype = {
       catch(e) {
         logging.error('error [%s]', e);
         logging.error('stack trace: [%s]', e.stack);
-        return default_return_value;
       }
     };
     return error_handler;
@@ -1013,13 +1012,8 @@ AdBan.prototype = {
     logging.info('setting up error handlers for [%s]', funcs);
     const funcs_length = funcs.length;
     for (let i = 0; i < funcs_length; i++) {
-      let default_return_value;
       let func = funcs[i];
-      if (typeof(func) != 'string') {
-        default_return_value = func[1];
-        func = func[0];
-      }
-      this[func] = this._createErrorHandler(this[func], default_return_value);
+      this[func] = this._createErrorHandler(this[func]);
     }
     logging.info('error handlers for [%s] have been set up successfully', funcs);
   },
