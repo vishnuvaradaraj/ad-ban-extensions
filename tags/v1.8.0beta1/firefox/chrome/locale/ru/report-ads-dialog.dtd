@@ -1,0 +1,12 @@
+<!ENTITY adban.complaint-dialog.title "Сообщить о баннерах либо проблемах на текущей странице">
+<!ENTITY adban.complaint-dialog.cancel-button.label "Отмена">
+<!ENTITY adban.complaint-dialog.accept-button.label "Отправить сообщение">
+<!ENTITY adban.complaint-dialog.site-url.label "
+  Страница по заданному адресу содержит незаблокированные баннеры
+  либо поломана AdBan'ом. Вы можете отредактировать этот адрес, если он неправильный (хотя это маловероятно)
+">
+<!ENTITY adban.complaint-dialog.comment.label "
+  Это поле опционально. Здесь можно кратко описать проблему, возникшую на заданной странице.
+  Например, 'Я вижу баннеры на этой странице'
+">
+
