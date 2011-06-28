@@ -143,6 +143,7 @@
   };
 
   const cmdComplaint = function() {
+    const referer_url = content.document.referrer;
     const complaint_callback = function(site_url, comment) {
       const success_callback = function() {
         conditionalAlert('complaint-sent', _('complaint-sent', [site_url]));
@@ -150,7 +151,7 @@
       const failure_callback = function(error) {
         conditionalAlert('complaint-send-error', _('complaint-send-error', [site_url, error]));
       };
-      adban.sendUrlComplaint(site_url, comment, success_callback, failure_callback);
+      adban.sendUrlComplaint(site_url, referer_url, comment, success_callback, failure_callback);
     };
 
     // Don't use $('urlbar').value as initial_site_url, since this value can be broken.
