@@ -884,11 +884,12 @@ AdBan.prototype = {
     logging.info('AdBan.firstRun()');
   },
 
-  sendUrlComplaint: function(site_url, comment, success_callback, failure_callback) {
-    logging.info('sending url complaint for site_url=[%s], comment=[%s]', site_url, comment);
+  sendUrlComplaint: function(site_url, referer_url, comment, success_callback, failure_callback) {
+    logging.info('sending url complaint for site_url=[%s], referer_url=[%s], comment=[%s]', site_url, referer_url, comment);
     const request_data = [
       site_url,
       comment,
+      referer_url,
     ];
     const response_callback = function() {
       success_callback();
