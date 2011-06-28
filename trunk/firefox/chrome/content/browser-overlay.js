@@ -4,8 +4,8 @@
   const Cc = Components.classes;
   const Ci = Components.interfaces;
 
-  const TEST_SCHEME_REGEXP = new RegExp('^[a-z]+:', 'i');
-  const SCHEME_AND_HOST_REGEXP = new RegExp('[^:]+:/{2}?[^/]*');
+  const SCHEME_REGEXP = new RegExp('^[a-z]+:/{2}?', 'i');
+  const SCHEME_AND_HOST_REGEXP = new RegExp('^[a-z]+:/{2}?[^/]*', 'i');
 
   const prompts = Cc['@mozilla.org/embedcomp/prompt-service;1'].getService(Ci.nsIPromptService);
   const adban = Cc['@ad-ban.appspot.com/adban;1'].getService().wrappedJSObject;
@@ -27,11 +27,15 @@
   const getCurrentSiteUrl = function() {
     let current_site_url = $('urlbar').value;
     // add dummy scheme if it is missing
-    if (current_site_url && !TEST_SCHEME_REGEXP.test(current_site_url)) {
+    if (current_site_url && !SCHEME_REGEXP.test(current_site_url)) {
       current_site_url = 'http://' + current_site_url;
     }
     const match = SCHEME_AND_HOST_REGEXP.exec(current_site_url);
     return match ? match[0] : '';
+  };
+
+  const getUrlWithoutScheme = function(url) {
+    return url.replace(SCHEME_REGEXP, '');
   };
 
   const conditionalAlert = function(alert_name, msg) {
@@ -123,8 +127,9 @@
     const cmd_add_per_site_whitelist = $('adban-cmd-add-per-site-whitelist');
     const cmd_remove_per_site_whitelist = $('adban-cmd-remove-per-site-whitelist');
     const current_site_url = getCurrentSiteUrl();
-    cmd_add_per_site_whitelist.setAttribute('label', _('add-per-site-whitelist', [current_site_url]));
-    cmd_remove_per_site_whitelist.setAttribute('label', _('remove-per-site-whitelist', [current_site_url]));
+    const current_site_url_without_scheme = getUrlWithoutScheme(current_site_url);
+    cmd_add_per_site_whitelist.setAttribute('label', _('add-per-site-whitelist', [current_site_url_without_scheme]));
+    cmd_remove_per_site_whitelist.setAttribute('label', _('remove-per-site-whitelist', [current_site_url_without_scheme]));
     const has_per_site_whitelist = adban.hasPerSiteWhitelist(current_site_url);
     if (has_per_site_whitelist == null) {
       cmd_add_per_site_whitelist.setAttribute('disabled', 'true');
