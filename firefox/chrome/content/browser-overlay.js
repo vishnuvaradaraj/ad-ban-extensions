@@ -148,7 +148,7 @@
   };
 
   const cmdComplaint = function() {
-    const referer_url = content.document.referrer;
+    const referer_url = (content && content.document) ? content.document.referrer : '';
     const complaint_callback = function(site_url, comment) {
       const success_callback = function() {
         conditionalAlert('complaint-sent', _('complaint-sent', [site_url]));
