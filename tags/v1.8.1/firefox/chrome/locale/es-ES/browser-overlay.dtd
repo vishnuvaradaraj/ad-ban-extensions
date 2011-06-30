@@ -1,0 +1,22 @@
+<!ENTITY adban.menuitem.start "Activar">
+<!ENTITY adban.menuitem.start.tooltiptext "Activar AdBan">
+<!ENTITY adban.menuitem.start.accesskey "a">
+<!ENTITY adban.menuitem.stop "Desacctivar">
+<!ENTITY adban.menuitem.stop.tooltiptext "Desacctivar AdBan">
+<!ENTITY adban.menuitem.stop.accesskey "d">
+<!ENTITY adban.menuitem.add-per-site-whitelist.accesskey "c">
+<!ENTITY adban.menuitem.remove-per-site-whitelist.accesskey "o">
+<!ENTITY adban.menuitem.complaint "Denunciar publicidad">
+<!ENTITY adban.menuitem.complaint.tooltiptext "Denunciar publicidad o problemas en la página actual">
+<!ENTITY adban.menuitem.complaint.accesskey "p">
+<!ENTITY adban.menuitem.help "Ayuda">
+<!ENTITY adban.menuitem.help.accesskey "y">
+<!ENTITY adban.menuitem.donate "Donar">
+<!ENTITY adban.menuitem.donate.accesskey "n">
+<!ENTITY adban.menuitem.recommend "Recomendar">
+<!ENTITY adban.menuitem.recommend.accesskey "e">
+<!ENTITY adban.menuitem.report-bug "Reportar errores">
+<!ENTITY adban.menuitem.report-bug.accesskey "s">
+
+<!ENTITY adban.toolbarbutton.label "AdBan">
+<!ENTITY adban.toolbarbutton.tooltiptext "Opciones de AdBan">
