@@ -6,7 +6,7 @@
   <Description about="urn:mozilla:install-manifest">
     <em:id>adban@ad-ban.appspot.com</em:id>
     <em:name>AdBan</em:name>
-    <em:version>1.8.1beta2</em:version>
+    <em:version>1.8.1</em:version>
     <em:description>Blocks ads, spyware, cookie trackers and popups on the web</em:description>
     <em:creator>support@advertban.com</em:creator>
     <em:homepageURL>http://www.advertban.com/</em:homepageURL>
