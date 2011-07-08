@@ -181,13 +181,15 @@
   const cmdAddPerSiteWhitelist = function() {
     const current_site_url = getCurrentSiteUrl();
     adban.addPerSiteWhitelist(current_site_url);
-    conditionalAlert('per-site-whitelist-added', _('per-site-whitelist-added', [current_site_url]));
+    const current_site_url_without_scheme = getUrlWithoutScheme(current_site_url);
+    conditionalAlert('per-site-whitelist-added', _('per-site-whitelist-added', [current_site_url_without_scheme]));
   };
 
   const cmdRemovePerSiteWhitelist = function() {
     const current_site_url = getCurrentSiteUrl();
     adban.removePerSiteWhitelist(current_site_url);
-    conditionalAlert('per-site-whitelist-removed', _('per-site-whitelist-removed', [current_site_url]));
+    const current_site_url_without_scheme = getUrlWithoutScheme(current_site_url);
+    conditionalAlert('per-site-whitelist-removed', _('per-site-whitelist-removed', [current_site_url_without_scheme]));
   };
 
   const cmdHelp = function() {
