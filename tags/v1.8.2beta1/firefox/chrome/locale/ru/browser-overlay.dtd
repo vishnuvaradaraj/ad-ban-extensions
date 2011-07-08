@@ -1,0 +1,22 @@
+<!ENTITY adban.menuitem.start "Включить">
+<!ENTITY adban.menuitem.start.tooltiptext "Включить AdBan">
+<!ENTITY adban.menuitem.start.accesskey "к">
+<!ENTITY adban.menuitem.stop "Выключить">
+<!ENTITY adban.menuitem.stop.tooltiptext "Выключить AdBan">
+<!ENTITY adban.menuitem.stop.accesskey "ы">
+<!ENTITY adban.menuitem.add-per-site-whitelist.accesskey "р">
+<!ENTITY adban.menuitem.remove-per-site-whitelist.accesskey "з">
+<!ENTITY adban.menuitem.complaint "Сообщить о баннерах">
+<!ENTITY adban.menuitem.complaint.tooltiptext "Сообщить о баннерах или проблемах на текущей странице">
+<!ENTITY adban.menuitem.complaint.accesskey "с">
+<!ENTITY adban.menuitem.help "Помощь">
+<!ENTITY adban.menuitem.help.accesskey "п">
+<!ENTITY adban.menuitem.donate "Сделать пожертвование">
+<!ENTITY adban.menuitem.donate.accesskey "ж">
+<!ENTITY adban.menuitem.recommend "Рекомендовать друзьям">
+<!ENTITY adban.menuitem.recommend.accesskey "е">
+<!ENTITY adban.menuitem.report-bug "Сообщить об ошибке">
+<!ENTITY adban.menuitem.report-bug.accesskey "ш">
+
+<!ENTITY adban.toolbarbutton.label "AdBan">
+<!ENTITY adban.toolbarbutton.tooltiptext "Меню AdBan">
