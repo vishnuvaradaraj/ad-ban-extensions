@@ -9,9 +9,11 @@ const Cr = Components.results;
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
 const ADDON_VERSION = '1.8.2beta1';
-const SERVER_DOMAIN = 'www.advertban.com';
+const BACKEND_SERVER_DOMAIN = 'ad-ban.appspot.com';
+const FRONTEND_SERVER_DOMAIN = 'www.advertban.com';
+const BACKEND_SERVER_PROTOCOL = 'https';
+const FRONTEND_SERVER_PROTOCOL = 'http';
 const EXTENSION_ID = 'adban@ad-ban.appspot.com';
-const SERVER_PROTOCOL = 'http';
 const app_info = Cc['@mozilla.org/xre/app-info;1'].getService(Ci.nsIXULAppInfo);
 
 const getCurrentDate = function() {
@@ -478,17 +480,18 @@ const perSiteWhitelistValueConstructor = function(d) {
 
 const AdBan = function() {
   logging.info('entering AdBan constructor');
-  const server_host = SERVER_PROTOCOL + '://' + SERVER_DOMAIN;
-  this._SEND_URL_COMPLAINT_ENDPOINT = server_host + '/c/' + ADDON_VERSION;
-  this._READ_SETTINGS_ENDPOINT = server_host + '/s/' + ADDON_VERSION;
-  this._VERIFY_URLS_ENDPOINT = server_host + '/g/' + ADDON_VERSION;
+  const backend_server_host = BACKEND_SERVER_PROTOCOL + '://' + BACKEND_SERVER_DOMAIN;
+  this._SEND_URL_COMPLAINT_ENDPOINT = backend_server_host + '/c/' + ADDON_VERSION;
+  this._READ_SETTINGS_ENDPOINT = backend_server_host + '/s/' + ADDON_VERSION;
+  this._VERIFY_URLS_ENDPOINT = backend_server_host + '/g/' + ADDON_VERSION;
 
+  const frontend_server_host = FRONTEND_SERVER_PROTOCOL + '://' + FRONTEND_SERVER_DOMAIN;
   this.pref_branch = this._pref_service.getBranch('extensions.' + EXTENSION_ID + '.');
-  this.HELP_URL = server_host + '/ff/help/' + ADDON_VERSION;
-  this.DONATE_URL = server_host + '/ff/donate';
-  this.RECOMMEND_URL = server_host + '/ff/recommend';
+  this.HELP_URL = frontend_server_host + '/ff/help/' + ADDON_VERSION;
+  this.DONATE_URL = frontend_server_host + '/ff/donate';
+  this.RECOMMEND_URL = frontend_server_host + '/ff/recommend';
   this.REPORT_BUG_URL = 'http://code.google.com/p/ad-ban-extensions/issues/entry';
-  this.USER_STATUS_URL = server_host + '/ff/user_status';
+  this.USER_STATUS_URL = frontend_server_host + '/ff/user_status';
 
   const funcs = [
     ['shouldLoad', true],
@@ -550,7 +553,7 @@ AdBan.prototype = {
     'embed',
     'a',
   ],
-  _AUTH_COOKIE_HOST: SERVER_DOMAIN,
+  _AUTH_COOKIE_HOST: FRONTEND_SERVER_DOMAIN,
   _ERROR_CODES: {
     NO_ERRORS: 0,
     REQUEST_PARSING_ERROR: 1,
