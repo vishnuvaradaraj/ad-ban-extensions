@@ -8,7 +8,7 @@ const Cr = Components.results;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
-const ADDON_VERSION = '1.8.1';
+const ADDON_VERSION = '1.8.2beta1';
 const SERVER_DOMAIN = 'www.advertban.com';
 const EXTENSION_ID = 'adban@ad-ban.appspot.com';
 const SERVER_PROTOCOL = 'http';
@@ -563,7 +563,6 @@ AdBan.prototype = {
   _verify_urls_xhr: Cc['@mozilla.org/xmlextras/xmlhttprequest;1'].createInstance(Ci.nsIXMLHttpRequest),
   _update_settings_xhr: Cc['@mozilla.org/xmlextras/xmlhttprequest;1'].createInstance(Ci.nsIXMLHttpRequest),
   _url_complaint_xhr: Cc['@mozilla.org/xmlextras/xmlhttprequest;1'].createInstance(Ci.nsIXMLHttpRequest),
-  _json_encoder: Cc['@mozilla.org/dom/json;1'].createInstance(Ci.nsIJSON),
   _converter: Cc['@mozilla.org/intl/scriptableunicodeconverter'].createInstance(Ci.nsIScriptableUnicodeConverter),
   _category_manager: Cc['@mozilla.org/categorymanager;1'].getService(Ci.nsICategoryManager),
   _window_mediator: Cc['@mozilla.org/appshell/window-mediator;1'].getService(Ci.nsIWindowMediator),
@@ -1268,7 +1267,7 @@ AdBan.prototype = {
         }
         try {
           const json_data = that._converter.convertFromByteArray(result, length);
-          const data = that._json_encoder.decode(json_data);
+          const data = JSON.parse(json_data);
           logging.info('stop reading from the file=[%s]', file.path);
           read_complete_callback(data);
         }
@@ -1286,7 +1285,7 @@ AdBan.prototype = {
 
   _writeJsonToFileSync: function(file, data) {
     logging.info('start writing to the file=[%s]', file.path);
-    const json_data = this._json_encoder.encode(data);
+    const json_data = JSON.stringify(data);
     const data_chunk = this._converter.ConvertFromUnicode(json_data);
     const output_stream = Cc['@mozilla.org/network/file-output-stream;1'].createInstance(Ci.nsIFileOutputStream);
     output_stream.init(file, -1, -1, 0);
@@ -1677,7 +1676,7 @@ AdBan.prototype = {
     let error_message;
 
     logging.info('response_text=[%s]', response_text);
-    const response_data = this._json_encoder.decode(response_text);
+    const response_data = JSON.parse(response_text);
     const error_code = response_data[0];
     if (error_code == error_codes.NO_ERRORS) {
       const new_auth_token = response_data[2];
@@ -1716,7 +1715,7 @@ AdBan.prototype = {
     const auth_token = this._vars.auth_token;
     let error_message;
 
-    const request_text = this._json_encoder.encode([auth_token, request_data]);
+    const request_text = JSON.stringify([auth_token, request_data]);
     logging.info('request_url=[%s], request_text=[%s]', request_url, request_text);
 
     const that = this;
