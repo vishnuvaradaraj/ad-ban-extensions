@@ -1,0 +1,11 @@
+<!ENTITY adban.complaint-dialog.title "Denunciar publicidad o problemas en la página actual">
+<!ENTITY adban.complaint-dialog.cancel-button.label "Cancelar">
+<!ENTITY adban.complaint-dialog.accept-button.label "Enviar el reporte">
+<!ENTITY adban.complaint-dialog.site-url.label "
+  La página contiene publicidad o aparece rota debido a AdBan.
+  Puedes modificar la dirección de la página si es incorrecta (aunque es improbable)
+">
+<!ENTITY adban.complaint-dialog.comment.label "
+  Este campo es opcional. Puedes introducir una breve descripción de problema que has encontrado.
+  (Por ejemplo: 'veo publicidad en esta página')
+">
