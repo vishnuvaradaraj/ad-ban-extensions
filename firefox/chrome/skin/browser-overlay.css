@@ -5,18 +5,25 @@
 }
 
 #adban-toolbarbutton {
-  list-style-image: url("icons/24px.png");
+  -moz-box-orient: horizontal;
+}
+
+#adban-toolbarbutton .toolbarbutton-text {
+  display: -moz-box;
+}
+
+#adban-toolbarbutton .toolbarbutton-icon {
+  display: none;
 }
 
 #adban-toolbarbutton .toolbarbutton-menu-dropmarker {
   display: none;
 }
 
-toolbar[iconsize="small"] #adban-toolbarbutton {
-  list-style-image: url("icons/16px.png");
+toolbar[iconsize="large"] #adban-toolbarbutton {
+  font-size: 1.5em;
 }
 
-#adban-toolbarbutton[adban-disabled] .toolbarbutton-icon {
+#adban-toolbarbutton[adban-disabled] .toolbarbutton-text {
   opacity: 0.3;
 }
-
