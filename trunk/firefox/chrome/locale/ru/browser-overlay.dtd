@@ -18,5 +18,4 @@
 <!ENTITY adban.menuitem.report-bug "Сообщить об ошибке">
 <!ENTITY adban.menuitem.report-bug.accesskey "ш">
 
-<!ENTITY adban.toolbarbutton.label "AB">
 <!ENTITY adban.toolbarbutton.tooltiptext "Меню AdvertBan">
