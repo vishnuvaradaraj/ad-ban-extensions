@@ -91,7 +91,7 @@
   <toolbarpalette id="BrowserToolbarPalette">
     <toolbarbutton
       id="adban-toolbarbutton"
-      label="&adban.toolbarbutton.label;"
+      label="AB"
       class="toolbarbutton-1"
       tooltiptext="&adban.toolbarbutton.tooltiptext;"
       type="menu"

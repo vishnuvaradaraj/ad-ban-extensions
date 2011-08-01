@@ -18,5 +18,4 @@
 <!ENTITY adban.menuitem.report-bug "Reportar errores">
 <!ENTITY adban.menuitem.report-bug.accesskey "s">
 
-<!ENTITY adban.toolbarbutton.label "AB">
 <!ENTITY adban.toolbarbutton.tooltiptext "Opciones de AdvertBan">
