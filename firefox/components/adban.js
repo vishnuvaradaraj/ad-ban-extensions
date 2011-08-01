@@ -8,7 +8,7 @@ const Cr = Components.results;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
-const ADDON_VERSION = '1.8.3beta1';
+const ADDON_VERSION = '2.0.0';
 const BACKEND_SERVER_DOMAIN = 'ad-ban.appspot.com';
 const FRONTEND_SERVER_DOMAIN = 'www.advertban.com';
 const BACKEND_SERVER_PROTOCOL = 'https';
@@ -478,8 +478,8 @@ const perSiteWhitelistValueConstructor = function(d) {
   return !!d;
 };
 
-const AdBan = function() {
-  logging.info('entering AdBan constructor');
+const AdvertBan = function() {
+  logging.info('entering AdvertBan constructor');
   const backend_server_host = BACKEND_SERVER_PROTOCOL + '://' + BACKEND_SERVER_DOMAIN;
   this._SEND_URL_COMPLAINT_ENDPOINT = backend_server_host + '/c/' + ADDON_VERSION;
   this._READ_SETTINGS_ENDPOINT = backend_server_host + '/s/' + ADDON_VERSION;
@@ -514,12 +514,12 @@ const AdBan = function() {
   // allow direct access to the XPCOM object from javascript.
   // see https://developer.mozilla.org/en/wrappedJSObject .
   this.wrappedJSObject = this;
-  logging.info('exiting AdBan constructor');
+  logging.info('exiting AdvertBan constructor');
 };
 
-AdBan.prototype = {
+AdvertBan.prototype = {
   // XPCOM stuff.
-  classDescription: 'AdBan XPCOM component',
+  classDescription: 'AdvertBan XPCOM component',
   classID:          Components.ID('{02f31d71-1c0b-48f3-a3b5-100c18dc771e}'),
   contractID:       '@ad-ban.appspot.com/adban;1',
   _xpcom_categories: [
@@ -583,7 +583,7 @@ AdBan.prototype = {
   _save_stale_urls_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _process_stale_urls_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
 
-  // this logging must be accessible outside the AdBan component.
+  // this logging must be accessible outside the AdvertBan component.
   logging: logging,
 
   // component's settings. New values for these settings are periodically read
@@ -851,7 +851,7 @@ AdBan.prototype = {
   start: function() {
     const vars = this._vars;
     if (vars.is_active) {
-      logging.warning('AdBan component already started');
+      logging.warning('AdvertBan component already started');
       return;
     }
     const category_manager = this._category_manager;
@@ -860,13 +860,13 @@ AdBan.prototype = {
     this._startTimers();
     vars.is_active = true;
     this._notifyStateListeners();
-    logging.info('AdBan component has been started');
+    logging.info('AdvertBan component has been started');
   },
 
   stop: function() {
     const vars = this._vars;
     if (!vars.is_active) {
-      logging.warning('AdBan component already stopped');
+      logging.warning('AdvertBan component already stopped');
       return;
     }
     this._stopTimers();
@@ -875,7 +875,7 @@ AdBan.prototype = {
     category_manager.deleteCategoryEntry('content-policy', this.classDescription, false);
     vars.is_active = false;
     this._notifyStateListeners();
-    logging.info('AdBan component has been stopped');
+    logging.info('AdvertBan component has been stopped');
   },
 
   isActive: function() {
@@ -883,7 +883,7 @@ AdBan.prototype = {
   },
 
   firstRun: function() {
-    logging.info('AdBan.firstRun()');
+    logging.info('AdvertBan.firstRun()');
   },
 
   sendUrlComplaint: function(site_url, referer_url, comment, success_callback, failure_callback) {
@@ -939,7 +939,7 @@ AdBan.prototype = {
   },
 
   subscribeToStateChange: function(state_change_callback) {
-    logging.info('subscribing to AdBan component state change');
+    logging.info('subscribing to AdvertBan component state change');
     const listener_id = this._last_state_listener_id++;
     this._state_listeners[listener_id] = state_change_callback;
     return [
@@ -949,7 +949,7 @@ AdBan.prototype = {
   },
 
   unsubscribeFromStateChange: function(listener_id) {
-    logging.info('unsubscribing from AdBan component state change. listener_id=[%s]', listener_id);
+    logging.info('unsubscribing from AdvertBan component state change. listener_id=[%s]', listener_id);
     delete this._state_listeners[listener_id];
   },
 
@@ -1076,7 +1076,7 @@ AdBan.prototype = {
   _notifyStateListeners: function() {
     const state_listeners = this._state_listeners;
     for (let listener_id in state_listeners) {
-      logging.info('notifying AdBan component state listener [%s]', listener_id);
+      logging.info('notifying AdvertBan component state listener [%s]', listener_id);
       state_listeners[listener_id]();
     }
   },
@@ -1118,7 +1118,7 @@ AdBan.prototype = {
   },
 
   _startTimers: function() {
-    logging.info('starting AdBan component timers');
+    logging.info('starting AdvertBan component timers');
     const that = this;
     const settings = this._settings;
 
@@ -1166,11 +1166,11 @@ AdBan.prototype = {
         process_stale_urls_callback,
         settings.process_stale_urls_interval);
 
-    logging.info('AdBan component timers have been started');
+    logging.info('AdvertBan component timers have been started');
   },
 
   _stopTimers: function() {
-    logging.info('stopping AdBan component timers');
+    logging.info('stopping AdvertBan component timers');
     // canceled timers can be re-used later.
     // See https://developer.mozilla.org/En/nsITimer#cancel() .
     this._update_current_date_timer.cancel();
@@ -1178,7 +1178,7 @@ AdBan.prototype = {
     this._save_cache_timer.cancel();
     this._save_stale_urls_timer.cancel();
     this._process_stale_urls_timer.cancel();
-    logging.info('AdBan component timers have been stopped');
+    logging.info('AdvertBan component timers have been stopped');
   },
 
   _createUri: function(url) {
@@ -1216,7 +1216,7 @@ AdBan.prototype = {
     const data_dir = this._directory_service.get('ProfD', Ci.nsIFile);
     data_dir.append(this._DATA_DIRECTORY_NAME);
     if (!data_dir.exists() || !data_dir.isDirectory()) {
-      logging.info('creating data directory for AdBan plugin: [%s]', data_dir.path);
+      logging.info('creating data directory for AdvertBan plugin: [%s]', data_dir.path);
       data_dir.create(data_dir.DIRECTORY_TYPE, 0774);
     }
     return data_dir.clone();
@@ -1301,30 +1301,30 @@ AdBan.prototype = {
   },
 
   _loadSettingsAsync: function() {
-    logging.info('loading AdBan settings from file');
+    logging.info('loading AdvertBan settings from file');
     const file = this._getFileForSettings();
     const that = this;
     const read_complete_callback = function(data) {
       that._vars.auth_token = data[0];
       that._settings.import(data[1]);
-      logging.info('AdBan settings have been loaded from file');
+      logging.info('AdvertBan settings have been loaded from file');
     };
     this._readJsonFromFileAsync(file, read_complete_callback);
   },
 
   _saveSettingsSync: function() {
-    logging.info('saving AdBan settings to file');
+    logging.info('saving AdvertBan settings to file');
     const file = this._getFileForSettings();
     const data = [
       this._vars.auth_token,
       this._settings.export(),
     ];
     this._writeJsonToFileSync(file, data);
-    logging.info('AdBan settings have been saved to file');
+    logging.info('AdvertBan settings have been saved to file');
   },
 
   _loadCacheAsync: function() {
-    logging.info('loading AdBan cache from file');
+    logging.info('loading AdvertBan cache from file');
     const vars = this._vars;
     const settings = this._settings;
     const stale_node_timeout = settings.stale_node_timeout;
@@ -1345,13 +1345,13 @@ AdBan.prototype = {
           urlExceptionValueConstructor);
       vars.url_cache = url_cache;
       vars.url_exception_cache = url_exception_cache;
-      logging.info('AdBan cache has been loaded from file');
+      logging.info('AdvertBan cache has been loaded from file');
     };
     this._readJsonFromFileAsync(file, read_complete_callback);
   },
 
   _saveCacheSync: function() {
-    logging.info('saving AdBan cache to file');
+    logging.info('saving AdvertBan cache to file');
     const vars = this._vars;
     if (vars.is_in_private_mode) {
       logging.info('cache shouldn\'t be saved while in private mode');
@@ -1366,7 +1366,7 @@ AdBan.prototype = {
       url_exception_cache.exportToNodes(urlExceptionNodeConstructor, current_date),
     ];
     this._writeJsonToFileSync(file, data);
-    logging.info('AdBan cache has been saved to file');
+    logging.info('AdvertBan cache has been saved to file');
   },
 
   _loadPerSiteWhitelistAsync: function() {
@@ -2042,9 +2042,9 @@ AdBan.prototype = {
 // XPCOMUtils.generateNSGetFactory was introduced in Mozilla 2 (Firefox 4).
 // XPCOMUtils.generateNSGetModule is for Mozilla 1.9.2 (Firefox 3.6).
 if (XPCOMUtils.generateNSGetFactory) {
-  const NSGetFactory = XPCOMUtils.generateNSGetFactory([AdBan]);
+  const NSGetFactory = XPCOMUtils.generateNSGetFactory([AdvertBan]);
 }
 else {
-  const NSGetModule = XPCOMUtils.generateNSGetModule([AdBan]);
+  const NSGetModule = XPCOMUtils.generateNSGetModule([AdvertBan]);
 }
 

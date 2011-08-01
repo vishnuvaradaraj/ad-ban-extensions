@@ -2,7 +2,7 @@
 <!ENTITY adban.complaint-dialog.cancel-button.label "Löschen">
 <!ENTITY adban.complaint-dialog.accept-button.label "Die Meldung senden">
 <!ENTITY adban.complaint-dialog.site-url.label "
-  Die nächste Seite erhält Werbung oder sieht gebrochen im Gefolge von AdBan. Sie können
+  Die nächste Seite erhält Werbung oder sieht gebrochen im Gefolge von AdvertBan. Sie können
   die Seite url modifizieren, wenn das unkorrekt ist (obwohl das nicht wünschenswert ist)
 ">
 <!ENTITY adban.complaint-dialog.comment.label "

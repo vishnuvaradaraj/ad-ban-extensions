@@ -2,7 +2,7 @@
 <!ENTITY adban.complaint-dialog.cancel-button.label "Mégse">
 <!ENTITY adban.complaint-dialog.accept-button.label "Jelentés elküldése">
 <!ENTITY adban.complaint-dialog.site-url.label "
-  A megadott oldal reklámot tartalmaz vagy helytelenül jelenik meg az AdBan miatt.
+  A megadott oldal reklámot tartalmaz vagy helytelenül jelenik meg az AdvertBan miatt.
   Megváltoztathatja a webhely URL-címét, amennyiben az nem megfelelő
 ">
 <!ENTITY adban.complaint-dialog.comment.label "

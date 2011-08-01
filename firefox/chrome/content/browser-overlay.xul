@@ -33,7 +33,7 @@
   </commandset>
 
   <menupopup id="menu_ToolsPopup">
-    <menu id="adban-menuitem" label="AdBan" accesskey="b" class="menu-iconic">
+    <menu id="adban-menuitem" label="AdvertBan" accesskey="b" class="menu-iconic">
       <menupopup id="adban-menupopup">
         <menuitem
           label="&adban.menuitem.complaint;"

@@ -48,7 +48,7 @@
     const state_obj = {
         value: false,
     };
-    prompts.alertCheck(window, 'AdBan', msg, _('dont-show-this-message-again'), state_obj);
+    prompts.alertCheck(window, 'AdvertBan', msg, _('dont-show-this-message-again'), state_obj);
     if (state_obj.value) {
       logging.info('disabling the alert [%s] in preferences', alert_name);
       pref_branch.setBoolPref(alert_name, true);
@@ -234,7 +234,7 @@
     // Read more at http://blog.pearlcrescent.com/archives/24 .
     const first_run_callback = function() {
       if (!pref_branch.prefHasUserValue('first-run')) {
-        logging.info('first run of AdBan');
+        logging.info('first run of AdvertBan');
         adban.firstRun();
         setupToolbarButtons();
         pref_branch.setBoolPref('first-run', true);
@@ -245,7 +245,7 @@
         setTimeout(cmdHelp, 2000);
       }
       else if (!pref_branch.prefHasUserValue('toolbarbutton-installed')) {
-        logging.info('installing adban-toolbarbutton for the user of the previous AdBan version');
+        logging.info('installing adban-toolbarbutton for the user of the previous AdvertBan version');
         setupToolbarButtons();
         pref_branch.setBoolPref('toolbarbutton-installed', true);
       }

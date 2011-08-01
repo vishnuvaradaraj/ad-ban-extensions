@@ -2,7 +2,7 @@
 <!ENTITY adban.complaint-dialog.cancel-button.label "Cancelar">
 <!ENTITY adban.complaint-dialog.accept-button.label "Enviar el reporte">
 <!ENTITY adban.complaint-dialog.site-url.label "
-  La página contiene publicidad o aparece rota debido a AdBan.
+  La página contiene publicidad o aparece rota debido a AdvertBan.
   Puedes modificar la dirección de la página si es incorrecta (aunque es improbable)
 ">
 <!ENTITY adban.complaint-dialog.comment.label "
