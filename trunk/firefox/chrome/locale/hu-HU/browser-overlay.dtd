@@ -1,8 +1,8 @@
 <!ENTITY adban.menuitem.start "Engedélyezés">
-<!ENTITY adban.menuitem.start.tooltiptext "AdBan engedélyezése">
+<!ENTITY adban.menuitem.start.tooltiptext "AdvertBan engedélyezése">
 <!ENTITY adban.menuitem.start.accesskey "E">
 <!ENTITY adban.menuitem.stop "Letiltás">
-<!ENTITY adban.menuitem.stop.tooltiptext "AdBan letiltása">
+<!ENTITY adban.menuitem.stop.tooltiptext "AdvertBan letiltása">
 <!ENTITY adban.menuitem.stop.accesskey "L">
 <!ENTITY adban.menuitem.add-per-site-whitelist.accesskey "c">
 <!ENTITY adban.menuitem.remove-per-site-whitelist.accesskey "k">
@@ -19,4 +19,4 @@
 <!ENTITY adban.menuitem.report-bug.accesskey "H">
 
 <!ENTITY adban.toolbarbutton.label "AB">
-<!ENTITY adban.toolbarbutton.tooltiptext "AdBan lehetőségek">
+<!ENTITY adban.toolbarbutton.tooltiptext "AdvertBan lehetőségek">

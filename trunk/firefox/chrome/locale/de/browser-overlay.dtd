@@ -1,8 +1,8 @@
 <!ENTITY adban.menuitem.start "Ein">
-<!ENTITY adban.menuitem.start.tooltiptext "AdBan anschalten">
+<!ENTITY adban.menuitem.start.tooltiptext "AdvertBan anschalten">
 <!ENTITY adban.menuitem.start.accesskey "n">
 <!ENTITY adban.menuitem.stop "Aus">
-<!ENTITY adban.menuitem.stop.tooltiptext "AdBan abstellen">
+<!ENTITY adban.menuitem.stop.tooltiptext "AdvertBan abstellen">
 <!ENTITY adban.menuitem.stop.accesskey "b">
 <!ENTITY adban.menuitem.add-per-site-whitelist.accesskey "c">
 <!ENTITY adban.menuitem.remove-per-site-whitelist.accesskey "k">
@@ -19,4 +19,4 @@
 <!ENTITY adban.menuitem.report-bug.accesskey "f">
 
 <!ENTITY adban.toolbarbutton.label "AB">
-<!ENTITY adban.toolbarbutton.tooltiptext "AdBan's Optionen">
+<!ENTITY adban.toolbarbutton.tooltiptext "AdvertBan's Optionen">
