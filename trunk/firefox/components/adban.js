@@ -8,7 +8,7 @@ const Cr = Components.results;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
-const ADDON_VERSION = '2.0.0';
+const ADDON_VERSION = '2.1.0';
 const BACKEND_SERVER_DOMAIN = 'ad-ban.appspot.com';
 const FRONTEND_SERVER_DOMAIN = 'www.advertban.com';
 const BACKEND_SERVER_PROTOCOL = 'https';
@@ -1518,19 +1518,20 @@ AdvertBan.prototype = {
     }
   },
 
-  _updateCache: function(response_data, urls, cache, value_constructor) {
+  _updateCache: function(response_data, response_values, urls, cache, value_constructor) {
     const response_data_length = response_data.length;
     const current_date = this._vars.current_date;
 
     for (let i = 0; i < response_data_length; i++) {
-      let [url_length, todo, url_idx, properties] = response_data[i];
+      let [url_length, todo, url_idx, value_index] = response_data[i];
       let end_urls = [];
       let url_idx_length = url_idx.length;
       for (let j = 0; j < url_idx_length; j++) {
         end_urls[j] = urls[url_idx[j]];
       }
       let url = urls[url_idx[0]].substring(0, url_length);
-      let value = value_constructor(properties);
+      let values = response_values[value_index];
+      let value = value_constructor(values);
       cache.update(url, end_urls, value, current_date, todo);
     }
   },
@@ -1833,11 +1834,13 @@ AdvertBan.prototype = {
     const response_callback = function(response) {
       that._updateCache(
           response[0],
+          response[2],
           urls,
           vars.url_cache,
           urlValueConstructor);
       that._updateCache(
           response[1],
+          response[3],
           url_exceptions,
           vars.url_exception_cache,
           urlExceptionValueConstructor);
