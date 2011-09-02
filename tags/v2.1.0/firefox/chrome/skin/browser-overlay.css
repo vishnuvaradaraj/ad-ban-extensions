@@ -1,0 +1,29 @@
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+
+#adban-menuitem {
+  list-style-image: url("icons/16px.png");
+}
+
+#adban-toolbarbutton {
+  -moz-box-orient: horizontal;
+}
+
+#adban-toolbarbutton .toolbarbutton-text {
+  display: -moz-box;
+}
+
+#adban-toolbarbutton .toolbarbutton-icon {
+  display: none;
+}
+
+#adban-toolbarbutton .toolbarbutton-menu-dropmarker {
+  display: none;
+}
+
+toolbar[iconsize="large"] #adban-toolbarbutton {
+  font-size: 1.4em;
+}
+
+#adban-toolbarbutton[adban-disabled] .toolbarbutton-text {
+  opacity: 0.3;
+}
