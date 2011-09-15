@@ -8,7 +8,7 @@ const Cr = Components.results;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
-const ADDON_VERSION = '2.1.0';
+const ADDON_VERSION = '2.1.1beta1';
 const BACKEND_SERVER_DOMAIN = 'ad-ban.appspot.com';
 const FRONTEND_SERVER_DOMAIN = 'www.advertban.com';
 const BACKEND_SERVER_PROTOCOL = 'https';
@@ -1717,39 +1717,37 @@ AdvertBan.prototype = {
   },
 
   _startJsonRequestInternal: function(xhr, request_url, request_data, response_callback, finish_callback) {
-    const auth_token = this._vars.auth_token;
     let error_message;
-
-    const request_text = JSON.stringify([auth_token, request_data]);
+    const request_text = JSON.stringify([this._vars.auth_token, request_data]);
     logging.info('request_url=[%s], request_text=[%s]', request_url, request_text);
 
     const that = this;
-    xhr.open('POST', request_url, true);
     xhr.onreadystatechange = function() {
-      if (xhr.readyState == 4) {
-        try {
-          const http_status = xhr.status;
-          if (http_status == 200) {
-            error_message = that._processJsonResponse(request_text, xhr.responseText, response_callback);
-          }
-          else {
-            logging.error('unexpected HTTP status code for the request_url=[%s], request_text=[%s], http_status=[%s]', request_url, request_text, http_status);
-            error_message = 'server error';
-          }
+      if (xhr.readyState != 4) {
+        return;
+      }
+      try {
+        const http_status = xhr.status;
+        if (http_status == 200) {
+          error_message = that._processJsonResponse(request_text, xhr.responseText, response_callback);
         }
-        catch(e) {
-          logging.error('error when processing json response=[%s] for the request_url=[%s], request_text=[%s]: [%s]', xhr.responseText, request_url, request_text, e);
-          logging.error('stack trace: [%s]', e.stack);
-          error_message = 'protocol error';
-        }
-        finally {
-          finish_callback = that._createErrorHandler(finish_callback);
-          finish_callback(error_message);
+        else {
+          logging.error('unexpected HTTP status code for the request_url=[%s], request_text=[%s], http_status=[%s]', request_url, request_text, http_status);
+          error_message = 'server error';
         }
       }
+      catch(e) {
+        logging.error('error when processing json response=[%s] for the request_url=[%s], request_text=[%s]: [%s]', xhr.responseText, request_url, request_text, e);
+        logging.error('stack trace: [%s]', e.stack);
+        error_message = 'protocol error';
+      }
+      finally {
+        finish_callback = that._createErrorHandler(finish_callback);
+        finish_callback(error_message);
+      }
     };
-    const encoded_request = encodeURIComponent(request_text);
-    xhr.send(encoded_request);
+    xhr.open('POST', request_url, true);
+    xhr.send(request_text);
   },
 
   _startJsonRequest: function(xhr, request_url, request_data, response_callback, finish_callback) {
