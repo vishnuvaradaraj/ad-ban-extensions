@@ -688,7 +688,10 @@ AdvertBan.prototype = {
       // there is no need in verifying the old_channel, because it must be
       // already verified by shouldLoad() content-policy handler.
       // So verify only the new_channel.
-      const request_origin = this._getRequestOriginFromChannel(new_channel);
+      // Obtain request_origin from the old_channel, since it should be
+      // the same as the request_origin for the new_channel and the new_channel
+      // can have no request_origin yet.
+      const request_origin = this._getRequestOriginFromChannel(old_channel);
       is_whitelist = this._verifyLocation(new_channel.URI, request_origin)[0];
     }
     catch(e) {
