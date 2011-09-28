@@ -1192,10 +1192,12 @@ AdvertBan.prototype = {
         request_origin = this._createUri(origin_url);
       }
       catch(e) {
-        // It looks like css channels don't provide nsIDOMWindow
+        // It looks like css and rss channels don't provide nsIDOMWindow
         // during redirects. Just silently skip this, because it is unclear
         // how to determine the request_origin in this case.
-        logging.warning('error when obtaining request origin from channel: [%s]', e);
+        // Use logging.info instead of logging.error, since this message
+        // tends to spam output log for default installations too much.
+        logging.info('error when obtaining request origin from channel: [%s]', e);
       }
     }
     return request_origin;
