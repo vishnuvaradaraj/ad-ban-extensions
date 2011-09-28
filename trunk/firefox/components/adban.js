@@ -55,11 +55,9 @@ const logging = {
   setLogStream: function(log_stream) {
     this._log_stream = log_stream;
     if (log_stream) {
-      const pending_messages = this._pending_messages;
-      const pending_messages_length = pending_messages.length;
-      for (let i = 0; i < pending_messages_length; i++) {
-        log_stream.writeString(pending_messages[i]);
-      }
+      this._pending_messages.forEach(function(pending_message) {
+        log_stream.writeString(pending_message);
+      });
       log_stream.flush();
       this._pending_messages = [];
     }
