@@ -1499,7 +1499,7 @@ AdvertBan.prototype = {
       let uri = this._createUri(link.href);
       if (!this._shouldProcessUri(uri)) {
         logging.info('there is no need in processing the link=[%s]', uri.spec);
-        continue;
+        return;
       }
       let canonical_url = this._getCanonicalUrl(uri);
       let is_whitelist = this._verifyUrlException(canonical_url, url_exception_value, canonical_site_url);
