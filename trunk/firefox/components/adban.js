@@ -1549,10 +1549,9 @@ AdvertBan.prototype = {
 
   _createDictionaryFromKeys: function(keys, value) {
     const dict = {};
-    const keys_length = keys.length;
-    for (let i = 0; i < keys_length; i++) {
-      dict[keys[i]] = value;
-    }
+    keys.forEach(function(key) {
+      dict[key] = value;
+    });
     return dict;
   },
 
