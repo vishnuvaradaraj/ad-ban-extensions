@@ -252,7 +252,7 @@ Trie.prototype = {
         continue;
       }
       node.last_check_date = 0;
-    });
+    }, this);
   },
 
   _exportSubtreeNodes: function(ctx, key, node, is_parent_node_with_value) {
@@ -1024,16 +1024,14 @@ AdvertBan.prototype = {
 
   _setupErrorHandlers: function(funcs) {
     logging.info('setting up error handlers for [%s]', funcs);
-    const funcs_length = funcs.length;
-    for (let i = 0; i < funcs_length; i++) {
+    funcs.forEach(function(func) {
       let default_return_value;
-      let func = funcs[i];
       if (typeof(func) != 'string') {
         default_return_value = func[1];
         func = func[0];
       }
       this[func] = this._createErrorHandler(this[func], default_return_value);
-    }
+    }, this);
     logging.info('error handlers for [%s] have been set up successfully', funcs);
   },
 
