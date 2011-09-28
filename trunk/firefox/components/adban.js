@@ -238,15 +238,11 @@ Trie.prototype = {
         children_to_delete.push(c);
       }
     }
-    const children_to_delete_length = children_to_delete.length;
-    for (let i = 0; i < children_to_delete_length; i++) {
-      let c = children_to_delete[i];
+    children_to_delete.forEach(function(c) {
       delete children[c];
-    }
+    });
 
-    const todo_length = todo.length;
-    for (let i = 0; i < todo_length; i++) {
-      let c = todo[i];
+    todo.forEach(function(c) {
       let node = children[c];
       if (!node) {
         node = this._createNode();
@@ -256,7 +252,7 @@ Trie.prototype = {
         continue;
       }
       node.last_check_date = 0;
-    }
+    });
   },
 
   _exportSubtreeNodes: function(ctx, key, node, is_parent_node_with_value) {
