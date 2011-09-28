@@ -242,7 +242,9 @@ Trie.prototype = {
       delete children[c];
     });
 
-    todo.forEach(function(c) {
+    // todo is a string, so it doesn't contain forEach implementation.
+    // Apply forEach from Array to the todo string.
+    Array.prototype.forEach.call(todo, function(c) {
       let node = children[c];
       if (!node) {
         node = this._createNode();
