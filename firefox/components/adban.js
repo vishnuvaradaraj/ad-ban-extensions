@@ -136,9 +136,7 @@ const compressStrings = function(s_list) {
 
 const uncompressIndexes = function(compressed_indexes) {
   const uncompressed_indexes = [];
-  const compressed_indexes_length = compressed_indexes.length;
-  for (let i = 0; i < compressed_indexes_length; i++) {
-    let compressed_index = compressed_indexes[i];
+  compressed_indexes.forEach(function(compressed_index) {
     if (typeof(compressed_index) == 'string') {
       let [start_range, end_range] = compressed_index.split('-');
       start_range = parseInt(start_range);
@@ -151,7 +149,7 @@ const uncompressIndexes = function(compressed_indexes) {
     else {
       uncompressed_indexes.push(compressed_index);
     }
-  }
+  });
   return uncompressed_indexes;
 };
 
