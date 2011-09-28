@@ -1491,13 +1491,16 @@ AdvertBan.prototype = {
   },
 
   _hideBlacklistedLinks: function(doc, canonical_site_url) {
+    const links = doc.links;
+    const links_length = links.length;
     const [url_exception_value, is_todo1] = this._getUrlExceptionValue(canonical_site_url);
     const todo_nodes = this._vars.todo_nodes;
-    doc.links.forEach(function(link) {
+    for (let i = 0; i < links_length; i++) {
+      let link = links[i];
       let uri = this._createUri(link.href);
       if (!this._shouldProcessUri(uri)) {
         logging.info('there is no need in processing the link=[%s]', uri.spec);
-        return;
+        continue;
       }
       let canonical_url = this._getCanonicalUrl(uri);
       let is_whitelist = this._verifyUrlException(canonical_url, url_exception_value, canonical_site_url);
@@ -1512,7 +1515,7 @@ AdvertBan.prototype = {
       else if (is_todo1 || is_todo2) {
         todo_nodes.push([canonical_url, canonical_site_url, link, 0]);
       }
-    }, this);
+    }
   },
 
   _updateCache: function(response_data, response_values, urls, cache, value_constructor) {
