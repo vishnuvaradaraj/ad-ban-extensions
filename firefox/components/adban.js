@@ -1516,22 +1516,18 @@ AdvertBan.prototype = {
   },
 
   _updateCache: function(response_data, response_values, urls, cache, value_constructor) {
-    const response_data_length = response_data.length;
     const current_date = getCurrentDate();
-
-    for (let i = 0; i < response_data_length; i++) {
-      let [url_length, todo, url_idx, value_index] = response_data[i];
-      let end_urls = [];
+    response_data.forEach(function(data) {
+      let [url_length, todo, url_idx, value_index] = data;
       url_idx = uncompressIndexes(url_idx);
-      let url_idx_length = url_idx.length;
-      for (let j = 0; j < url_idx_length; j++) {
-        end_urls[j] = urls[url_idx[j]];
-      }
-      let url = urls[url_idx[0]].substring(0, url_length);
+      let end_urls = url_idx.map(function(idx) {
+        return urls[idx];
+      });
+      let url = end_urls[0].substring(0, url_length);
       let values = response_values[value_index];
       let value = value_constructor(values);
       cache.update(url, end_urls, value, current_date, todo);
-    }
+    });
   },
 
   _getDictionaryKeys: function(dict, max_keys_to_return) {
