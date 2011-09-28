@@ -1558,15 +1558,13 @@ AdvertBan.prototype = {
   _cleanupUnverifiedUrls: function(unverified_urls, cache) {
     const current_date = getCurrentDate();
     const urls = this._getAllDictionaryKeys(unverified_urls);
-    const urls_length = urls.length;
-    for (let i = 0; i < urls_length; i++) {
-      let url = urls[i];
+    urls.forEach(function(url) {
       let tmp = cache.get(url);
       let non_empty_node = tmp[2];
       if (!cache.isStaleNode(non_empty_node, current_date)) {
         delete unverified_urls[url];
       }
-    }
+    });
   },
 
   _cleanupTodoNodes: function() {
