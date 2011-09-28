@@ -1627,11 +1627,10 @@ AdvertBan.prototype = {
   _cleanupTodoPopups: function() {
     const vars = this._vars;
     const todo_popups = vars.todo_popups;
-    const todo_popups_length = todo_popups.length;
     const max_todo_generation_count = this._settings.max_todo_generation_count;
     vars.todo_popups = [];
-    for (let i = 0; i < todo_popups_length; i++) {
-      let [canonical_url, node, generation_count] = todo_popups[i];
+    todo_popups.forEach(function(todo_popup) {
+      let [canonical_url, node, generation_count] = todo_popup;
       let [is_whitelist, is_todo] = this._verifyUrl(canonical_url);
       if (!is_whitelist) {
         try {
@@ -1652,7 +1651,7 @@ AdvertBan.prototype = {
           logging.warning('couldn\'t process the todo popup for canonical_url=[%s] in [%s] tries', canonical_url, generation_count);
         }
       }
-    }
+    }, this);
   },
 
   _injectAuthTokenToCookie: function(auth_token) {
