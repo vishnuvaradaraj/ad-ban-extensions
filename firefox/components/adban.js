@@ -223,14 +223,12 @@ Trie.prototype = {
   },
 
   _deleteObsoleteChildren: function(children, node_depth, end_keys) {
-    const end_keys_length = end_keys.length;
-    for (let i = 0; i < end_keys_length; i++) {
-      let end_key = end_keys[i];
+    end_keys.forEach(function(end_key) {
       if (node_depth < end_key.length) {
         let c = end_key[node_depth];
         delete children[c];
       }
-    }
+    });
   },
 
   _updateTodoChildren: function(children, todo) {
