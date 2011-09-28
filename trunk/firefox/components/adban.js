@@ -17,7 +17,7 @@ const EXTENSION_ID = 'adban@ad-ban.appspot.com';
 const app_info = Cc['@mozilla.org/xre/app-info;1'].getService(Ci.nsIXULAppInfo);
 
 const getCurrentDate = function() {
-  return (new Date()).getTime();
+  return Date.now();
 };
 
 const logging = {
