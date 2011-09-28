@@ -8,7 +8,7 @@ const Cr = Components.results;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
-const ADDON_VERSION = '2.1.1beta1';
+const ADDON_VERSION = '2.2.0beta1';
 const BACKEND_SERVER_DOMAIN = 'ad-ban.appspot.com';
 const FRONTEND_SERVER_DOMAIN = 'www.advertban.com';
 const BACKEND_SERVER_PROTOCOL = 'https';
@@ -134,6 +134,27 @@ const compressStrings = function(s_list) {
     prev_s = s;
   }
   return result;
+};
+
+const uncompressIndexes = function(compressed_indexes) {
+  const uncompressed_indexes = [];
+  const compressed_indexes_length = compressed_indexes.length;
+  for (let i = 0; i < compressed_indexes_length; i++) {
+    let compressed_index = compressed_indexes[i];
+    if (typeof(compressed_index) == 'string') {
+      let [start_range, end_range] = compressed_index.split('-');
+      start_range = parseInt(start_range);
+      end_range = parseInt(end_range);
+      while (start_range <= end_range) {
+        uncompressed_indexes.push(start_range);
+        ++start_range;
+      }
+    }
+    else {
+      uncompressed_indexes.push(i);
+    }
+  }
+  return uncompressed_indexes;
 };
 
 const Trie = function(root_value) {
@@ -1516,6 +1537,7 @@ AdvertBan.prototype = {
     for (let i = 0; i < response_data_length; i++) {
       let [url_length, todo, url_idx, value_index] = response_data[i];
       let end_urls = [];
+      url_idx = uncompressIndexes(url_idx);
       let url_idx_length = url_idx.length;
       for (let j = 0; j < url_idx_length; j++) {
         end_urls[j] = urls[url_idx[j]];
