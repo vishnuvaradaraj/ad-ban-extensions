@@ -1611,10 +1611,9 @@ AdvertBan.prototype = {
   _cleanupTodoDocs: function() {
     const vars = this._vars;
     const todo_docs = vars.todo_docs;
-    const todo_docs_length = todo_docs.length;
     vars.todo_docs = [];
-    for (let i = 0; i < todo_docs_length; i++) {
-      let [canonical_site_url, doc, generation_count] = todo_docs[i];
+    todo_docs.forEach(function(todo_doc) {
+      let [canonical_site_url, doc, generation_count] = todo_doc;
       try {
         this._injectCssToDocument(doc, canonical_site_url, generation_count + 1);
       }
@@ -1622,7 +1621,7 @@ AdvertBan.prototype = {
         logging.error('error when hiding the todo doc for canonical_site_url=[%s]: [%s]', canonical_site_url, e);
         logging.error('stack trace: [%s]', e.stack);
       }
-    }
+    }, this);
   },
 
   _cleanupTodoPopups: function() {
