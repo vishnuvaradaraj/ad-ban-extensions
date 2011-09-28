@@ -249,7 +249,7 @@ Trie.prototype = {
         children[c] = node;
       }
       else if (this._isNodeWithValue(node)) {
-        continue;
+        return;
       }
       node.last_check_date = 0;
     }, this);
