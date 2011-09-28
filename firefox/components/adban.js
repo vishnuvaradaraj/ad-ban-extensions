@@ -1570,11 +1570,10 @@ AdvertBan.prototype = {
   _cleanupTodoNodes: function() {
     const vars = this._vars;
     const todo_nodes = vars.todo_nodes;
-    const todo_nodes_length = todo_nodes.length;
     const max_todo_generation_count = this._settings.max_todo_generation_count;
     vars.todo_nodes = [];
-    for (let i = 0; i < todo_nodes_length; i++) {
-      let [canonical_url, canonical_site_url, node, generation_count] = todo_nodes[i];
+    todo_nodes.forEach(function(todo_node) {
+      let [canonical_url, canonical_site_url, node, generation_count] = todo_node;
       let is_whitelist = null;
       let is_todo1 = false;
       let is_todo2 = false;
@@ -1606,7 +1605,7 @@ AdvertBan.prototype = {
           logging.warning('couldn\'t process the todo node=[%s] for canonical_url=[%s], canonical_site_url=[%s] in [%s] tries', node.nodeName, canonical_url, canonical_site_url, generation_count);
         }
       }
-    }
+    }, this);
   },
 
   _cleanupTodoDocs: function() {
