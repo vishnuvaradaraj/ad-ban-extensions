@@ -111,7 +111,7 @@ logging.init();
 const getCommonPrefixLength = function(s1, s2) {
   const s1_length = s1.length;
   for (let i = 0; i < s1_length; i++) {
-    if (s1[i] != s2[i]) {
+    if (s1[i] !== s2[i]) {
       return i;
     }
   }
@@ -137,7 +137,7 @@ const compressStrings = function(s_list) {
 const uncompressIndexes = function(compressed_indexes) {
   const uncompressed_indexes = [];
   compressed_indexes.forEach(function(compressed_index) {
-    if (typeof(compressed_index) == 'string') {
+    if (typeof(compressed_index) === 'string') {
       let [start_range, end_range] = compressed_index.split('-');
       start_range = parseInt(start_range);
       end_range = parseInt(end_range);
@@ -234,7 +234,7 @@ Trie.prototype = {
   _updateTodoChildren: function(children, todo) {
     const children_to_delete = [];
     for (let c in children) {
-      if (todo.indexOf(c) == -1) {
+      if (todo.indexOf(c) === -1) {
         children_to_delete.push(c);
       }
     }
@@ -260,7 +260,7 @@ Trie.prototype = {
   _exportSubtreeNodes: function(ctx, key, node, is_parent_node_with_value) {
     let is_node_with_value = this._isNodeWithValue(node);
     let is_todo_node = this.isTodoNode(node);
-    if (is_node_with_value && node != this._root && (ctx.current_date - node.last_check_date > this._node_delete_timeout)) {
+    if (is_node_with_value && node !== this._root && (ctx.current_date - node.last_check_date > this._node_delete_timeout)) {
       this._clearNode(node, is_parent_node_with_value);
       is_node_with_value = false;
       is_todo_node = is_parent_node_with_value;
@@ -285,7 +285,7 @@ Trie.prototype = {
   },
 
   isTodoNode: function(node) {
-    return (node.last_check_date == 0);
+    return (node.last_check_date === 0);
   },
 
   isStaleNode: function(node, current_date) {
@@ -332,7 +332,7 @@ Trie.prototype = {
     const tmp = this.get(key);
     const node = tmp[0];
     const node_depth = tmp[3];
-    if (node_depth == key.length) {
+    if (node_depth === key.length) {
       this._clearNode(node, false);
     }
   },
@@ -341,7 +341,7 @@ Trie.prototype = {
     const tmp = this.get(start_key);
     const node = tmp[0];
     const node_depth = tmp[3];
-    if (node_depth == start_key.length) {
+    if (node_depth === start_key.length) {
       this._deleteObsoleteChildren(node.children, node_depth, end_keys);
     }
 
@@ -451,7 +451,7 @@ const perSiteWhitelistNodeConstructor = function(v) {
 
 const urlValueConstructor = function(d) {
   const v = {};
-  if (typeof(d) == 'number') {
+  if (typeof(d) === 'number') {
     v.is_whitelist = !!(d & 1);
     return v;
   }
@@ -725,15 +725,15 @@ AdvertBan.prototype = {
   shouldLoad: function(content_type, content_location, request_origin, node, mime_type, extra) {
     const [is_whitelist, is_todo, canonical_url, canonical_site_url] = this._verifyLocation(content_location, request_origin);
     let is_popup = false;
-    if (node && content_type == Ci.nsIContentPolicy.TYPE_DOCUMENT) {
+    if (node && content_type === Ci.nsIContentPolicy.TYPE_DOCUMENT) {
       const w = node.contentWindow;
-      if (w && w.opener && w.top != w.opener.top) {
+      if (w && w.opener && w.top !== w.opener.top) {
         is_popup = true;
       }
     }
     const is_collapsable_node = (!is_popup && node && node.nodeName &&
-        (this._COLLAPSABLE_NODES.indexOf(node.nodeName.toLowerCase()) != -1) &&
-        content_type != Ci.nsIContentPolicy.TYPE_OBJECT_SUBREQUEST);
+        (this._COLLAPSABLE_NODES.indexOf(node.nodeName.toLowerCase()) !== -1) &&
+        content_type !== Ci.nsIContentPolicy.TYPE_OBJECT_SUBREQUEST);
 
     if (is_whitelist) {
       if (is_todo) {
@@ -764,7 +764,7 @@ AdvertBan.prototype = {
   observe: function(subject, topic, data) {
     const observer_service = this._observer_service;
     const vars = this._vars;
-    if (topic == 'app-startup') {
+    if (topic === 'app-startup') {
       logging.info('app-startup');
       // The 'app-startup' event isn't fired in FF4, so perform
       // all initialization at 'profile-after-change' step,
@@ -773,7 +773,7 @@ AdvertBan.prototype = {
       vars.is_app_startup_called = true;
       observer_service.addObserver(this, 'profile-after-change', false);
     }
-    else if (topic == 'profile-after-change') {
+    else if (topic === 'profile-after-change') {
       logging.info('profile-after-change');
       this._setupLogging();
       observer_service.addObserver(this, 'quit-application', false);
@@ -803,8 +803,8 @@ AdvertBan.prototype = {
       };
       this._executeDelayed(this._delayed_startup_xhr_timer, delayed_startup_xhr_callback, this._settings.startup_xhr_delay);
     }
-    else if (topic == 'private-browsing') {
-      if (data == 'enter') {
+    else if (topic === 'private-browsing') {
+      if (data === 'enter') {
         // save the current cache to local storage, so it can be loaded later
         // after exiting the private mode. The cache created during private mode
         // won't be saved to local storage.
@@ -827,7 +827,7 @@ AdvertBan.prototype = {
         logging.stop();
         vars.is_in_private_mode = true;
       }
-      else if (data == 'exit') {
+      else if (data === 'exit') {
         logging.start();
         logging.info('exiting private browsing mode');
         // load cache from local storage, which were saved before entering
@@ -839,7 +839,7 @@ AdvertBan.prototype = {
         vars.is_in_private_mode = false;
       }
     }
-    else if (topic == 'quit-application') {
+    else if (topic === 'quit-application') {
       logging.info('quit-application');
       this.stop();
 
@@ -967,7 +967,7 @@ AdvertBan.prototype = {
 
   processDocument: function(doc) {
     const node_name = doc.nodeName;
-    if (node_name != '#document') {
+    if (node_name !== '#document') {
       logging.info('the ducument\'s node=[%s] isn\'t html document', node_name);
       return;
     }
@@ -1028,7 +1028,7 @@ AdvertBan.prototype = {
     logging.info('setting up error handlers for [%s]', funcs);
     funcs.forEach(function(func) {
       let default_return_value;
-      if (typeof(func) != 'string') {
+      if (typeof(func) !== 'string') {
         default_return_value = func[1];
         func = func[0];
       }
@@ -1195,7 +1195,7 @@ AdvertBan.prototype = {
       try {
         const w = cb.getInterface(Ci.nsIDOMWindow);
         let origin_url = w.document.location.href;
-        if (origin_url == 'about:blank') {
+        if (origin_url === 'about:blank') {
           // Iframe's window is 'about:blank'. Use url for the parent
           // window instead.
           origin_url = w.parent.document.location.href;
@@ -1504,7 +1504,7 @@ AdvertBan.prototype = {
       let canonical_url = this._getCanonicalUrl(uri);
       let is_whitelist = this._verifyUrlException(canonical_url, url_exception_value, canonical_site_url);
       let is_todo2 = false;
-      if (is_whitelist == null) {
+      if (is_whitelist === null) {
         [is_whitelist, is_todo2] = this._verifyUrl(canonical_url);
       }
       if (!is_whitelist) {
@@ -1584,7 +1584,7 @@ AdvertBan.prototype = {
         [url_exception_value, is_todo1] = this._getUrlExceptionValue(canonical_site_url);
         is_whitelist = this._verifyUrlException(canonical_url, url_exception_value, canonical_site_url);
       }
-      if (is_whitelist == null) {
+      if (is_whitelist === null) {
         [is_whitelist, is_todo2] = this._verifyUrl(canonical_url);
       }
       if (!is_whitelist) {
@@ -1672,7 +1672,7 @@ AdvertBan.prototype = {
     logging.info('response_text=[%s]', response_text);
     const response_data = JSON.parse(response_text);
     const error_code = response_data[0];
-    if (error_code == error_codes.NO_ERRORS) {
+    if (error_code === error_codes.NO_ERRORS) {
       const new_auth_token = response_data[2];
       if (new_auth_token) {
         logging.info('obtained new auth_token=[%s] from the response_text=[%s]. request_text=[%s]', new_auth_token, response_text, request_text);
@@ -1688,13 +1688,13 @@ AdvertBan.prototype = {
         response_callback(response_data[1]);
       }
     }
-    else if (error_code == error_codes.AUTHENTICATION_ERROR) {
+    else if (error_code === error_codes.AUTHENTICATION_ERROR) {
       logging.error('authentication failed for the auth_token=[%s]. Resetting the auth_token.', vars.auth_token);
       vars.auth_token = '';
       this._saveSettingsSync();
       error_message = 'authentication error';
     }
-    else if (error_code == error_codes.AUTHORIZATION_ERROR) {
+    else if (error_code === error_codes.AUTHORIZATION_ERROR) {
       logging.warning('authorization failed for the auth_token=[%s]. Opening a user status tab', vars.auth_token);
       this.openTab('user-status', this.USER_STATUS_URL);
       error_message = 'authorization error';
@@ -1713,12 +1713,12 @@ AdvertBan.prototype = {
 
     const that = this;
     xhr.onreadystatechange = function() {
-      if (xhr.readyState != 4) {
+      if (xhr.readyState !== 4) {
         return;
       }
       try {
         const http_status = xhr.status;
-        if (http_status == 200) {
+        if (http_status === 200) {
           error_message = that._processJsonResponse(request_text, xhr.responseText, response_callback);
         }
         else {
@@ -1918,11 +1918,11 @@ AdvertBan.prototype = {
   },
 
   _isIp: function(host_parts) {
-    if (host_parts[0].indexOf(':') != -1) {
+    if (host_parts[0].indexOf(':') !== -1) {
       // IPv6 address
       return true;
     }
-    if (host_parts.length == 4) {
+    if (host_parts.length === 4) {
       for (let i = 0; i < 4; i++) {
         let part = host_parts[i];
         let int_part = parseInt(part);
@@ -1956,7 +1956,7 @@ AdvertBan.prototype = {
     if (!reg_exp) {
       return false;
     }
-    return (s.search(reg_exp) != -1);
+    return (s.search(reg_exp) !== -1);
   },
 
   _verifyUrl: function(canonical_url) {
@@ -2011,7 +2011,7 @@ AdvertBan.prototype = {
         is_whitelist = this._verifyUrlException(canonical_url, url_exception_value, canonical_site_url);
       }
     }
-    if (is_whitelist == null) {
+    if (is_whitelist === null) {
       if (!canonical_site_url && this._verifyPerSiteWhitelist(canonical_url)) {
         is_whitelist = true;
         is_todo1 = false;
