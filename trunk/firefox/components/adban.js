@@ -577,7 +577,6 @@ AdvertBan.prototype = {
   _main_thread: Cc['@mozilla.org/thread-manager;1'].getService().mainThread,
   _verify_urls_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _delayed_startup_xhr_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
-  _update_current_date_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _update_settings_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _save_cache_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
   _save_stale_urls_timer: Cc['@mozilla.org/timer;1'].createInstance(Ci.nsITimer),
@@ -592,7 +591,6 @@ AdvertBan.prototype = {
     url_verifier_delay: 1000 * 2,
     stale_node_timeout: 1000 * 3600 * 24,
     node_delete_timeout: 1000 * 3600 * 24 * 30,
-    current_date_granularity: 1000 * 10,
     update_settings_interval: 1000 * 3600 * 24,
     max_url_length: 50,
     max_url_exception_length: 50,
@@ -617,7 +615,7 @@ AdvertBan.prototype = {
       this.url_verifier_delay = data[0];
       this.stale_node_timeout = data[1];
       this.node_delete_timeout = data[2];
-      this.current_date_granularity = data[3];
+      this._deprecated_current_date_granularity = data[3];
       this.update_settings_interval = data[4];
       this.max_url_length = data[5];
       this.max_url_exception_length = data[6];
@@ -636,7 +634,7 @@ AdvertBan.prototype = {
         this.url_verifier_delay,
         this.stale_node_timeout,
         this.node_delete_timeout,
-        this.current_date_granularity,
+        this._deprecated_current_date_granularity,
         this.update_settings_interval,
         this.max_url_length,
         this.max_url_exception_length,
@@ -658,7 +656,6 @@ AdvertBan.prototype = {
   // among all instances of the component, which could be created by FireFox
   // via createInstance() call instead of getService() call.
   _vars: {
-    current_date: getCurrentDate(),
     auth_token: '',
     url_cache: createEmptyUrlCache(),
     url_exception_cache: createEmptyUrlExceptionCache(),
@@ -909,13 +906,12 @@ AdvertBan.prototype = {
 
   addPerSiteWhitelist: function(site_url) {
     logging.info('adding per site whitelist for the site_url=[%s]', site_url);
-    const vars = this._vars;
     const canonical_site_host = this._getCanonicalSiteHost(site_url);
     if (!canonical_site_host) {
       return;
     }
     logging.info('adding canonical_site_host=[%s] to the per_site_whitelist', canonical_site_host);
-    vars.per_site_whitelist.add(canonical_site_host, true, vars.current_date);
+    this._vars.per_site_whitelist.add(canonical_site_host, true, getCurrentDate());
     this._savePerSiteWhitelistSync();
   },
 
@@ -1128,15 +1124,6 @@ AdvertBan.prototype = {
     // it is safe re-initializing timers in-place -
     // in this case the first callback will be automatically canceled.
     // See https://developer.mozilla.org/En/nsITimer .
-    const update_current_date_callback = function() {
-      that._vars.current_date = getCurrentDate();
-    };
-    update_current_date_callback();
-    this._startRepeatingTimer(
-        this._update_current_date_timer,
-        update_current_date_callback,
-        settings.current_date_granularity);
-
     const update_settings_callback = function() {
       that._readSettingsFromServer();
     };
@@ -1176,7 +1163,6 @@ AdvertBan.prototype = {
     logging.info('stopping AdvertBan component timers');
     // canceled timers can be re-used later.
     // See https://developer.mozilla.org/En/nsITimer#cancel() .
-    this._update_current_date_timer.cancel();
     this._update_settings_timer.cancel();
     this._save_cache_timer.cancel();
     this._save_stale_urls_timer.cancel();
@@ -1360,7 +1346,7 @@ AdvertBan.prototype = {
       logging.info('cache shouldn\'t be saved while in private mode');
       return;
     }
-    const current_date = vars.current_date;
+    const current_date = getCurrentDate();
     const url_cache = vars.url_cache;
     const url_exception_cache = vars.url_exception_cache;
     const file = this._getFileForCaches();
@@ -1523,7 +1509,7 @@ AdvertBan.prototype = {
 
   _updateCache: function(response_data, response_values, urls, cache, value_constructor) {
     const response_data_length = response_data.length;
-    const current_date = this._vars.current_date;
+    const current_date = getCurrentDate();
 
     for (let i = 0; i < response_data_length; i++) {
       let [url_length, todo, url_idx, value_index] = response_data[i];
@@ -1566,7 +1552,7 @@ AdvertBan.prototype = {
   },
 
   _cleanupUnverifiedUrls: function(unverified_urls, cache) {
-    const current_date = this._vars.current_date;
+    const current_date = getCurrentDate();
     const urls = this._getAllDictionaryKeys(unverified_urls);
     const urls_length = urls.length;
     for (let i = 0; i < urls_length; i++) {
@@ -1754,8 +1740,6 @@ AdvertBan.prototype = {
   },
 
   _startJsonRequest: function(xhr, request_url, request_data, response_callback, finish_callback) {
-    // don't use this._vars.current_date here, since it may be too coarse
-    // for the backoff algorithm to work properly.
     const current_date = getCurrentDate();
     const last_failed_request_date = xhr._last_failed_request_date;
     if (last_failed_request_date && current_date - last_failed_request_date < xhr._backoff_timeout) {
@@ -1770,8 +1754,6 @@ AdvertBan.prototype = {
     const that = this;
     const finish_callback_wrapper = function(error_message) {
       if (error_message) {
-        // don't use this._vars.current_date here, since it is too coarse
-        // for the backoff algorithm to work properly.
         xhr._last_failed_request_date = getCurrentDate();
         const settings = that._settings;
         let backoff_timeout = xhr._backoff_timeout;
@@ -1903,7 +1885,7 @@ AdvertBan.prototype = {
     const non_empty_node = tmp[2];
     const node_depth = tmp[3];
     const is_todo = cache.isTodoNode(non_empty_node);
-    if (cache.isStaleNode(non_empty_node, this._vars.current_date)) {
+    if (cache.isStaleNode(non_empty_node, getCurrentDate())) {
       if (is_todo) {
         url = url.substring(0, max_url_length);
         unverified_urls[url] = true;
