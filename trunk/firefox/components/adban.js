@@ -90,7 +90,7 @@ const logging = {
       formatted_msg_parts.push(args[i], msg_parts[i]);
     };
     const formatted_msg = formatted_msg_parts.join('');
-    const date_string = (new Date()).toString();
+    const date_string = (new Date()).toISOString();
     const log_string = '['+date_string+'] ['+level[0]+']: '+formatted_msg+'\n';
     this._log(log_string);
   },
