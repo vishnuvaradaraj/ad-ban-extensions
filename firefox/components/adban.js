@@ -1,4 +1,4 @@
-// it is safe defining objects in the global scope of the XPCOM component,
+// It is safe defining objects in the global scope of the XPCOM component,
 // since they aren't visible outside the component.
 
 const Cu = Components.utils;
@@ -8,7 +8,7 @@ const Cr = Components.results;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
-const ADDON_VERSION = '2.2.0';
+const ADDON_VERSION = '2.3.0';
 const BACKEND_SERVER_DOMAIN = 'ad-ban.appspot.com';
 const FRONTEND_SERVER_DOMAIN = 'www.advertban.com';
 const BACKEND_SERVER_PROTOCOL = 'https';
@@ -158,6 +158,11 @@ const Trie = function(root_value) {
   root.value = root_value;
   root.last_check_date = 0;
   this._root = root;
+
+  // Mapping between serialized values and unserialized ones. The map is used
+  // for removing duplicate complex unserialized values in the trie,
+  // such as common rules in url cache.
+  this._values_map = {};
   this._stale_node_timeout = 0;
   this._node_delete_timeout = 0;
 };
@@ -166,18 +171,52 @@ Trie.importFromNodes = function(root_value, stale_node_timeout, node_delete_time
   const trie = new Trie(root_value);
   trie.setStaleNodeTimeout(stale_node_timeout);
   trie.setNodeDeleteTimeout(node_delete_timeout);
+
+  let are_values_compressed = false;
+  let values_serialized;
+  if (typeof(nodes[0]) === 'number' && nodes[0] === 1) {
+    values_serialized = nodes[2];
+    nodes = nodes[1];
+    are_values_compressed = true;
+  }
+
   const nodes_length = nodes.length;
   let key = '';
   for (let i = 0; i < nodes_length; i++) {
-    let [common_prefix_length, key_suffix, value_serialized, last_check_date] = nodes[i];
+    let [common_prefix_length, key_suffix, value_index, last_check_date] = nodes[i];
     key = key.substring(0, common_prefix_length) + key_suffix;
-    let value = value_constructor(value_serialized);
+    let value_serialized = (are_values_compressed ? values_serialized[value_index] : value_index);
+    let value = trie._unserializeValue(value_serialized, value_constructor);
     trie.add(key, value, last_check_date);
   }
   return trie;
 };
 
 Trie.prototype = {
+  _unserializeValue: function(value_serialized, value_constructor) {
+    const values_map = this._values_map;
+    if (value_serialized in values_map) {
+      return values_map[value_serialized];
+    }
+    const value = value_constructor(value_serialized);
+    values_map[value_serialized] = value;
+    return value;
+  },
+
+  _getValueIndex: function(ctx, value) {
+    const values_indexes = ctx.values_indexes;
+    const value_serialized = ctx.node_constructor(value);
+    if (value_serialized in values_indexes) {
+      return values_indexes[value_serialized];
+    }
+
+    const values_serialized = ctx.values_serialized;
+    const value_index = values_serialized.length;
+    values_indexes[value_serialized] = value_index;
+    values_serialized.push(value_serialized);
+    return value_index;
+  },
+
   _createNode: function() {
     return {
       children: {},
@@ -269,11 +308,11 @@ Trie.prototype = {
       const common_prefix_length = getCommonPrefixLength(ctx.prev_key, key);
       const key_suffix = key.substring(common_prefix_length);
       const value = is_node_with_value ? node.value : null;
-      const value_serialized = ctx.node_constructor(value);
+      const value_index = this._getValueIndex(ctx, value);
       ctx.nodes.push([
           common_prefix_length,
           key_suffix,
-          value_serialized,
+          value_index,
           node.last_check_date,
       ]);
       ctx.prev_key = key;
@@ -337,7 +376,7 @@ Trie.prototype = {
     }
   },
 
-  update: function(start_key, end_keys, value, current_date, todo) {
+  update: function(start_key, end_keys, value_serialized, current_date, todo, value_constructor) {
     const tmp = this.get(start_key);
     const node = tmp[0];
     const node_depth = tmp[3];
@@ -345,6 +384,7 @@ Trie.prototype = {
       this._deleteObsoleteChildren(node.children, node_depth, end_keys);
     }
 
+    const value = this._unserializeValue(value_serialized, value_constructor);
     const added_node = this._add(node, node_depth, start_key, value, current_date);
     this._updateTodoChildren(added_node.children, todo);
   },
@@ -354,15 +394,16 @@ Trie.prototype = {
   },
 
   exportToNodes: function(node_constructor, current_date) {
-    const nodes = [];
     const ctx = {
       prev_key: '',
-      nodes: nodes,
+      nodes: [],
+      values_serialized: [],
+      values_indexes: {},
       node_constructor: node_constructor,
       current_date: current_date,
     };
     this._exportSubtreeNodes(ctx, '', this._root, true);
-    return nodes;
+    return [1, ctx.nodes, ctx.values_serialized];
   },
 
   setStaleNodeTimeout: function(stale_node_timeout) {
@@ -1526,9 +1567,8 @@ AdvertBan.prototype = {
         return urls[idx];
       });
       let url = end_urls[0].substring(0, url_length);
-      let values = response_values[value_index];
-      let value = value_constructor(values);
-      cache.update(url, end_urls, value, current_date, todo);
+      let value_serialized = response_values[value_index];
+      cache.update(url, end_urls, value_serialized, current_date, todo, value_constructor);
     });
   },
 
