@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<!DOCTYPE dialog SYSTEM "chrome://adban/locale/report-ads-dialog.dtd">
+
+<dialog
+    id="adban-complaint-dialog"
+    title="&adban.complaint-dialog.title;"
+    xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+    maxwidth="500"
+    buttons="accept,cancel"
+    buttonlabelcancel="&adban.complaint-dialog.cancel-button.label;"
+    buttonlabelaccept="&adban.complaint-dialog.accept-button.label;">
+  <script type="application/x-javascript" src="report-ads-dialog.js"/>
+
+  <groupbox>
+    <caption label="&adban.complaint-dialog.title;"/>
+
+    <label control="adban-complaint-site-url">&adban.complaint-dialog.site-url.label;</label>
+    <textbox id="adban-complaint-site-url" tabindex="-1"/>
+
+    <label control="adban-complaint-comment">&adban.complaint-dialog.comment.label;</label>
+    <textbox id="adban-complaint-comment" multiline="true" spellcheck="true" cols="80" rows="10" tabindex="1"/>
+
+  </groupbox>
+</dialog>
+
