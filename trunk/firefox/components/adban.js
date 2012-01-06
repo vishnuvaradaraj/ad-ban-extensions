@@ -174,8 +174,10 @@ Trie.importFromNodes = function(root_value, stale_node_timeout, node_delete_time
 
   let are_values_compressed = false;
   let values_serialized;
+  let last_check_dates;
   if (typeof(nodes[0]) === 'number' && nodes[0] === 1) {
     values_serialized = nodes[2];
+    last_check_dates = nodes[3];
     nodes = nodes[1];
     are_values_compressed = true;
   }
@@ -183,10 +185,11 @@ Trie.importFromNodes = function(root_value, stale_node_timeout, node_delete_time
   const nodes_length = nodes.length;
   let key = '';
   for (let i = 0; i < nodes_length; i++) {
-    let [common_prefix_length, key_suffix, value_index, last_check_date] = nodes[i];
+    let [common_prefix_length, key_suffix, value_index, last_check_date_index] = nodes[i];
     key = key.substring(0, common_prefix_length) + key_suffix;
     let value_serialized = (are_values_compressed ? values_serialized[value_index] : value_index);
     let value = trie._unserializeValue(value_serialized, value_constructor);
+    let last_check_date = (are_values_compressed ? last_check_dates[last_check_date_index] : last_check_date_index);
     trie.add(key, value, last_check_date);
   }
   return trie;
@@ -215,6 +218,19 @@ Trie.prototype = {
     values_indexes[value_serialized] = value_index;
     values_serialized.push(value_serialized);
     return value_index;
+  },
+
+  _getLastCheckDateIndex: function(ctx, last_check_date) {
+    const last_check_dates_indexes = ctx.last_check_dates_indexes;
+    if (last_check_date in last_check_dates_indexes) {
+      return last_check_dates_indexes[last_check_date];
+    }
+
+    const last_check_dates = ctx.last_check_dates;
+    const last_check_date_index = last_check_dates.length;
+    last_check_dates_indexes[last_check_date] = last_check_date_index;
+    last_check_dates.push(last_check_date);
+    return last_check_date_index;
   },
 
   _createNode: function() {
@@ -309,11 +325,12 @@ Trie.prototype = {
       const key_suffix = key.substring(common_prefix_length);
       const value = is_node_with_value ? node.value : null;
       const value_index = this._getValueIndex(ctx, value);
+      const last_check_date_index = this._getLastCheckDateIndex(ctx, node.last_check_date);
       ctx.nodes.push([
           common_prefix_length,
           key_suffix,
           value_index,
-          node.last_check_date,
+          last_check_date_index,
       ]);
       ctx.prev_key = key;
     }
@@ -399,11 +416,13 @@ Trie.prototype = {
       nodes: [],
       values_serialized: [],
       values_indexes: {},
+      last_check_dates: [],
+      last_check_dates_indexes: {},
       node_constructor: node_constructor,
       current_date: current_date,
     };
     this._exportSubtreeNodes(ctx, '', this._root, true);
-    return [1, ctx.nodes, ctx.values_serialized];
+    return [1, ctx.nodes, ctx.values_serialized, ctx.last_check_dates];
   },
 
   setStaleNodeTimeout: function(stale_node_timeout) {
