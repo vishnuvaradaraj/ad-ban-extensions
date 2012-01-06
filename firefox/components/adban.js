@@ -180,6 +180,7 @@ Trie.importFromNodes = function(root_value, stale_node_timeout, node_delete_time
     last_check_dates = nodes[3];
     nodes = nodes[1];
     are_values_compressed = true;
+    logging.info('imported [%s] serialized values, [%s] last check dates', values_serialized.length, last_check_dates.length);
   }
 
   const nodes_length = nodes.length;
@@ -192,6 +193,8 @@ Trie.importFromNodes = function(root_value, stale_node_timeout, node_delete_time
     let last_check_date = (are_values_compressed ? last_check_dates[last_check_date_index] : last_check_date_index);
     trie.add(key, value, last_check_date);
   }
+  logging.info('imported [%s] nodes', nodes_length);
+
   return trie;
 };
 
@@ -422,6 +425,7 @@ Trie.prototype = {
       current_date: current_date,
     };
     this._exportSubtreeNodes(ctx, '', this._root, true);
+    logging.info('exported [%s] nodes, [%s] serialized values and [%s] last check dates', ctx.nodes.length, ctx.values_serialized.length, ctx.last_check_dates.length);
     return [1, ctx.nodes, ctx.values_serialized, ctx.last_check_dates];
   },
 
