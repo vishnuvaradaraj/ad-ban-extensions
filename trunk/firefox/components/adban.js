@@ -1837,10 +1837,10 @@ AdvertBan.prototype = {
 
   _isUnverifiedUrlsEmpty: function() {
     const vars = this._vars;
-    for (url in vars.unverified_urls) {
+    for (let url in vars.unverified_urls) {
       return false;
     }
-    for (url in vars.unverified_url_exceptions) {
+    for (let url in vars.unverified_url_exceptions) {
       return false;
     }
     return true;
