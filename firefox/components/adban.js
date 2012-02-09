@@ -159,10 +159,10 @@ const Trie = function(root_value) {
   root.last_check_date = 0;
   this._root = root;
 
-  // Mapping between serialized values and unserialized ones. The map is used
-  // for removing duplicate complex unserialized values in the trie,
+  // Cache for unserialized values. The cache is used for removing
+  // duplicate instances of complex unserialized values in the trie,
   // such as common rules in url cache.
-  this._values_map = {};
+  this._values_cache = {};
   this._stale_node_timeout = 0;
   this._node_delete_timeout = 0;
 };
@@ -201,11 +201,11 @@ Trie.importFromNodes = function(root_value, stale_node_timeout, node_delete_time
 Trie.prototype = {
   _unserializeValue: function(value_serialized, value_constructor) {
     const key = JSON.stringify(value_serialized);
-    const values_map = this._values_map;
-    let value = values_map[key];
+    const values_cache = this._values_cache;
+    let value = values_cache[key];
     if (typeof(value) === "undefined") {
       value = value_constructor(value_serialized);
-      values_map[key] = value;
+      values_cache[key] = value;
     }
     return value;
   },
