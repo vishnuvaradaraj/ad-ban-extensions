@@ -8,7 +8,7 @@ const Cr = Components.results;
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 
-const ADDON_VERSION = '2.3.0';
+const ADDON_VERSION = '2.3.1';
 const BACKEND_SERVER_DOMAIN = 'ad-ban.appspot.com';
 const FRONTEND_SERVER_DOMAIN = 'www.advertban.com';
 const BACKEND_SERVER_PROTOCOL = 'https';
@@ -200,12 +200,13 @@ Trie.importFromNodes = function(root_value, stale_node_timeout, node_delete_time
 
 Trie.prototype = {
   _unserializeValue: function(value_serialized, value_constructor) {
+    const key = JSON.stringify(value_serialized);
     const values_map = this._values_map;
-    if (value_serialized in values_map) {
-      return values_map[value_serialized];
+    if (key in values_map) {
+      return values_map[key];
     }
     const value = value_constructor(value_serialized);
-    values_map[value_serialized] = value;
+    values_map[key] = value;
     return value;
   },
 
