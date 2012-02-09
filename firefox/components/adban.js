@@ -202,11 +202,11 @@ Trie.prototype = {
   _unserializeValue: function(value_serialized, value_constructor) {
     const key = JSON.stringify(value_serialized);
     const values_map = this._values_map;
-    if (key in values_map) {
-      return values_map[key];
+    let value = values_map[key];
+    if (typeof(value) === "undefined") {
+      value = value_constructor(value_serialized);
+      values_map[key] = value;
     }
-    const value = value_constructor(value_serialized);
-    values_map[key] = value;
     return value;
   },
 
