@@ -1,3 +1,6 @@
+// Use strict mode. https://developer.mozilla.org/en/JavaScript/Strict_mode .
+"use strict";
+
 // use this scoping hack in order to hide objects defined inside the anonymous function
 // from the global scope.
 (function() {
