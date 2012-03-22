@@ -991,8 +991,15 @@ AdvertBan.prototype = {
     if (!canonical_site_host) {
       return;
     }
-    logging.info('adding canonical_site_host=[%s] to the per_site_whitelist', canonical_site_host);
-    this._vars.per_site_whitelist.add(canonical_site_host, true, getCurrentDate());
+
+    const per_site_whitelist = this._vars.per_site_whitelist;
+    const current_date = getCurrentDate();
+    const complementary_host = this._getComplementaryCanonicalSiteHost(canonical_site_host);
+
+    logging.info('adding canonical_site_host=[%s] and complementary_host=[%s] to the per_site_whitelist', canonical_site_host, complementary_host);
+    per_site_whitelist.add(canonical_site_host, true, current_date);
+    per_site_whitelist.add(complementary_host, true, current_date);
+
     this._savePerSiteWhitelistSync();
   },
 
@@ -1002,8 +1009,14 @@ AdvertBan.prototype = {
     if (!canonical_site_host) {
       return;
     }
-    logging.info('removing canonical_site_host=[%s] from the per_site_whitelist', canonical_site_host);
-    this._vars.per_site_whitelist.remove(canonical_site_host);
+
+    const per_site_whitelist = this._vars.per_site_whitelist;
+    const complementary_host = this._getComplementaryCanonicalSiteHost(canonical_site_host);
+
+    logging.info('removing canonical_site_host=[%s] and complementary_host=[%s] from the per_site_whitelist', canonical_site_host, complementary_host);
+    per_site_whitelist.remove(canonical_site_host);
+    per_site_whitelist.remove(complementary_host);
+
     this._savePerSiteWhitelistSync();
   },
 
@@ -1119,6 +1132,13 @@ AdvertBan.prototype = {
       logging.info('cannot obtain canonical_site_host from the site_url=[%s]', site_url);
       return null;
     }
+  },
+
+  _getComplementaryCanonicalSiteHost: function(canonical_site_host) {
+    if (canonical_site_host.lastIndexOf('.www/') != canonical_site_host.length - 5) {
+      return canonical_site_host.substring(0, canonical_site_host.length - 1) + '.www/';
+    }
+    return canonical_site_host.substring(0, canonical_site_host.length - 5) + '/';
   },
 
   _openTabInternal: function(tab_name, url) {
