@@ -1,3 +1,6 @@
+// Use strict mode. https://developer.mozilla.org/en/JavaScript/Strict_mode .
+"use strict";
+
 // It is safe defining objects in the global scope of the XPCOM component,
 // since they aren't visible outside the component.
 
@@ -1142,7 +1145,7 @@ AdvertBan.prototype = {
     }
 
     logging.info('openining new tab [%s]', tab_name);
-    tab = tab_browser.addTab(url);
+    const tab = tab_browser.addTab(url);
     tab.setAttribute(attribute_name, 'true');
     tab_browser.selectedTab = tab;
     logging.info('the tab [%s], url=[%s] has been opened', tab_name, url);
@@ -1284,7 +1287,7 @@ AdvertBan.prototype = {
     data_dir.append(this._DATA_DIRECTORY_NAME);
     if (!data_dir.exists() || !data_dir.isDirectory()) {
       logging.info('creating data directory for AdvertBan plugin: [%s]', data_dir.path);
-      data_dir.create(data_dir.DIRECTORY_TYPE, 0774);
+      data_dir.create(data_dir.DIRECTORY_TYPE, (7 << 6));
     }
     return data_dir.clone();
   },
