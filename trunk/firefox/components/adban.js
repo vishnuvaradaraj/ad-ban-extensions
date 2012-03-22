@@ -1135,7 +1135,7 @@ AdvertBan.prototype = {
   },
 
   _getComplementaryCanonicalSiteHost: function(canonical_site_host) {
-    if (canonical_site_host.lastIndexOf('.www/') != canonical_site_host.length - 5) {
+    if (canonical_site_host.lastIndexOf('.www/') !== canonical_site_host.length - 5) {
       return canonical_site_host.substring(0, canonical_site_host.length - 1) + '.www/';
     }
     return canonical_site_host.substring(0, canonical_site_host.length - 5) + '/';
