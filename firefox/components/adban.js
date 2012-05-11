@@ -2049,11 +2049,11 @@ AdvertBan.prototype = {
   _verifyUrl: function(canonical_url) {
     const [url_value, is_todo] = this._getUrlValue(canonical_url);
     if (this._matchesRegexp(url_value.whitelist_regexp, canonical_url)) {
-      logging.info('the canonical_url=[%s] is whitelisted via own regexp', canonical_url);
+      logging.info('the canonical_url=[%s] is whitelisted via own regexp [%s]', canonical_url, url_value.whitelist_regexp);
       return [true, is_todo];
     }
     if (this._matchesRegexp(url_value.blacklist_regexp, canonical_url)) {
-      logging.info('the canonical_url=[%s] is blacklisted via own regexp', canonical_url);
+      logging.info('the canonical_url=[%s] is blacklisted via own regexp [%s]', canonical_url, url_value.blacklist_regexp);
       return [false, is_todo];
     }
     return [url_value.is_whitelist, is_todo];
@@ -2061,11 +2061,11 @@ AdvertBan.prototype = {
 
   _verifyUrlException: function(canonical_url, url_exception_value, canonical_site_url) {
     if (this._matchesRegexp(url_exception_value.whitelist_regexp, canonical_url)) {
-      logging.info('the canonical_url=[%s] is whitelisted via url exception regexp for canonical_site_url=[%s]', canonical_url, canonical_site_url);
+      logging.info('the canonical_url=[%s] is whitelisted via url exception regexp [%s] for canonical_site_url=[%s]', canonical_url, url_exception_value.whitelist_regexp, canonical_site_url);
       return true;
     }
     if (this._matchesRegexp(url_exception_value.blacklist_regexp, canonical_url)) {
-      logging.info('the canonical_url=[%s] is blacklisted via url exception regexp for canonical_site_url=[%s]', canonical_url, canonical_site_url);
+      logging.info('the canonical_url=[%s] is blacklisted via url exception regexp [%s] for canonical_site_url=[%s]', canonical_url, url_exception_value.blacklist_regexp, canonical_site_url);
       return false;
     }
     return null;
